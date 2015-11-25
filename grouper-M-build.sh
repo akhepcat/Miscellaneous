@@ -1,9 +1,12 @@
 #!/bin/bash
 
 BASE=/mnt/disk/android		# change this to your build root
-PROXY=""			# If you want/need to use a web proxy
+PROXY=""	# If you want/need to use a web proxy
+
+trap cleanup SIGINT SIGTERM SIGKILL SIGQUIT SIGABRT SIGSTOP SIGSEGV
 
 ###################################
+NICE=""
 
 if [ -n "${PROXY}" ]
 then
@@ -30,6 +33,12 @@ export ARCH=arm
 Mver=6.0.0_r1
 Lver=5.1.1_r1
 
+cleanup()
+{
+	# Not much to do here right now
+	exit -1
+}
+
 latest_M()
 {
 	## latest is
@@ -48,7 +57,7 @@ get_marshmallow()
 	test -d ${BASE}/M || mkdir -p ${BASE}/M
 	cd ${BASE}/M
 	repo info -l -b Manifest >/dev/null 2>&1 || repo init -u https://android.googlesource.com/platform/manifest -b android-${Mver}
-	repo sync -j4
+	${NICE} repo sync -j4 2>&1
 }
 
 get_lollipop()
@@ -57,14 +66,14 @@ get_lollipop()
 	test -d ${BASE}/L || mkdir -p ${BASE}/L
 	cd ${BASE}/L
 	repo info -l -b Manifest >/dev/null 2>&1 || repo init -u https://android.googlesource.com/platform/manifest -b android-${Lver}
-	repo sync -j4
+	${NICE} repo sync -j4 2>&1
 
 }
 
 copy_drivers()
 {
 	#Now that we have them, copy old device sources into M
-	cp -Rvf ${BASE}/L/device/asus/grouper ${BASE}/M/device/asus/grouper
+	${NICE} cp -Rvf ${BASE}/L/device/asus/grouper ${BASE}/M/device/asus/grouper
 }
 
 get_blobs()
@@ -94,28 +103,28 @@ patch_blobs()
 apply_vendor_patches()
 {
 	#apply source patch to Nfc package (sadly we must mess with platform code here)
-	cd ${BASE}/packages/apps/Nfc/
-	git apply ${BASE}/patches/packages-apps-Nfc.patch
+	cd ${BASE}/M/packages/apps/Nfc/
+	git apply ${BASE}/patches/packages-apps-Nfc.patch 2>&1
 
 	#apply source patch to vendor repo
-	cd ${BASE}/vendor
-	git apply ${BASE}/patches/vendor.patch
+	cd ${BASE}/M/vendor
+	git apply ${BASE}/patches/vendor.patch 2>&1
 
 	#apply source patch to device repo
-	cd ${BASE}/device/asus/grouper
-	git apply ${BASE}/patches/device-asus-grouper.patch
+	cd ${BASE}/M/device/asus/grouper/grouper
+	git apply ${BASE}/patches/device-asus-grouper.patch 2>&1
 }
 
 
 get_kernel()
 {
 	cd ${BASE}
-	git clone https://android.googlesource.com/kernel/tegra.git
+	${NICE} git clone https://android.googlesource.com/kernel/tegra.git
 	cd ${BASE}/tegra
-	git checkout remotes/origin/android-tegra3-grouper-3.1-lollipop-mr1 -b l-mr1
+	${NICE} git checkout remotes/origin/android-tegra3-grouper-3.1-lollipop-mr1 -b l-mr1
 
 	#apply kernel patch
-	git apply ${BASE}/patches/kernel.patch
+	git apply ${BASE}/patches/kernel.patch 2>&1
 }
 
 
@@ -123,8 +132,8 @@ build_kernel()
 {
 	cd ${BASE}/tegra
 
-	make tegra3_android_defconfig
-	make -j4
+	${NICE} make tegra3_android_defconfig
+	test -z "${NICE}" && make -j4 || ${NICE} make
 	cp ${BASE}/tegra/arch/arm/boot/zImage ${BASE}/M/device/asus/grouper/kernel
 }
 
@@ -143,9 +152,9 @@ Typical()
 	#build Android
 	cd ${BASE}/M
 	source build/envsetup.sh
-	lunch aosp_grouper-userdebug
-	make ./out/target/product/grouper/symbols/system/bin/tune2fs
-	make -j4
+	${NICE} lunch aosp_grouper-userdebug 2>&1
+	${NICE} make ./out/target/product/grouper/symbols/system/bin/tune2fs
+	test -z "${NICE}" && make -j4 || ${NICE} make
 }
 
 BuildLatest()
@@ -170,20 +179,34 @@ LatestInfo()
 	echo "Most current version of Marshmallow is: ${Mlatest}"
 }
 
-if [ -n "$1" ]; then
+usage()
+{
+	echo "$0 -[vlnsh]"
+	echo "no options will build the system fully"
+	echo "    -v [version]          will attempt to download and build the specified Marshmallow release. version format: 6.0.0_r05"
+	echo "    -l                    attempts to build the absolute latest release version"
+	echo "    -n                    'nicely' build - enables ionice"
+	echo "    -s                    displays the latest versions of L and M"
+	echo "    -h                    this help"
 
-	case $1 in
-		version|status) LatestInfo
+	exit 1
+}
+
+if [ -n "$1" ]; then
+    while getopts ":hnslv:" param; do
+	case $param in
+		s) LatestInfo
 			;;
-		latest) BuildLatest
+		l) BuildLatest
 			;;
-		help) echo "$0 {version|latest|status|help}"
-			echo "no options will build the system fully"
-			echo "latest will try to build against the latest M release"
-			;;
-		*) echo "unknown option.  Try 'help'"
+                v) Mver=$OPTARG;
+                        ;;
+                n)  NICE="ionice"
+                	;;
+		*) usage
 			;;
 	esac	
-else
-	Typical
+    done
 fi
+
+Typical
