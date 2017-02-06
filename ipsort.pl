@@ -20,7 +20,7 @@ while(<>) {
 
 print "DBG5: unsorted IPs (@in)\n" if $DEBUG >= 5;
 
-my @sorted = map inet_ntoa($_), sort map inet_aton($_), @in;
+my @sorted =  map  substr($_, 4) => sort map  pack('C4' => split /\./, $_)  . $_ => @in;
 
 foreach $ip (@sorted) {
   print "$ip\n";
