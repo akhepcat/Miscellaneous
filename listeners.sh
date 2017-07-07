@@ -4,7 +4,14 @@
 #       lsof -i -n -P | grep LISTEN | sort -n -k +2 -t: | grep -vE '127.0.0.1|::1' | uniq -f 7
 # without multiple execs
 
-lsof -i -n -P | awk '
+lsof -i -n -P +c15 | awk '
+# LSOF replaces spaces in the procname with \x20, which we CAN remove, else formatting
+#	$0 ~ /\\x20/ {
+#		gsub("\\\\x20"," ",$0)
+#	}
+
+
+# Look for global listeners (ignore localhost)
 	/LISTEN/ && !( /127.0.0.1/ || /::1/ ) {
 		myline=$0;
 		FS=":";
@@ -15,6 +22,7 @@ lsof -i -n -P | awk '
                	};
 	};
 	
+# Sort the command-lines by the listening port
 	END {
 		j=1;
 		for ( i in line) {
