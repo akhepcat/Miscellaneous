@@ -47,8 +47,11 @@ check_emu() {
 	fi
 }
 
-if [ -d "${ROOT}" ]
+# Does it look like a mounted filesystem?
+if [ -n "${ROOT}" ]
 then
+    if [ -d "${ROOT}/etc" ]
+    then
 	do_mounts
 	
 	check_emu
@@ -64,6 +67,9 @@ then
 	do_umounts
 
 	echo "clean to umount ${ROOT}"
+    else
+	echo "Can't chroot to dir ${ROOT} - is it a valid filesystem?"
+    fi
 else
-	echo "chroot to where?"
+    echo "chroot to where?"
 fi
