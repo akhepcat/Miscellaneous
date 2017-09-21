@@ -1,0 +1,69 @@
+#!/bin/bash
+ROOT=${1}
+
+cleanup() {
+	echo "bailing out..."
+	MOUNTED=1
+	do_umounts
+}
+
+do_mounts() {
+	mount -o bind /dev ${ROOT}/dev
+	mount -o bind /dev/pts ${ROOT}/dev/pts
+	mount -o bind /proc ${ROOT}/proc
+	mount -o bind /sys ${ROOT}/sys
+
+	MOUNTED=1
+}
+
+do_umounts() {
+	[[ ${MOUNTED:-0} -eq 1 ]] && umount ${ROOT}/sys ${ROOT}/proc ${ROOT}/dev/pts ${ROOT}/dev >/dev/null 2>&1
+}
+
+check_emu() {
+	if [ -n "$(ls ${ROOT}/lib*/ld-linux* 2>/dev/null)" -a -n "$(ls /proc/sys/fs/binfmt_misc/qemu-*  2>/dev/null)" ]
+	then
+		# we can see the library, so we can figure out the emulation
+		if [ -n "$(ls ${ROOT}/lib64/ld-linux-x86-64* 2>/dev/null)" -o  -n "$(ls ${ROOT}/lib/ld-linux.so* 2>/dev/null)" ]
+		then
+			EMU=aarch64
+		elif [ -n "$(ls ${ROOT}/lib/ld-linux-armeb* 2>/dev/null)" ]
+		then
+			EMU=armeb
+		elif [ -n "$(ls ${ROOT}/lib/ld-linux-arm* 2>/dev/null)" ]
+		then
+			EMU=arm
+		else
+			EMU=""
+		fi
+	else
+		echo "Can't reliably determine chroot architecture - is it mounted?"
+		EMU=""
+	fi
+	if [ -n "${EMU}" -a ! -r "/proc/sys/fs/binfmt_misc/qemu-${EMU}" ]
+	then
+		echo "no qemu emulator for architecture ${EMU}"
+		EMU=""
+	fi
+}
+
+if [ -d "${ROOT}" ]
+then
+	do_mounts
+	
+	check_emu
+
+	[[ -r "${ROOT}/etc/hostname" ]] && export debian_chroot=$(cat ${ROOT}/etc/hostname)
+	if [ -n "${EMU}" -a ! -r "${ROOT}/usr/bin/qemu-${EMU}-static" ]
+	then
+		cp /usr/bin/qemu-${EMU}-static ${ROOT}/usr/bin/
+	fi
+
+	chroot ${ROOT}
+
+	do_umounts
+
+	echo "clean to umount ${ROOT}"
+else
+	echo "chroot to where?"
+fi
