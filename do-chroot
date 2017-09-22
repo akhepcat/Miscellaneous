@@ -8,16 +8,16 @@ cleanup() {
 }
 
 do_mounts() {
-	[[ ! -e ${ROOT}/dev/zero ]] && mount -o bind /dev ${ROOT}/dev
-	[[ ! -e ${ROOT}/dev/pts/ptmx ]] && mount -o bind /dev/pts ${ROOT}/dev/pts
-	[[ ! -e ${ROOT}/proc/ ]] && mount -o bind /proc ${ROOT}/proc
-	[[ ! -e ${ROOT}/sys/devices/cpu ]] && mount -o bind /sys ${ROOT}/sys
+	# grab all the mountpoints, and submountpoints...
+	[[ ! -e ${ROOT}/dev/zero ]] && mount --rbind /dev ${ROOT}/dev
+	[[ ! -e ${ROOT}/proc/ ]] && mount --rbind /proc ${ROOT}/proc
+	[[ ! -e ${ROOT}/sys/devices/cpu ]] && mount --rbind /sys ${ROOT}/sys
 
 	MOUNTED=1
 }
 
 do_umounts() {
-	[[ ${MOUNTED:-0} -eq 1 ]] && umount ${ROOT}/sys ${ROOT}/proc ${ROOT}/dev/pts ${ROOT}/dev >/dev/null 2>&1
+	[[ ${MOUNTED:-0} -eq 1 ]] && umount ${ROOT}/sys ${ROOT}/proc ${ROOT}/dev >/dev/null 2>&1
 }
 
 check_emu() {
@@ -56,6 +56,7 @@ check_emu() {
 # Does it look like a mounted filesystem?
 if [ -n "${ROOT}" ]
 then
+    ROOT=${ROOT%/}	# strip off a trailing '/'
     if [ -d "${ROOT}/etc" ]
     then
 	do_mounts
