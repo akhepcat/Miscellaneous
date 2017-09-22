@@ -17,7 +17,7 @@ do_mounts() {
 }
 
 do_umounts() {
-	[[ ${MOUNTED:-0} -eq 1 ]] && umount ${ROOT}/sys ${ROOT}/proc ${ROOT}/dev >/dev/null 2>&1
+	[[ ${MOUNTED:-0} -eq 1 ]] && umount --recursive ${ROOT}/sys ${ROOT}/proc ${ROOT}/dev >/dev/null 2>&1
 }
 
 check_emu() {
