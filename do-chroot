@@ -1,10 +1,11 @@
 #!/bin/bash
 ROOT=${1}
+trap cleanup SIGINT SIGTERM SIGKILL SIGQUIT SIGABRT SIGSTOP SIGSEGV
 
 cleanup() {
 	echo "bailing out..."
-	MOUNTED=1
-	do_umounts
+	[[ ${MOUNTED} -eq 1 ]] && do_umounts
+	exit 0
 }
 
 do_mounts() {
@@ -45,11 +46,13 @@ check_emu() {
 	else
 		echo "Can't reliably determine chroot architecture - is it mounted?"
 		EMU=""
+		cleanup
 	fi
 	if [ -n "${EMU}" -a ! -r "/proc/sys/fs/binfmt_misc/qemu-${EMU}" ]
 	then
 		echo "no qemu emulator for architecture ${EMU}"
 		EMU=""
+		cleanup
 	fi
 }
 
@@ -59,9 +62,9 @@ then
     ROOT=${ROOT%/}	# strip off a trailing '/'
     if [ -d "${ROOT}/etc" ]
     then
-	do_mounts
-	
 	check_emu
+
+	do_mounts
 
 	[[ -r "${ROOT}/etc/hostname" ]] && export debian_chroot=$(cat ${ROOT}/etc/hostname)
 	if [ -n "${EMU}" -a ! -r "${ROOT}/usr/bin/qemu-${EMU}-static" ]
@@ -71,8 +74,6 @@ then
 
 	chroot ${ROOT}
 
-	do_umounts
-
 	echo "clean to umount ${ROOT}"
     else
 	echo "Can't chroot to dir ${ROOT} - is it a valid filesystem?"
@@ -80,3 +81,5 @@ then
 else
     echo "chroot to where?"
 fi
+
+cleanup
