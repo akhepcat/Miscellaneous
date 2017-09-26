@@ -13,7 +13,8 @@ do_mounts() {
 	[[ ! -e ${ROOT}/dev/tty0 ]] && mount --rbind /dev ${ROOT}/dev
 	[[ ! -e ${ROOT}/dev/pts/ptmx ]] && mount --rbind /dev/pts ${ROOT}/dev/pts
 	[[ ! -e ${ROOT}/proc/version ]] && mount --rbind /proc ${ROOT}/proc
-	[[ ! -e ${ROOT}/sys/devices/cpu ]] && mount --rbind /sys ${ROOT}/sys
+	# don't rbind /sys, because we don't want the cgroups!
+	[[ ! -e ${ROOT}/sys/devices/cpu ]] && mount --bind /sys ${ROOT}/sys
 
 	MOUNTED=1
 }
