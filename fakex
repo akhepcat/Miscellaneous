@@ -1,0 +1,75 @@
+#!/bin/bash
+
+prereqs() {
+        for i in Xvfb x11vnc xfwm4 xfce4-panel xterm xhost;
+        do
+                if [ -z "$(which $i)" ]
+                then
+                        showreqs=1
+			reqs="${reqs} ${i}"
+                fi
+        done
+        if [ 1 -eq ${showreqs:-0} ]
+        then
+                echo "Prerequisites are missing!"
+                echo "Please make sure the following packages are installed:"
+                echo ""
+                echo "xvfb x11vnc xfwm4 xfwm4-themes xfce4-panel xfce4-indicator-plugin xterm x11-xserver-utils"
+		echo ""
+		echo "can't find: ${reqs}"
+                echo ""
+                exit 1
+        fi
+
+}
+
+PROG="${0##*/}"
+stop() {
+        PIDS=$(pgrep Xvfb)
+        for PID in $PIDS
+        do
+                kill ${PID}
+        done
+}
+
+status() {
+        pgrep -l Xvfb
+        [[ $? -eq 1 ]] && echo "fakex is not running (no Xvfb processes found)"
+}
+
+start() {
+        USER=$(/usr/bin/whoami)
+        HOST=$(/bin/hostname | cut -f 1 -d.)
+        FBDIR=$(mktemp -d /tmp/vmfbXXXXX)
+
+        # Base display is 1001, but will auto-increment for each additional...
+        DISP=$(ps -ef|grep Xvfb | grep -v grep | sed 's/.*:\([0-9]*\).*/\1/' | tail -1)
+        DISPLAY=${DISP:-1000}
+        RFBPORT=$((DISPLAY + 4901))
+        DISPLAY=":$((DISPLAY + 1))"
+
+        Xvfb ${DISPLAY} -dpms -shmem -br -nolisten tcp -noreset -v -xinerama -ac -screen 0 1440x900x16 -fbdir ${FBDIR} 2>/dev/null &
+        sleep 2
+        xterm -ls  -sl 1000 -sb -T ${USER}@${HOST} -fg white -bg black -C -fn 9x15 -display ${DISPLAY} 2>/dev/null &
+        sleep 1
+        DISPLAY=${DISPLAY} xfwm4 --daemon 2>/dev/null
+        sleep 1
+        DISPLAY=${DISPLAY} xfce4-panel 2>/dev/null &
+        sleep 1
+        DISPLAY=${DISPLAY} xhost +localhost
+
+        x11vnc -q -rfbport ${RFBPORT} -forever -alwaysshared -bg -nopw -display ${DISPLAY}
+}
+
+prereqs
+
+case "$1" in
+        start) start
+                ;;
+        stop) stop
+                ;;
+        status) status
+                ;;
+        *) echo "${PROG} [start|stop|status]"
+                ;;
+esac
