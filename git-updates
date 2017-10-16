@@ -1,0 +1,15 @@
+#!/bin/bash
+CWD=$(pwd)
+for DIR in $(find .  -type d -iname .git)
+do
+	# echo ./proxyapp/.git | cut -f 2 -d/
+	SUBDIR=${DIR:2}
+	SUBDIR=${SUBDIR//\/.git}
+
+	if [ -e "${SUBDIR}/.git/config" -a -n "$(grep -w url ${SUBDIR}/.git/config)" ]
+	then
+		echo "checking ${SUBDIR}"
+		cd ${SUBDIR} && git pull
+		cd ${CWD}
+	fi
+done
