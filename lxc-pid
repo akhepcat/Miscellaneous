@@ -1,0 +1,31 @@
+#!/bin/bash
+# show the full process including virtual hostname for a PID or PNAME
+if [ -z  "$1" ]
+then
+	echo "lxc-pid: show the full process including virtual hostname for a PID or PNAME"
+	echo "error:  $0 [process_name|pid]"
+	exit 1
+fi
+
+if [ -z "${1//[0-9]/}" ];
+then
+	PID=$1
+else
+	PNAME=$1
+fi
+
+if [ -n "${PID}" ];
+then
+	for HOST in $(find /sys/fs/cgroup/memory/lxc -iname cgroup.procs -exec grep -il ${PID} {} \; | cut -d/ -f7)
+	do
+		echo "${HOST} $(ps  --no-headers --pid=${PID})"
+	done
+else
+	for PID in $(pgrep "${PNAME}")
+	do
+		for HOST in $(find /sys/fs/cgroup/memory/lxc -iname cgroup.procs -exec grep -il ${PID} {} \; | cut -d/ -f7)
+		do
+			echo "${HOST} $(ps  --no-headers --pid=${PID})"
+		done
+	done
+fi
