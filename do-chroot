@@ -24,37 +24,54 @@ do_umounts() {
 }
 
 check_emu() {
-	if [ -n "$(ls ${ROOT}/lib*/ld-linux* 2>/dev/null)" -a -n "$(ls /proc/sys/fs/binfmt_misc/qemu-*  2>/dev/null)" ]
+	HOST=$(uname -m)
+	if [ "${HOST}" != "${HOST##*arm*}" ]
 	then
-		# we can see the library, so we can figure out the emulation
-		if [ -n "$(ls -l ${ROOT}/lib64/ld-linux* 2>/dev/null | grep x86_64 )" -o  -n "$(ls -l ${ROOT}/lib/ld-linux* 2>/dev/null | grep i386)" ]
-		then
-			# ls -l  /lib64/ld-linux*
-			# /lib64/ld-linux-x86-64.so.2 -> /lib/x86_64-linux-gnu/ld-2.24.so*
-			# ls -l  /lib/ld-linux*
-			# /lib/ld-linux.so.2 -> i386-linux-gnu/ld-2.24.so*
-			EMU=aarch64
-		elif [ -n "$(ls -l ${ROOT}/lib/ld-linux* 2>/dev/null | grep armeb )" ]
-		then
-			EMU=armeb
-		elif [ -n "$(ls -l ${ROOT}/lib/ld-linux* 2>/dev/null | grep arm-)" ]
-		then
-			# ls -l  /mnt/disk/lib/ld-linux.so.3
-			# /mnt/disk/lib/ld-linux.so.3 -> arm-linux-gnueabi/ld-2.24.so*
-			EMU=arm
-		else
-			EMU=""
-		fi
+		HOST=arm
+	elif [ "${HOST}" != "${HOST##*x86_64*}" ]
+	then
+		HOST=x86_64
+	fi
+	if [ -z "$(ls /proc/sys/fs/binfmt_misc/qemu-*  2>/dev/null)" ]
+	then
+		echo "qemu binfmt_misc support not registered. You may have problems with foreign archs"
+		HOST=""
+	fi
+	# we can see the library, so we can figure out the emulation
+	if [ -n "$(ls -l ${ROOT}/lib64/ld-linux* 2>/dev/null | grep x86_64 )" -o  -n "$(ls -l ${ROOT}/lib/ld-linux* 2>/dev/null | grep i386)" ]
+	then
+		# ls -l  /lib64/ld-linux*
+		# /lib64/ld-linux-x86-64.so.2 -> /lib/x86_64-linux-gnu/ld-2.24.so*
+		# ls -l  /lib/ld-linux*
+		# /lib/ld-linux.so.2 -> i386-linux-gnu/ld-2.24.so*
+		EMU=aarch64
+	elif [ -n "$(ls -l ${ROOT}/lib/ld-linux* 2>/dev/null | grep armeb )" ]
+	then
+		EMU=armeb
+	elif [ -n "$(ls -l ${ROOT}/lib/ld-linux* 2>/dev/null | grep arm-)" ]
+	then
+		# ls -l  /mnt/disk/lib/ld-linux.so.3
+		# /mnt/disk/lib/ld-linux.so.3 -> arm-linux-gnueabi/ld-2.24.so*
+		EMU=arm
 	else
-		echo "Can't reliably determine chroot architecture - is it mounted?"
 		EMU=""
+	fi
+	if [ -z "${HOST}" -a -z "${EMU}" ]
+	then
+		echo "Can't reliably determine host/chroot architecture. Aborting."
 		cleanup
 	fi
+	
 	if [ -n "${EMU}" -a ! -r "/proc/sys/fs/binfmt_misc/qemu-${EMU}" ]
 	then
-		echo "no qemu emulator for architecture ${EMU}"
 		EMU=""
-		cleanup
+		if [ "${EMU}" = "${HOST}" ]
+		then
+			echo "attempting native chroot without binfmt_misc support"
+		else
+			echo "no qemu emulator for architecture ${EMU}"
+			cleanup
+		fi
 	fi
 }
 
