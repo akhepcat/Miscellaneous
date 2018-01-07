@@ -1,0 +1,25 @@
+#!/bin/bash
+# reads a list of MD5sums and filenames and outputs only the duplicates
+
+awk \
+        '$1 != /^$/ {
+                md5=$1
+                fname=$2
+		files[fname]=md5
+		hashes[md5]=hashes[md5] + 1
+        };
+  
+        END {
+		for (md5 in hashes) {
+			if (hashes[md5] > 1) {
+				for (fname in files) {
+					if ( files[fname] == md5 ) {
+						print md5 " " fname;
+					}
+				}
+			}
+		}
+        };
+        '
+
+# end
