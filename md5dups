@@ -8,7 +8,7 @@
 #
 # We use a long second fieldwidth to get around spaces in filenames/paths for the second argument
 #
-# alias findups='find . -type f -print0 | xargs -0 -i md5sum "{}" | md5dups'
+# alias findups='find . -type f -links 1 -print0 | xargs -0 -i md5sum "{}" | md5dups'
 awk '
 	BEGIN { 
 		FIELDWIDTHS = "32 256";
