@@ -1,14 +1,17 @@
 #!/bin/bash
 # reads a list of MD5sums and filenames and outputs only the duplicates
 #
-# you could feed it with something like:
-#    find Pictures/ -type f -print0 | xargs -0 -i md5sum "{}" > allmd5s
+# you could feed it with something like this, finding non-null, non-linked files
+#    find Pictures/ -type f -size +1c -links 1 -print0 | xargs -0 -i md5sum "{}" > allmd5s
 # and then
 #    md5dups < allmd5s
 #
+# or make a bash alias:
+# alias findups='find . -type f -size +1c -links 1 -print0 | xargs -0 -i md5sum "{}" | md5dups | sort -f'
+#
+#
 # We use a long second fieldwidth to get around spaces in filenames/paths for the second argument
 #
-# alias findups='find . -type f -links 1 -print0 | xargs -0 -i md5sum "{}" | md5dups'
 awk '
 	BEGIN { 
 		FIELDWIDTHS = "32 256";
