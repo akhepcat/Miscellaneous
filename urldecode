@@ -1,0 +1,42 @@
+#!/usr/bin/perl
+#  Very basic wrapper script to en/de-code html/url encoded text
+#
+#  symlink to this file, and change the name to reflect the function
+#
+$_ = $0;
+
+if ( (m/url/i)  || (m/uri/i) ) {
+    if (m/encode/i) {
+
+	use URI::Escape;
+
+	while(<>) {
+		print uri_escape($_);
+	}
+    } else {
+
+	while(<>) {
+	#	print uri_unescape($_);
+		$_ =~ s/%([0-9A-Fa-f]{2})/chr(hex($1))/eg;
+		print "$_";
+		}
+    }
+} elsif ( (m/html/i) ) {
+    use HTML::Entities;
+
+    if (m/encode/i) {
+	while(<>) {
+		print encode_entities($_);
+	}
+    } else {
+
+	while(<>) {
+		print decode_entities($_);
+		}
+    }
+} else {
+	print "Unknown applet: [url|uri|html][encode|decode] are supported only\n";
+	exit 1
+}
+
+exit 0;
