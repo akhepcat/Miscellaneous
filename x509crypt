@@ -56,7 +56,7 @@ then
 		PRIVKEY=${1}
 	fi
 
-	if [ -n "$(grep 'BEGIN.*PRIVATE' \"${PRIVKEY}\" )" ]
+	if [ -n "$(grep 'BEGIN.*PRIVATE' "${PRIVKEY}" )" ]
 	then
 		SIZE=$(stat -c"%s" "${INFILE}")
 		# 576 bytes is the size of an encrypted null-length file
@@ -106,20 +106,19 @@ else
 	fi
 
 	PUBKEY=$(mktemp /tmp/pubkey-XXXXXX.pem)
-	if [ -n "$(grep 'BEGIN PUBLIC KEY' ${UPUBKEY})" ]
+	if [ -n "$(grep 'BEGIN PUBLIC KEY' "${UPUBKEY}")" ]
 	then
 		# we've got a public key, so it just works
-		cp ${UPUBKEY} ${PUBKEY}
-	elif [ -n "$(grep 'BEGIN CERTIFICATE' ${UPUBKEY})" ]
+		cp "${UPUBKEY}" "${PUBKEY}"
+	elif [ -n "$(grep 'BEGIN CERTIFICATE' "${UPUBKEY}")" ]
 	then
-		openssl x509 -pubkey -noout -in ${UPUBKEY} > ${PUBKEY}
-	elif [ -n "$(grep 'BEGIN PRIVATE' ${UPUBKEY})" ]
+		openssl x509 -pubkey -noout -in "${UPUBKEY}" > "${PUBKEY}"
+	elif [ -n "$(grep 'BEGIN PRIVATE' "${UPUBKEY}")" ]
 	then
 		#it's a private cert, so extract the public key from it
-		openssl rsa -in ${UPUBKEY} -out ${PUBKEY} -outform PEM -pubout
+		openssl rsa -in "${UPUBKEY}" -out "${PUBKEY}" -outform PEM -pubout
 	else
 		echo "Can't identify your certificate/key, bailing out"
-		rm -f ${PUBKEY}
 		cleanup
 	fi
 
