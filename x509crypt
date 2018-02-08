@@ -33,8 +33,11 @@ if [ "-d" = "${1}" ]
 then
 	DECRYPT=1
 	shift
-else
-	ENCRYPT=1
+fi
+
+if [ "${PROG##*decrypt*}" ]
+then
+	DECRYPT=1
 fi
 
 if [ -z "${1}" ]
