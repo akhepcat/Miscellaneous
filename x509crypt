@@ -6,7 +6,7 @@ PROG="${0##*/}"
 trap cleanup SIGINT SIGTERM SIGKILL SIGQUIT SIGABRT SIGSTOP SIGSEGV
 
 cleanup() {
-	for file in "${PUBKEY}" "${SECRET}" "${INFILE}" "${ENC_SECRET}" "${TMP}"
+	for file in "${PUBKEY}" "${SECRET}" "${ENC_SECRET}" "${TMP}"
 	do
 		[[ -n "${file}" ]] && rm -f "${file}"
 	done
@@ -59,7 +59,8 @@ then
 	if [ -n "$(grep 'BEGIN.*PRIVATE' \"${PRIVKEY}\" )" ]
 	then
 		SIZE=$(stat -c"%s" "${INFILE}")
-		[[ ${SIZE} -lt 544 ]] && die_tampered
+		# 576 bytes is the size of an encrypted null-length file
+		[[ ${SIZE} -lt 576 ]] && die_tampered
 		HMAC_START=$(( $SIZE - 32 ))
 		ENC_SECRET=$(mktemp /tmp/encsecret-XXXXXX.b64)
 		SECRET=$(mktemp /tmp/secret-XXXXXX.b64)
