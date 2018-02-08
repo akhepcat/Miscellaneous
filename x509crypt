@@ -35,7 +35,7 @@ then
 	shift
 fi
 
-if [ "${PROG##*decrypt*}" ]
+if [ -z "${PROG##*decrypt*}" ]
 then
 	DECRYPT=1
 fi
