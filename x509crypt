@@ -3,6 +3,7 @@
 #  use x509 public/private certificates for file encryption
 PROG="${0##*/}"
 
+trap cleanup SIGINT SIGTERM SIGKILL SIGQUIT SIGABRT SIGSTOP SIGSEGV
 
 cleanup() {
 	for file in "${PUBKEY}" "${SECRET}" "${INFILE}" "${ENC_SECRET}" "${TMP}"
