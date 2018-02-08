@@ -149,7 +149,7 @@ else
 	# append the HMAC of the original binary for comparison, encrypted of course with the random secret
 	openssl dgst -hmac "${HMAC_KEY}" -binary -sha256 "${INFILE}" >> "${INFILE}.enc"
 
-	ls -alF "${INFILE}.enc"
+	ls -alF "${INFILE}" "${INFILE}.enc"
 fi
 
 cleanup
