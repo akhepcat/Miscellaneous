@@ -49,6 +49,12 @@ else
 	shift
 fi
 
+if [ ! -r "${INFILE}" ]
+then
+	echo "Can't read from >${INFILE}<, aborting"
+	cleanup
+fi
+
 if [ ${DECRYPT:-0} -eq 1 ]
 then
 	if [ -z "${1}" ]
