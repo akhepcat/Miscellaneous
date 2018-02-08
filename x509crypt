@@ -1,0 +1,129 @@
+#!/bin/bash
+#
+#  use x509 public/private certificates for file encryption
+
+if [ -z "${1}" ]
+then
+	echo "no action to take"
+	echo "$0 [-d] [infile] [keyfile]"
+	echo ""
+	echo "    -d decrypt"
+	exit 1
+fi
+
+if [ "-d" = "${1}" ]
+then
+	DECRYPT=1
+	shift
+else
+	ENCRYPT=1
+fi
+
+if [ -z "${1}" ]
+then
+	echo "no file to take action on"
+	exit 1
+else
+	INFILE=${1}
+	shift
+fi
+
+if [ ${DECRYPT:-0} -eq 1 ]
+then
+	if [ -z "${1}" ]
+	then
+		echo "no local receiver private-key specified"
+		exit 1
+	else
+		PRIVKEY=${1}
+	fi
+
+	if [ -n "$(grep 'BEGIN.*PRIVATE' ${PRIVKEY})" ]
+	then
+		SIZE=$(stat -c"%s" ${INFILE})
+		HMAC_START=$(( $SIZE - 32 ))
+		ENC_SECRET=$(mktemp /tmp/encsecret-XXXXXX.b64)
+		SECRET=$(mktemp /tmp/secret-XXXXXX.b64)
+		TMP=$(mktemp /tmp/temp-XXXXXX.b64)
+		dd if=${INFILE} bs=512 count=1 of=${ENC_SECRET} >/dev/null 2>&1
+		dd if=${INFILE} bs=512 skip=1 of=${TMP} >/dev/null 2>&1
+		truncate --size=$(($HMAC_START - 512 )) ${TMP}
+
+		PHMAC=$( dd if=${INFILE} bs=1 count=32 skip=${HMAC_START} 2>/dev/null | hexdump -v -e '/1 "%02x"' )
+		OUTFILE=${INFILE//.enc}
+		[[ -r "${OUTFILE}" ]] &&  OUTFILE="${OUTFILE}.plain"
+
+		# decrypt the random secret using the private key
+		openssl rsautl -decrypt -inkey ${PRIVKEY} -in ${ENC_SECRET} -out ${SECRET}
+		# decrypt the datafile using the decrypted secret
+		openssl enc -d -aes-256-cbc -in ${TMP} -out ${OUTFILE} -pass file:${SECRET}
+		# generate the HMAC from the recovered datafile
+
+		HMAC_KEY=$(base64 -d ${SECRET} | hexdump -v -e '/1 "%02x"' -n 32 -s 0)
+		RHMAC=$(openssl dgst -hmac "${HMAC_KEY}" -binary -sha256 ${OUTFILE} | hexdump -v -e '/1 "%02x"')
+
+#		echo "Transmitted HMAC: >${PHMAC}<"
+#		echo "  Recovered HMAC: >${RHMAC}<"
+
+		if [ "${RHMAC}" = "${PHMAC}" ]
+		then
+			echo "File was not tampered with"
+		else
+			echo "FILE TAMPERING DETECTED"
+		fi
+	else
+		echo "Can't find a private cert to decrypt ${INFILE}"
+		exit 1
+	fi
+
+	rm -f ${INFILE} ${SECRET} ${ENC_SECRET} ${TMP}
+
+else
+	if [ -z "${1}" ]
+	then
+		echo "no remote recipient public-key or certificate specified"
+		exit 1
+	else
+		UPUBKEY=${1}
+	fi
+
+	PUBKEY=$(mktemp /tmp/pubkey-XXXXXX.pem)
+	if [ -n "$(grep 'BEGIN PUBLIC KEY' ${UPUBKEY})" ]
+	then
+		# we've got a public key, so it just works
+		cp ${UPUBKEY} ${PUBKEY}
+	elif [ -n "$(grep 'BEGIN CERTIFICATE' ${UPUBKEY})" ]
+	then
+		openssl x509 -pubkey -noout -in ${UPUBKEY} > ${PUBKEY}
+	elif [ -n "$(grep 'BEGIN PRIVATE' ${UPUBKEY})" ]
+	then
+		#it's a private cert, so extract the public key from it
+		openssl rsa -in ${UPUBKEY} -out ${PUBKEY} -outform PEM -pubout
+	else
+		echo "Can't identify your certificate/key, bailing out"
+		rm -f ${PUBKEY}
+		exit 1
+	fi
+
+	# Generate an encrypted single file of format:
+	#         [0-511] encrypted secret
+	#   [512 - DATAn] encrypted datafile
+	#   [EOF-32 - EOF] HMAC digest
+
+
+	SECRET=$(mktemp /tmp/secret-XXXXXX.b64)
+	# Generate 128-byte (1024-bit) random secret
+	openssl rand -base64 -out ${SECRET} 128
+	# 64 hex character key for the digest
+	HMAC_KEY=$(base64 -d ${SECRET} | hexdump -v -e '/1 "%02x"' -n 32 -s 0)
+	# encrypt the random secret with the public key - turns into 512 bytes
+	openssl rsautl -encrypt -inkey ${PUBKEY} -pubin -in ${SECRET} > ${INFILE}.enc
+	# encrypt the datafile using the random secret as the symmetrical key
+	openssl enc -aes-256-cbc -salt -in ${INFILE} -pass file:${SECRET} >> ${INFILE}.enc
+	# append the HMAC of the original binary for comparison, encrypted of course with the random secret
+	openssl dgst -hmac "${HMAC_KEY}" -binary -sha256 ${INFILE} >> ${INFILE}.enc
+
+	rm -f ${PUBKEY} ${SECRET}
+
+fi
+
