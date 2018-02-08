@@ -94,9 +94,6 @@ then
 		HMAC_KEY=$(base64 -d "${SECRET}" | hexdump -v -e '/1 "%02x"' -n 32 -s 0)
 		RHMAC=$(openssl dgst -hmac "${HMAC_KEY}" -binary -sha256 "${OUTFILE}" | hexdump -v -e '/1 "%02x"')
 
-#		echo "Transmitted HMAC: >${PHMAC}<"
-#		echo "  Recovered HMAC: >${RHMAC}<"
-
 		[[ "${RHMAC}" != "${PHMAC}" ]] && die_tampered
 
 		# else
@@ -104,6 +101,8 @@ then
 	else
 		echo "Can't find a private cert to decrypt ${INFILE}"
 	fi
+
+	ls -alF "${OUTFILE}"
 
 else
 	if [ -z "${1}" ]
