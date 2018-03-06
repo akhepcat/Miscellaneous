@@ -4,7 +4,12 @@
 #       lsof -i -n -P | grep LISTEN | sort -n -k +2 -t: | grep -vE '127.0.0.1|::1' | uniq -f 7
 # without multiple execs
 
-lsof -i -n -P +c15 | awk '
+GAWK=$(which gawk)
+AWK=$(which awk)
+
+USE_AWK=${GAWK:-$AWK}
+
+lsof -i -n -P +c15 | ${USE_AWK} '
 # LSOF replaces spaces in the procname with \x20, which we CAN remove, else formatting
 #	$0 ~ /\\x20/ {
 #		gsub("\\\\x20"," ",$0)
