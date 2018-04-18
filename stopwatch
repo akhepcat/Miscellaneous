@@ -1,0 +1,57 @@
+#!/bin/bash
+PROG="${0##*/}"
+
+trap cleanup SIGINT SIGTERM SIGKILL SIGQUIT SIGABRT SIGSTOP SIGSEGV
+
+cleanup() {
+	echo -e "\n\n"
+	exit 0
+}
+
+usage() {
+        echo "${PROG} [-cC]"
+	echo "        -c  clears the screen"
+	echo "        -C  pipe the output to CowSay"
+        exit 1
+}
+
+while getopts ':cC' opt; do
+  case $opt in
+    c) CLEAR=1 ;
+      ;;
+    C) COW=1;
+      ;;
+    *) echo "Invalid option: -$OPTARG";
+      usage;
+      ;;
+  esac
+done
+
+[[ 1 -eq ${CLEAR:-0} ]] && clear
+
+while [ 1 ]
+do
+	if [ 0 -eq ${COW:-0} ]
+	then
+		printf "\rTime(HH:MM:SS) - %02d:%02d:%02d" ${HOURS:-0} ${MINS:-0} ${SECS:-0}
+	else
+		clear
+		printf "Time(HH:MM:SS) - %02d:%02d:%02d" ${HOURS:-0} ${MINS:-0} ${SECS:-0} | cowsay
+	fi
+
+	if [ ${SECS:-0} -ge 59 ]
+	then
+		SECS=0
+		if [ ${MINS:-0} -ge 59 ]
+		then
+			MINS=0
+			HOURS=$(( $HOURS + 1 ))
+		else
+			MINS=$(( $MINS + 1 ))
+		fi
+	else
+		SECS=$(( SECS + 1 ))
+	fi
+
+	sleep 1
+done
