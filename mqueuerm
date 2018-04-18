@@ -1,0 +1,60 @@
+#!/bin/bash
+
+PROG="${0##*/}"
+FORCE=0
+STRINGS=0
+ALL=0
+
+usage() {
+	echo "${PROG} [-fsa] msgid"
+	exit 1
+}
+
+while getopts ':afs' opt; do
+  case $opt in
+    f) FORCE=1 ;
+      ;;
+    a) ALL=1;
+      ;;
+    s) STRINGS=1;
+      ;;
+    *) echo "Invalid option: -$OPTARG";
+      usage;
+      ;;
+  esac
+done
+
+if [ -z "$*" -a 0 -eq ${ALL} ]
+then
+        usage
+fi
+
+
+if [ ${ALL} ]; 
+then
+        FORCED=i
+        [[ 1 -eq ${FORCE} ]] && FORCED=""
+        find /var/spool/postfix/defer/ /var/spool/postfix/deferred/ -type f -exec rm -v${FORCED} {} \;
+else
+	if [ 1 -eq ${STRINGS} ];
+	then
+		strings $(find /var/spool/postfix/defer/ /var/spool/postfix/deferred/ /var/spool/postfix/active/ -iname "*${1}*")
+	else
+            for arg in $*
+            do
+                Q="$arg"
+                i="${Q:0:1}"
+
+                if [ 0 -eq ${FORCE} ];
+                then
+                        ls /var/spool/postfix/defer/${i}/${Q}
+                        ls /var/spool/postfix/deferred/${i}/${Q}
+                        ls /var/spool/postfix/active/${i}/${Q}
+                else
+                        rm -f /var/spool/postfix/defer/${i}/${Q}
+                        rm -f /var/spool/postfix/deferred/${i}/${Q}
+                        rm -f /var/spool/postfix/active/${i}/${Q}
+                fi
+            done
+        fi
+fi
