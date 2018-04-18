@@ -1,0 +1,10 @@
+#!/bin/bash
+
+KEY=${1}
+
+if [ -z "${KEY//[^a-fA-F0-9]/}" ]
+then
+	echo "apt-add-key [keysig]"
+else
+	apt-key adv --keyserver keyserver.ubuntu.com --recv-keys ${KEY//[^a-fA-F0-9]/}
+fi

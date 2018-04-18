@@ -1,0 +1,6 @@
+#!/bin/bash
+for module in $(dkms status | sed 's/, /\//g; s/:.*//g')
+do
+	echo "Working on ${module}"
+	dkms build $module -k && dkms install $module -k || break
+done
