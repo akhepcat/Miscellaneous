@@ -1,2 +1,18 @@
 #!/bin/bash
+if [ ! -r "configure"  -a -r "configure.ac" ]
+then
+	# get automake set up
+	autoreconf -fi
+	if [ $? -ne 0 ]
+	then
+		echo "possible errors during autoreconf, check includes for missing m4's, and manually 'autoreconf -fi -Iincdir'"
+		exit 1
+	fi
+fi
+if [ ! -r ./configure ]
+then
+	echo "Couldn't find or build configure script"
+	exit 1
+fi
+
 ./configure  --prefix=/usr --sysconfdir=/etc --localstatedir=/var $*
