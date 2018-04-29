@@ -6,9 +6,14 @@ do
 	SUBDIR=${DIR:2}
 	SUBDIR=${SUBDIR//\/.git}
 
-	if [ -e "${SUBDIR}/.git/config" -a -n "$(grep -w url ${SUBDIR}/.git/config)" ]
+	if [ -d "${SUBDIR}/.git/svn/refs" ];
 	then
-		echo "checking ${SUBDIR}"
+		echo -n "checking git-svn repo ${SUBDIR}: "
+		cd ${SUBDIR} && git svn fetch
+		cd ${CWD}
+	elif [ -e "${SUBDIR}/.git/config" -a -n "$(grep -w url ${SUBDIR}/.git/config)" ]
+	then
+		echo -n "checking git repo ${SUBDIR}: "
 		cd ${SUBDIR} && git pull
 		cd ${CWD}
 	fi
