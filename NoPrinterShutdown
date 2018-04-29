@@ -1,0 +1,64 @@
+#!/bin/bash
+
+# Production values
+WAIT=15
+SLEEP=60
+USBv=03f0
+USBd=1c17
+
+# Debugging overrides
+# SLEEP=1
+# WAIT=2
+# USBd=1c16
+
+PIDF=/run/NoPrinterShudown.pid
+
+if [ -e $PIDF ]
+then
+	PIDp=$(pgrep --pidfile ${PIDF})
+	if [ -n "${PIDp}" ]
+	then
+		# running, so exit
+		exit 1
+	else
+		# not running, stale pidfile
+		logger -t "usb-watchdog" "stale pidfile, removing"
+		rm -f ${PIDF}
+	fi
+fi
+echo $$ > $PIDF
+
+Device=$(lsusb -d $USBv:$USBd)
+
+if [ -n "${Device}" ]
+then
+	#We see the printer
+	rm -f $PIDF
+	exit 0
+fi
+
+# Else we don't see the printer, so we loop for 15 minutes, checking for the
+# printer's return, otherwise we shut down.
+
+logger -t "usb-watchdog" "Lost the printer, starting ${WAIT}m timer"
+
+for timer in $(seq 1 $WAIT)
+do
+
+	Device=$(lsusb -d $USBv:$USBd)
+	if [ -n "${Device}" ]
+	then
+	        #We see the printer has returned!
+		logger -t "usb-watchdog" "Printer returned after ${WAIT}m. Aborting shutdown."
+	        rm -f $PIDF
+	        exit 0
+	fi
+	logger -t "usb-watchdog" "tic ${timer} of ${WAIT}"
+	sleep $SLEEP
+done
+
+# We made it this far without seeing the printer return, so just shutdown
+
+logger -t "usb-watchdog" "Printer off-line, activating shutdown."
+rm -f $PIDF
+/sbin/shutdown --poweroff --no-wall now
