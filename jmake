@@ -1,0 +1,28 @@
+#!/bin/bash
+PROG="${0##*/}"
+CPUS=$(grep -c "^processor" /proc/cpuinfo )
+
+CPUS=$(($CPUS * 3 / 2))
+
+if [ $CPUS -gt 4 ]
+then
+        CPUS="-j $CPUS"
+else
+        CPUS=""
+fi
+
+DO_RETURN=${SHLVL}
+
+do_exit()
+{
+        STATUS=${1:-0}
+
+        if [ ${DO_RETURN} -eq 1 ];
+        then
+                return $STATUS
+        else
+                exit $STATUS
+        fi
+}
+
+make ${CPUS}
