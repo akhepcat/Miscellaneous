@@ -1,0 +1,214 @@
+#!/bin/bash
+URL="${*:-http://localhost/}"
+
+PREFERCHROME=1
+DEBUG=${DEBUG:-1}
+FORCEPREFER=0
+
+DBGLOG=/tmp/urls
+
+
+test ${DEBUG} -gt 1 && echo "DBG: new session starting..." >> $DBGLOG
+
+
+test ${DEBUG} -gt 2 && echo "DBG: Cleaning up url >>${URL}<<" >> $DBGLOG
+# Invalid characters that can show up in urls because of pidgin dumbs.
+
+OVER=1
+if [ $OVER -eq 1 ]; then
+############# These are commented out.....
+if [ -z "${URL//\'*http*/}" ]
+then
+	URL="${URL//*\'*http/http}"
+	test ${DEBUG} -gt 2 && echo "DBG: pre-tick >>${URL}<<" >> $DBGLOG
+fi
+
+if [ -z "${URL//\"*http*/}" ]
+then
+	URL="${URL//*\"*http/http}"
+	test ${DEBUG} -gt 2 && echo "DBG: pre-quote >>${URL}<<" >> $DBGLOG
+fi
+
+if [ -z "${URL//*\!*http*/}" ]
+then
+	URL="${URL//*\!*http/http}"
+	test ${DEBUG} -gt 2 && echo "DBG: pre-bang >>${URL}<<" >> $DBGLOG
+fi
+
+# Unicode cleanups:
+if [ -z "${URL//*\”*http*/}" ]
+then
+	URL="${URL//*\”*http/http}"
+	test ${DEBUG} -gt 2 && echo "DBG: pre-MS-quote >>${URL}<<" >> $DBGLOG
+fi
+
+if [ -z "${URL//*…*http*/}" ]
+then
+	URL="${URL//*…*http/http}"
+	test ${DEBUG} -gt 2 && echo "DBG: pre-elipses >>${URL}<<" >> $DBGLOG
+fi
+
+if [ -z "${URL//*http*%21*/}" ]
+then
+	URL="${URL//%21*/}"
+	test ${DEBUG} -gt 2 && echo "DBG: trailing %21 >>${URL}<<" >> $DBGLOG
+fi
+
+if [ -z "${URL//*http*%E2*/}" ]
+then
+	URL="${URL//%E2*/}"
+	test ${DEBUG} -gt 2 && echo "DBG: trailing %21 >>${URL}<<" >> $DBGLOG
+fi
+
+########################
+else
+	# remove extraneous characters from the beginning
+	URL=http${URL#*http}
+fi
+
+if [ -z "${URL//*http*\'*/}" ]
+then
+	URL="${URL//\'*/}"
+	test ${DEBUG} -gt 2 && echo "DBG: post-tick >>${URL}<<" >> $DBGLOG
+fi
+
+if [ -z "${URL//*http*\"*/}" ]
+then
+	URL="${URL//\"*/}"
+	test ${DEBUG} -gt 2 && echo "DBG: post-quote >>${URL}<<" >> $DBGLOG
+fi
+
+if [ -z "${URL//*http*\!*/}" ]
+then
+	URL="${URL//\!*/}"
+	test ${DEBUG} -gt 2 && echo "DBG: post-bang >>${URL}<<" >> $DBGLOG
+fi
+
+if [ -z "${URL//*http*”*/}" ]
+then
+	URL="${URL//”*/}"
+	test ${DEBUG} -gt 2 && echo "DBG: post-MS-quote >>${URL}<<" >> $DBGLOG
+fi
+
+if [ -z "${URL//*http*…*/}" ]
+then
+	URL="${URL//…*/}"
+	test ${DEBUG} -gt 2 && echo "DBG: post-elipses >>${URL}<<" >> $DBGLOG
+fi
+
+test ${DEBUG} -gt 2 && echo "DBG: URL for possible unshorting: >>${URL}<<" >> $DBGLOG
+
+
+CHROME=$(echo $(pgrep -f chromium; pgrep -f chrome) | wc -w)
+FIREFOX=$(pgrep -f firefox | wc -l)
+
+CRUN=$((CHROME > 0))
+FRUN=$((FIREFOX > 0))
+
+test ${DEBUG} -gt 1 && echo "DBG: CHROME_RUNNING=${CRUN}" >> $DBGLOG
+test ${DEBUG} -gt 1 && echo "DBG: FIREFOX_RUNNING=${CRUN}" >> $DBGLOG
+
+# Deal with URL shortners:
+
+# Twitter
+while true
+do
+	# zite.to, t.co, es.pn, bit.ly, ow.ly, fb.me, shar.es, tinyurl.com, ur1.ca, buff.ly, j.mp, bzfd.it, is.gd, tr.im; su.pr, cli.gs, v.gd, ph.ly, tiny.cc, say.ly, ht.ly, trib.al, zpr.io
+	if [ -z "${URL##http*//t.co/*}" -o  -z "${URL##*http*//es.pn/*}" -o  -z "${URL##*http*//bit.ly/*}" -o  \( -z "${URL##*http*//ow.ly/*}" -a -n "${URL##*http*//ow.ly/i/*}" \) \
+	     -o -z "${URL##*http*//tinyurl.com/*}" -o -z "${URL##*http*//url.ca/*}" -o -z "${URL##*http*//buff.ly/*}"  -o -z "${URL##*http*//j.mp/*}" \
+	     -o -z "${URL##*http*//bzfd.it/*}" -o -z "${URL##*http*//is.gd/*}" -o -z "${URL##*http*//tr.im/*}" -o -z "${URL##*http*//su.pr/*}"  \
+	     -o -z "${URL##*http*//say.ly/*}" -o -z "${URL##*http*//ht.ly/*}" -o -z "${URL##*http*//trib.al/*}" -o -z "${URL##*http*//zpr.io/*}" \
+	     -o -z "${URL##*http*//cli.gs/*}" -o -z "${URL##*http*//v.gd/*}" -o -z "${URL##*http*//ph.ly/*}" -o -z "${URL##*http*//tiny.cc/*}" \
+	     -o -z "${URL##*http*//zite.to/*}" -o -z "${URL##*http*//fb.me/*}" -o -z "${URL##*http*//goo.gl/*}" -o -z "${URL##*http*//shar.es/*}" ]
+	then
+		test ${DEBUG} -gt 2 && echo "DBG: Retrieving redirection" >> $DBGLOG
+		NURL="$(curl -I -j --proxy socks4://sec-2.gci.net/ $URL 2>/dev/null |
+			grep -i location: | sed 's/.*http/http/; s/\r//;' )"
+		if [ -z "${NURL}" ]
+		then
+			test ${DEBUG} -gt 2 && echo "DBG: Secondary attempt at retrieving redirection" >> $DBGLOG
+			NURL="$(curl -I -j --proxy http://nms-6.gci.net:8888/ $URL 2>/dev/null | \
+				grep -i location: | sed 's/.*http/http/; s/\r//;' )"
+		fi
+		if [ -z "${NURL}" ]
+		then
+			echo "invalid redirect parsing occursed for >>${URL}<< !! Bailing out" >> $DBGLOG
+			exit 1
+		fi
+		URL=${NURL}
+	else
+		test ${DEBUG} -gt 2 && echo "DBG: redirection parsing succeded" >> $DBGLOG
+		break
+	fi
+done
+
+test ${DEBUG} -gt 1 && echo "DBG: FIXED_URL=${URL}" >> $DBGLOG
+
+if [ -z "${URL##*http*//search.twitter.com/*}" ]
+then
+	URL=${URL//search.twitter.com/www.twitter.com}
+fi
+
+if [ ${FORCEPREFER:-0} -gt 0 ]
+then
+  if [ -z "${URL##*facebook.com/*}" ]
+  then
+	CHROME=0
+	FIREFOX=1
+
+	test ${DEBUG} -gt 1 && echo "DBG: Forcing Firefox for URL" >> $DBGLOG
+
+  elif [ -z "${URL##*reddit.com/*}" -o -z "${URL##*suicidegirls*}" -o -z "${URL##*okcupid.com*}" ]
+  then
+	CHROME=1
+	FIREFOX=0
+
+	test ${DEBUG} -gt 1 && echo "DBG: Forcing Chrome for URL" >> $DBGLOG
+  fi
+fi
+
+PCROM=$(pgrep -f chrom | tail -1)
+[[ -n "${PCROM}" ]] && MYCHROME=$(ps -o args= -q ${PCROM} | tail -1 | awk '{print $1}')
+[[ -z "${MYCHROME}" ]] && MYCHROME=chromium-browser
+
+
+if [ $PREFERCHROME -gt 0 ]
+then
+
+	test ${DEBUG} -gt 1 && echo "DBG: Chrome is preferred..." >> $DBGLOG
+	if [ $FORCEPREFER -gt 0 -o $CRUN -gt 0 -a $CHROME -gt 0 ]
+	then
+		test ${DEBUG} -gt 0 && echo "DBG: and sent >>$URL<< to chrome -remote" >> $DBGLOG
+		${MYCHROME} -remote "${URL}"
+	elif [ $FRUN -gt 0 -a $FIREFOX -gt 0 ]
+	then
+		test ${DEBUG} -gt 0 && echo "DBG: but sent >>$URL<< to firefox -remote" >> $DBGLOG
+		/usr/bin/firefox -new-tab -url "${URL}"
+	elif [ $FIREFOX -gt 0 ]
+	then
+		test ${DEBUG} -gt 0 && echo "DBG: but sent >>$URL<< to new firefox" >> $DBGLOG
+		/usr/bin/firefox -url "${URL}"
+	else
+		test ${DEBUG} -gt 0 && echo "DBG: and sent >>$URL<< to new chrome" >> $DBGLOG
+		${MYCHROME} "${URL}"
+	fi
+else
+	if [ $FRUN -gt 0 -a $FIREFOX -gt 0 ]
+	then
+		test ${DEBUG} -gt 0 && echo "DBG: and sent >>$URL<< to firefox -remote" >> $DBGLOG
+		/usr/bin/firefox -new-tab -url "${URL}"
+	elif [ $CRUN -gt 0 -a $CHROME -gt 0 ]
+	then
+		test ${DEBUG} -gt 0 && echo "DBG: but sent >>$URL<< to chrome -remote" >> $DBGLOG
+		${MYCHROME} -remote "${URL}"
+	elif [ $CHROME -gt 0 ]
+	then
+		test ${DEBUG} -gt 0 && echo "DBG: but sent >>$URL<< to new chrome" >> $DBGLOG
+		${MYCHROME}  "${URL}"
+	else
+		test ${DEBUG} -gt 0 && echo "DBG: and sent >>$URL<< to new firefox" >> $DBGLOG
+		/usr/bin/firefox -url "${URL}"
+	fi
+fi
+
+test ${DEBUG} -gt 1 && echo "DBG: finished" >> $DBGLOG
