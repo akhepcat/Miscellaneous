@@ -14,5 +14,12 @@ Random one-offs that need a temporary home
   * sddd - useful script for dd'ing images onto an SD card, with better (default) options  
   * urldecode - multi-use script to en/de-code html/url, based on (symlinked) filename  
   * x509crypt - uses public/private key certificates to encrypt/decrypt a file  
-
-
+  * NoPrinterShutdown	- Because shutting down your Pi when the printer goes away is fun
+  * apt-add-key	- simple GPG key add for apt with just the fingerprint
+  * basecfg	- because I'm tired of using the same configure prefixing options, and automake/autoconf setup
+  * browser-tab	- push URL opens to a new window in the preferred browser, while unshortening URLs
+  * dkms-force	- I don't remember what this is for.  It's probably a secret
+  * ipcapuniq -	awk example to capture and display unique IPv4/IPv6 addresses
+  * jmake	- auto-job your makes based on detected CPU quantity
+  * mqueuerm	- purge the stuck deferred mail queue singly or in masse
+  * stopwatch	- hey,look, a stopwatch script
