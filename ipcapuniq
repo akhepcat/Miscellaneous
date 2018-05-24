@@ -1,0 +1,63 @@
+#!/bin/bash
+
+DBFILE=ipcapuniq.log
+if [ -z "${1}" ]
+then
+        echo "$0 [iface] {expr....}"
+        exit 1
+fi
+ifaces=$(ip link show | grep UP | cut -f 2 -d:  )
+ifaces=$(echo $ifaces)
+IFACE=${1}
+if [ -n "${ifaces##*$IFACE*}" ]
+then
+        echo "invalid interface '${IFACE}'"
+        echo "one of: ${ifaces}"
+        exit 1
+fi
+
+shift
+CAPEXP=${*}
+
+# test mawk / awk for line-buffering
+INTERACTIVE=$(awk -W interactive 'BEGIN{0}' 2>&1)
+# gawk doesn't line-buffer, so we set interactive only for mawk/awk
+INTERACTIVE=${INTERACTIVE:+XXXXX}
+INTERACTIVE=${INTERACTIVE:--W interactive}
+INTERACTIVE=${INTERACTIVE//XXXXX/}
+
+tcpdump -l -i "${IFACE}" -nn "${CAPEXP}" 2>&1 | \
+        awk ${INTERACTIVE} -v dbfile="${DBFILE}" \
+        'BEGIN {
+                while(( getline line<dbfile) > 0 ) {
+                        if ( seen[line]!=1 ) { 
+                                print line > "/dev/stderr";
+                                seen[line]=1;
+                        };
+                };
+                close(dbfile);
+        };
+
+          match($2,/^IP6$/) {
+                split($3,ipArr,"."); 
+                ip6=ipArr[1]; 
+                if (seen[ip6]!=1) {
+                        print ip6 >> dbfile;
+                        fflush(dbfile);
+                        print ip6;
+                        seen[ip6]=1;
+                };
+          };
+
+          match($2,/^IP$/) {
+                split($3,ipArr,"."); 
+                ip=ipArr[1]"."ipArr[2]"."ipArr[3]"."ipArr[4]; 
+                if (seen[ip]!=1) {
+                        print ip >> dbfile;
+                        fflush(dbfile);
+                        print ip;
+                        seen[ip]=1;
+                };
+          };'
+
+# end
