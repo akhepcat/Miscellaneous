@@ -37,25 +37,29 @@ check_emu() {
 		echo "qemu binfmt_misc support not registered. You may have problems with foreign archs"
 		HOST=""
 	fi
+	# this should only find one, but compatibility libs will show up first, so only use the last found
+	LDLIB=$(find ${ROOT}/lib ${ROOT}/lib64 -maxdepth 1 -type f -iname 'ld-uclibc*' -o -iname 'ld-linux*' 2>/dev/null | tail -1)
+	TEMU=$(file -L "${LDLIB}" )
+
 	# we can see the library, so we can figure out the emulation
-	if [ -n "$(ls -l ${ROOT}/lib64/ld-linux* 2>/dev/null | grep x86_64 )" -o  -n "$(ls -l ${ROOT}/lib/ld-linux* 2>/dev/null | grep i386)" ]
+	if [ -z "${TEMU##*x86_64*}" -o -z "${TEMU##*32-bit*80386*}" ]
 	then
-		# ls -l  /lib64/ld-linux*
-		# /lib64/ld-linux-x86-64.so.2 -> /lib/x86_64-linux-gnu/ld-2.24.so*
-		# ls -l  /lib/ld-linux*
-		# /lib/ld-linux.so.2 -> i386-linux-gnu/ld-2.24.so*
+		# Intel 32-bit and 64-bit are handled by aarch64
 		EMU=aarch64
 	elif [ -n "$(ls -l ${ROOT}/lib/ld-linux* 2>/dev/null | grep armeb )" ]
 	then
 		EMU=armeb
 	elif [ -n "$(ls -l ${ROOT}/lib/ld-linux* 2>/dev/null | grep arm-)" ]
 	then
-		# ls -l  /mnt/disk/lib/ld-linux.so.3
-		# /mnt/disk/lib/ld-linux.so.3 -> arm-linux-gnueabi/ld-2.24.so*
 		EMU=arm
-	else
-		EMU=""
+	elif [ -z "${TEMU##*32*ARM*}" ]
+	then
+		EMU=armeb
+	elif [ -z "${TEMU##*64*ARM*}" ]
+	then
+		EMU=aarch64
 	fi
+
 	if [ -z "${HOST}" -a -z "${EMU}" ]
 	then
 		echo "Can't reliably determine host/chroot architecture. Aborting."
@@ -75,6 +79,32 @@ check_emu() {
 	fi
 }
 
+get_shell() {
+
+	if [ -r ${ROOT}/bin/bash ];
+	then
+		SHELL=/bin/bash
+	elif [ -r ${ROOT}/sbin/bash ];
+	then
+		SHELL=/sbin/bash
+	elif [ -r ${ROOT}/sbin/ash ];
+	then
+		SHELL=/sbin/ash
+	elif [ -r ${ROOT}/bin/ash ];
+	then
+		SHELL=/bin/ash
+	elif [ -r ${ROOT}/sbin/sh ];
+	then
+		SHELL=/sbin/sh
+	elif [ -r ${ROOT}/sbin/sh ];
+	then
+		SHELL=/sbin/sh
+	else
+		#HOPE!
+		SHELL=sh
+	fi
+}
+
 # Does it look like a mounted filesystem?
 if [ -n "${ROOT}" ]
 then
@@ -88,10 +118,17 @@ then
 	[[ -r "${ROOT}/etc/hostname" ]] && export debian_chroot=$(cat ${ROOT}/etc/hostname)
 	if [ -n "${EMU}" -a ! -r "${ROOT}/usr/bin/qemu-${EMU}-static" ]
 	then
-		cp /usr/bin/qemu-${EMU}-static ${ROOT}/usr/bin/
+		cp /usr/bin/qemu-${EMU}-static ${ROOT}/usr/bin/ 2>/dev/null
+		if [ $? -ne 0 ];
+		then
+			echo "can't cp emulation binary; check filesystem"
+			cleanup
+		fi
 	fi
 
-	chroot ${ROOT}
+	get_shell
+
+	chroot ${ROOT} ${SHELL}
 
 	echo "clean to umount ${ROOT}"
     else
