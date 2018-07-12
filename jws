@@ -1,0 +1,33 @@
+#!/bin/bash
+
+
+usage() {
+  echo "$(cd $HOME/jnlps/; ls *.jnlp | sed 's/\.jnlp//g')"
+  exit 1
+}
+
+if [ -z "$1" ]
+then
+  echo "which java webstart pacakge?"
+  usage
+else
+	JNLP=${1}
+fi
+
+JNLP="${JNLP//.jnlp/}.jnlp"
+
+if [ ! -e "$HOME/jnlps/${JNLP}" ]
+then
+  echo "invalid java webstart package"
+  usage
+fi
+	
+
+# use one or more of these to work around java swing display corruption
+#    -Dsun.java2d.opengl=true
+#    -Dsun.java2d.d3d=false
+#    -Dsun.java2d.noddraw=true
+
+
+#/usr/lib/jvm/java-7-oracle/jre/bin/
+javaws -J"-Dsun.java2d.d3d=false" -Xnosplash -wait ${HOME}/jnlps/${JNLP}
