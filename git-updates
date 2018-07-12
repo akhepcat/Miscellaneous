@@ -1,6 +1,42 @@
 #!/bin/bash
 CWD=$(pwd)
-for DIR in $(find . -maxdepth 3  -type d -iname .git)
+PROG="${0##*/}"
+
+trap cleanup SIGINT SIGTERM SIGKILL SIGQUIT SIGABRT SIGSTOP SIGSEGV
+
+cleanup() {
+	echo -e "\n\n"
+	exit 0
+}
+
+usage() {
+	echo "Usage:"
+	echo "${PROG} [-c] [-h] [-d N]"
+	echo ""
+	echo "    by default, recursively scans for git/git-svn repos and pulls updates"
+	echo ""
+	echo "    -c  'check' - will only show repos that have pending changes"
+	echo "    -dN 'depth' - will change the default scanning depth from 3 to N"
+	echo "    -h  'help'  - this usage text"
+
+	cleanup
+}
+
+while getopts ':chd:' opt; do
+  case $opt in
+    c) CHECK=1
+      ;;
+    h) usage
+      ;;
+    d) DEPTH="${OPTARG//[^0-9]/}"
+      ;;
+    *) echo "Invalid option: -$OPTARG"
+       usage
+      ;;
+  esac
+done
+
+for DIR in $(find . -maxdepth ${DEPTH:-3}  -type d -iname .git)
 do
 	# echo ./proxyapp/.git | cut -f 2 -d/
 	SUBDIR=${DIR:2}
@@ -9,12 +45,25 @@ do
 	if [ -d "${SUBDIR}/.git/svn/refs" ];
 	then
 		echo -n "checking git-svn repo ${SUBDIR}: "
-		cd ${SUBDIR} && git svn fetch
-		cd ${CWD}
+		cd ${SUBDIR}
+		if [ ${CHECK:-0} -eq 1 ]
+		then
+			git diff --quiet
+			test $? -eq 1 && echo "git-svn repo ${SUBDIR} has pending changes"
+		else
+			git svn fetch
+		fi
 	elif [ -e "${SUBDIR}/.git/config" -a -n "$(grep -w url ${SUBDIR}/.git/config)" ]
 	then
-		echo -n "checking git repo ${SUBDIR}: "
-		cd ${SUBDIR} && git pull
-		cd ${CWD}
+		cd ${SUBDIR}
+		if [ ${CHECK:-0} -eq 1 ]
+		then
+			git diff --quiet
+			test $? -eq 1 && echo "git repo ${SUBDIR} has pending changes"
+		else
+			echo -n "checking git repo ${SUBDIR}: "
+			git pull
+		fi
 	fi
+	cd ${CWD}
 done
