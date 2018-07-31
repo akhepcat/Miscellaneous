@@ -24,3 +24,4 @@ Random one-offs that need a temporary home
   * mqueuerm	- purge the stuck deferred mail queue singly or in masse
   * stopwatch	- hey,look, a stopwatch script
   * jws         - command-line java-web-start script for managing multiple jnlp files
+  * resolve-hosts.pl - use hostfile and dhcp logs to resolve unknown hosts
