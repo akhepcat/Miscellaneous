@@ -23,7 +23,7 @@ then
 	exit 1
 fi
 
-if [ ! -e "${OUTFILE}" -a ! -w "${OUTFILE}" ];
+if [ \( ! -e "${OUTFILE}" -a ! -w "${OUTFILE}" \) -a -z "${OUTFILE##*/dev/*}" ];
 then
 	echo "Can't write to ${OUTFILE}, bailing out"
 	exit 1
