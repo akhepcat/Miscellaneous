@@ -1,0 +1,19 @@
+#!/bin/bash
+
+USERLIST=$(who | awk '{print $1}')
+
+for USER in ${USERLIST}
+do
+	SSHU=$(ps -ef | grep "sshd: ${USER}")
+	if [ -n "${SSHU}" ]
+	then
+		xauth merge ~${USER}/.Xauthority >/dev/null 2>&1
+		if [ 0 -ne $? ]
+		then
+			xauth -f ~${USER}/.Xauthority list 2>&1 | while read line
+			do
+				xauth add $line
+			done
+		fi
+	fi
+done
