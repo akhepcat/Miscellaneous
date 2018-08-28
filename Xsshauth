@@ -1,19 +1,16 @@
 #!/bin/bash
 
-USERLIST=$(who | awk '{print $1}')
+# 9018 sshd: username@pts/4
+USERLIST=$(pgrep -fa "sshd:.*@" | awk '{print $3}' | cut -f1 -d@)
 
 for USER in ${USERLIST}
 do
-	SSHU=$(ps -ef | grep "sshd: ${USER}")
-	if [ -n "${SSHU}" ]
+	xauth merge ~${USER}/.Xauthority >/dev/null 2>&1
+	if [ 0 -ne $? ]
 	then
-		xauth merge ~${USER}/.Xauthority >/dev/null 2>&1
-		if [ 0 -ne $? ]
-		then
-			xauth -f ~${USER}/.Xauthority list 2>&1 | while read line
-			do
-				xauth add $line
-			done
-		fi
+		xauth -f ~${USER}/.Xauthority list 2>&1 | while read line
+		do
+			xauth add $line
+		done
 	fi
 done
