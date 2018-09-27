@@ -56,7 +56,7 @@ then
 	fi
 fi
 
-if [ ${DDD} -eq 1 -o ${DCFD} -eq 0 ]
+if [ ${DDD:-0} -eq 1 -o ${DCFD:-0} -eq 0 ]
 then
 	# Always prefer native DD
 	DD=dd
