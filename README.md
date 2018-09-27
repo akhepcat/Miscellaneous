@@ -25,3 +25,4 @@ Random one-offs that need a temporary home
   * stopwatch	- hey,look, a stopwatch script
   * jws         - command-line java-web-start script for managing multiple jnlp files
   * resolve-hosts.pl - use hostfile and dhcp logs to resolve unknown hosts
+  * 4to6proxy.sh - proxy a localhost IPv4 port to a localhost IPv6 port
