@@ -1,0 +1,62 @@
+#!/bin/bash
+#
+# based on  ksk-test.com
+#
+# Validates your local resolver against the old and new root KSK's
+#
+#################
+
+
+INVALID="http://invalid.ksk-test.net/invalid.gif"
+IS_TSA="http://root-key-sentinel-is-ta-20326.ksk-test.net/is-ta.gif"
+NOT_TSA="http://root-key-sentinel-not-ta-20326.ksk-test.net/not-ta.gif"
+TEST_US="http://_www.ksk-test.net/underscore.gif"
+TEST_HYPHEN="http://xm--www.ksk-test.net/dashdash.gif"
+
+# 18-chars of random, between 0 and 1
+# this could be a lot cleaner, but.... it works?
+RAND=$(dd if=/dev/urandom bs=1 count=18 2>/dev/null | od --endian=big -X -w32 | head -1 | awk '{print $2 $3 $4}' | sed 's/0*$//g' | tr [a-f] [0-5] | tail -18c)
+
+cat <<EOF
+This page uses the methods described in A Sentinel for Detecting Trusted Keys in DNSSEC to determine if the resolvers that you are using will survive the upcoming KSK roll.
+You should really read the document, but the 50'000ft view is that it attempts to load resources from 3 names:
+
+"http://invalid.ksk-test.net/invalid.gif"
+"http://root-key-sentinel-is-ta-20326.ksk-test.net/is-ta.gif"
+"http://root-key-sentinel-not-ta-20326.ksk-test.net/not-ta.gif"
+It then uses some simple logic to tell what your fate will be after the KSK roll:
+
+If you are not using a validating resolver, you will be able to load the invalid record.
+If you are using a validating resolver which does not understand this new mechanism you will be able to load both of the sentinel records: root-key-sentinel-is-ta-20326 and root-key-sentinel-not-ta-20326.
+If you are using a resolver that supports this mechanism you will only be able to load one of the two sentinel records - which one tells you how you will fare in the rollover.
+
+When running the above test, you:
+EOF
+
+NOT=""
+curl -s "${INVALID}?${RAND}" >/dev/null
+[[ $? -ne 0 ]] && NOT="NOT "
+echo "were ${NOT}able to fetch the 'invalid' record"
+
+NOT=""
+curl -s "${IS_TSA}?${RAND}" >/dev/null
+[[ $? -ne 0 ]] && NOT="NOT "
+echo "were ${NOT}able to fetch the 'root-key-sentinel-is-ta-20326' record"
+
+NOT=""
+curl -s "${NOT_TSA}?${RAND}" >/dev/null
+[[ $? -ne 0 ]] && NOT="NOT "
+echo "were ${NOT}able to fetch the 'root-key-sentinel-not-ta-20326' record"
+
+echo ''
+echo 'These below 2 tests are just for debugging / to understand browser behavior. You:'
+
+NOT=""
+curl -s "${TEST_US}?${RAND}" >/dev/null
+[[ $? -ne 0 ]] && NOT="NOT "
+echo "were ${NOT}able to fetch the 'underscore' record"
+
+NOT=""
+curl -s "${TEST_HYPHEN}?${RAND}" >/dev/null
+[[ $? -ne 0 ]] && NOT="NOT "
+echo "were ${NOT}able to fetch the 'dashdash' record"
