@@ -13,9 +13,9 @@ NOT_TSA="http://root-key-sentinel-not-ta-20326.ksk-test.net/not-ta.gif"
 TEST_US="http://_www.ksk-test.net/underscore.gif"
 TEST_HYPHEN="http://xm--www.ksk-test.net/dashdash.gif"
 
-# 18-chars of random, between 0 and 1
+# 18-chars of "floaty" random, between 0 and 1
 # this could be a lot cleaner, but.... it works?
-RAND=$(dd if=/dev/urandom bs=1 count=18 2>/dev/null | od --endian=big -X -w32 | head -1 | awk '{print $2 $3 $4}' | sed 's/0*$//g' | tr [a-f] [0-5] | tail -18c)
+RAND="0.$((RANDOM%10))$((RANDOM%10))$((RANDOM%10))$((RANDOM%10))$((RANDOM%10))$((RANDOM%10))$((RANDOM%10))$((RANDOM%10))$((RANDOM%10))$((RANDOM%10))$((RANDOM%10))$((RANDOM%10))$((RANDOM%10))$((RANDOM%10))$((RANDOM%10))$((RANDOM%10))$((RANDOM%10))$((RANDOM%10))"
 
 cat <<EOF
 This script uses the methods described in A Sentinel for Detecting Trusted Keys in DNSSEC 
