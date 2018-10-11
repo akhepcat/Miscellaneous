@@ -40,6 +40,7 @@ NOT=""
 curl -s "${INVALID}?${RAND}" >/dev/null
 [[ $? -ne 0 ]] && NOT="NOT "
 echo "were ${NOT}able to fetch the 'invalid' record"
+[[ -z "${NOT}" ]] && echo -e "You're not using a DNSSEC validating resolver. No problems for you!\n"
 
 NOT=""
 curl -s "${IS_TSA}?${RAND}" >/dev/null
