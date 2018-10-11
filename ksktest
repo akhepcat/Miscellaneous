@@ -46,11 +46,27 @@ NOT=""
 curl -s "${IS_TSA}?${RAND}" >/dev/null
 [[ $? -ne 0 ]] && NOT="NOT "
 echo "were ${NOT}able to fetch the 'root-key-sentinel-is-ta-20326' record"
+IS_TSA="false" && [[ -z "${NOT}" ]] && IS_TSA="true"
 
 NOT=""
 curl -s "${NOT_TSA}?${RAND}" >/dev/null
 [[ $? -ne 0 ]] && NOT="NOT "
 echo "were ${NOT}able to fetch the 'root-key-sentinel-not-ta-20326' record"
+NOT_TSA="false" && [[ -z "${NOT}" ]] && NOT_TSA="true"
+
+if [ "${IS_TSA}" = "true" -a "${NOT_TSA}" = "true" ]
+then
+	echo "You are using a legacy resolver (or updated resolvers, with some new and some old), we cannot determine your fate!"
+elif [ "${NOT_TSA}" = "true" ]
+then
+	echo "WARNING!: Your resolvers do not have the new KSK. Your Internet access will break!"
+elif [ "${IS_TSA}" = "true" ]
+then
+	echo "Congratulations, you have the new key. You will be fine."
+else
+	echo "Couldn't load either record - is DNS working?"
+fi
+
 
 echo ''
 echo 'These below 2 tests are just for debugging / to understand browser behavior. You:'
