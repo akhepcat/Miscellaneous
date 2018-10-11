@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# based on  ksk-test.com
+# based on  ksk-test.net
 #
 # Validates your local resolver against the old and new root KSK's
 #
