@@ -1,0 +1,171 @@
+#!/bin/bash
+PROG="${0##*/}"
+
+CWD=$(pwd -P)
+
+XDIR=/tmp
+XCONF=xdummy.conf
+XLOG=xdummy.log
+
+DISP=$(ps -ef|grep Xorg | grep -vE 'grep|vt[0-9]' | sed 's/.*:\([0-9]*\).*/\1/' | tail -1)
+DISPLAY=${DISP:-1000}
+RFBPORT=$((DISPLAY + 4901))
+XDISP=":$((DISPLAY + 1))"
+
+prereqs() {
+        for i in  x11vnc xfwm4 xfce4-panel xterm xhost;
+        do
+                if [ -z "$(which $i)" ]
+                then
+                        showreqs=1
+			reqs="${reqs} ${i}"
+                fi
+        done
+
+        apt-cache show xserver-xorg-video-dummy >/dev/null 2>&1
+        [[ $? -ne 0 ]] && showreqs=1
+
+        if [ 1 -eq ${showreqs:-0} ]
+        then
+                echo "Prerequisites are missing!"
+                echo "Please make sure the following packages are installed:"
+                echo ""
+                echo "xserver-xorg-video-dummy x11vnc xfwm4 xfwm4-themes xfce4-panel xfce4-indicator-plugin xterm x11-xserver-utils"
+		echo ""
+		echo "can't find: ${reqs}"
+                echo ""
+                exit 1
+        fi
+
+}
+
+create_xconf() {
+cd ${XDIR}
+cat >${XCONF} <<EOF
+
+Section "ServerFlags"
+  Option "DontVTSwitch" "true"
+  Option "AllowMouseOpenFail" "true"
+  Option "PciForceNone" "true"
+  Option "AutoEnableDevices" "false"
+  Option "AutoAddDevices" "false"
+EndSection
+
+Section "InputDevice"
+  Identifier "dummy_mouse"
+  Option "CorePointer" "true"
+  Driver "void"
+EndSection
+
+Section "InputDevice"
+  Identifier "dummy_keyboard"
+  Option "CoreKeyboard" "true"
+  Driver "void"
+EndSection
+
+Section "Device"
+    Identifier		"VDummy"
+    Driver		"dummy"
+    #VideoRam		256000
+    VideoRam		16384
+    Option		"ConstantDPI" "true"
+    Option		"IgnoreEDID" "true"
+    Option		"NoDDC" "true"
+EndSection
+
+Section "Monitor"
+    Identifier		"dummy_monitor"
+    HorizSync		15.0-100.0
+    VertRefresh		15.0-200.0
+    Modeline		"1920x1080" 23.53 1920 1952 2040 2072 1080 1106 1108 1135
+    Modeline		"1280x1024" 31.50 1280 1312 1424 1456 1024 1048 1052 1076
+    Modeline		"1024x768" 18.71 1024 1056 1120 1152 768 786 789 807
+EndSection
+
+Section "Screen"
+    Identifier		"dummy_screen"
+    Monitor		"dummy_monitor"
+    Device		"VDummy"
+    DefaultDepth	24
+
+    SubSection		"Display"
+        Viewport	0 0
+        Depth		24
+        Modes		"1920x1080" "1280x1024" "1024x768"
+        Virtual		1920 1080
+    EndSubSection
+EndSection
+
+Section "ServerLayout"
+  Identifier   "dummy_layout"
+  Screen       "dummy_screen"
+  InputDevice  "dummy_mouse"
+  InputDevice  "dummy_keyboard"
+EndSection
+
+
+EOF
+cd ${CWD}
+}
+
+fix_perms() {
+	sed -i 's/^\(allowed_users\)=.*/\1=anybody/g' /etc/X11/Xwrapper.config 
+}
+
+start_xdummy() {
+        USER=$(/usr/bin/whoami)
+        HOST=$(/bin/hostname | cut -f 1 -d.)
+        FBDIR=$(mktemp -d /tmp/vmfbXXXXX)
+	cd ${XDIR}
+
+	/usr/lib/xorg/Xorg -dpi 96 -noreset -nolisten tcp +extension GLX +extension RANDR +extension RENDER -logfile ${XLOG} -configdir ${XDIR} -config ${XCONF} ${XDISP} 2>/dev/null &
+	sleep 1
+	cd ${CWD}
+
+#	This is broken, so we manually do things - but then we can't "logout" which... is fine?
+#	( export DISPLAY=${XDISP};  startxfce4 DISPLAY=${XDISP} ) &
+#	sleep 1
+        xterm -ls  -sl 1000 -sb -T ${USER}@${HOST} -fg white -bg black -C -fn 9x15 -display ${XDISP} 2>/dev/null &
+        sleep 1
+        DISPLAY=${XDISP} xfwm4 --daemon 2>/dev/null
+        sleep 1
+        DISPLAY=${XDISP} xfce4-panel 2>/dev/null &
+        sleep 1
+        DISPLAY=${XDISP} xhost +localhost
+
+        x11vnc -q -rfbport ${RFBPORT} -forever -alwaysshared -bg -nopw -display ${XDISP}
+	
+
+}
+
+start() {
+	create_xconf
+	start_xdummy
+}
+
+stop() {
+	rm -f ${XCONF}
+        PIDS=$(pgrep -la Xorg | grep xdummy | awk '{print $1}')
+        for PID in $PIDS
+        do
+                kill ${PID}
+        done
+}
+
+status() {
+        pgrep -la Xorg | grep xdummy
+        [[ $? -eq 1 ]] && echo "${PROG} is not running (no xorg-dummy processes found)"
+}
+
+case ${1} in
+	start) start
+		;;
+	stop) stop
+		;;
+	prep) create_xconf
+		;;
+	status) status
+		;;
+	*) echo "$0 [start|stop|status]"
+		;;
+esac
