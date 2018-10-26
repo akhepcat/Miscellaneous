@@ -1,0 +1,82 @@
+#!/bin/bash
+#
+# based on  ksk-test.net
+#
+# Validates your local resolver against the old and new root KSK's
+#
+#################
+
+
+INVALID="http://invalid.ksk-test.net/invalid.gif"
+IS_TSA="http://root-key-sentinel-is-ta-20326.ksk-test.net/is-ta.gif"
+NOT_TSA="http://root-key-sentinel-not-ta-20326.ksk-test.net/not-ta.gif"
+TEST_US="http://_www.ksk-test.net/underscore.gif"
+TEST_HYPHEN="http://xm--www.ksk-test.net/dashdash.gif"
+
+# 18-chars of "floaty" random, between 0 and 1
+# this could be a lot cleaner, but.... it works?
+RAND="0.$((RANDOM%10))$((RANDOM%10))$((RANDOM%10))$((RANDOM%10))$((RANDOM%10))$((RANDOM%10))$((RANDOM%10))$((RANDOM%10))$((RANDOM%10))$((RANDOM%10))$((RANDOM%10))$((RANDOM%10))$((RANDOM%10))$((RANDOM%10))$((RANDOM%10))$((RANDOM%10))$((RANDOM%10))$((RANDOM%10))"
+
+cat <<EOF
+This script uses the methods described in A Sentinel for Detecting Trusted Keys in DNSSEC 
+to determine if the resolvers that you are using will survive the upcoming KSK roll.
+
+You should really read the document, but the 50,000ft view is that it attempts to load resources from 3 names:
+	"http://invalid.ksk-test.net/invalid.gif"
+	"http://root-key-sentinel-is-ta-20326.ksk-test.net/is-ta.gif"
+	"http://root-key-sentinel-not-ta-20326.ksk-test.net/not-ta.gif"
+
+It then uses some simple logic to tell what your fate will be after the KSK roll:
+	* If you are not using a validating resolver, you will be able to load the invalid record.
+	* If you are using a validating resolver which does not understand this new mechanism you will be
+		able to load both of the sentinel records: root-key-sentinel-is-ta-20326 and root-key-sentinel-not-ta-20326.
+	* If you are using a resolver that supports this mechanism you will only be able to load one of
+		the two sentinel records - which one tells you how you will fare in the rollover.
+
+When running the above test, you:
+EOF
+
+NOT=""
+curl -s "${INVALID}?${RAND}" >/dev/null
+[[ $? -ne 0 ]] && NOT="NOT "
+echo "were ${NOT}able to fetch the 'invalid' record"
+[[ -z "${NOT}" ]] && echo -e "You're not using a DNSSEC validating resolver. No problems for you!\n"
+
+NOT=""
+curl -s "${IS_TSA}?${RAND}" >/dev/null
+[[ $? -ne 0 ]] && NOT="NOT "
+echo "were ${NOT}able to fetch the 'root-key-sentinel-is-ta-20326' record"
+IS_TSA="false" && [[ -z "${NOT}" ]] && IS_TSA="true"
+
+NOT=""
+curl -s "${NOT_TSA}?${RAND}" >/dev/null
+[[ $? -ne 0 ]] && NOT="NOT "
+echo "were ${NOT}able to fetch the 'root-key-sentinel-not-ta-20326' record"
+NOT_TSA="false" && [[ -z "${NOT}" ]] && NOT_TSA="true"
+
+if [ "${IS_TSA}" = "true" -a "${NOT_TSA}" = "true" ]
+then
+	echo "You are using a legacy resolver (or updated resolvers, with some new and some old), we cannot determine your fate!"
+elif [ "${NOT_TSA}" = "true" ]
+then
+	echo "WARNING!: Your resolvers do not have the new KSK. Your Internet access will break!"
+elif [ "${IS_TSA}" = "true" ]
+then
+	echo "Congratulations, you have the new key. You will be fine."
+else
+	echo "Couldn't load either record - is DNS working?"
+fi
+
+
+echo ''
+echo 'These below 2 tests are just for debugging / to understand browser behavior. You:'
+
+NOT=""
+curl -s "${TEST_US}?${RAND}" >/dev/null
+[[ $? -ne 0 ]] && NOT="NOT "
+echo "were ${NOT}able to fetch the 'underscore' record"
+
+NOT=""
+curl -s "${TEST_HYPHEN}?${RAND}" >/dev/null
+[[ $? -ne 0 ]] && NOT="NOT "
+echo "were ${NOT}able to fetch the 'dashdash' record"
