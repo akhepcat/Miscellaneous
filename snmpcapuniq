@@ -1,0 +1,53 @@
+#!/bin/bash
+
+DBFILE=snmpcapuniq.log
+if [ -z "${1}" ]
+then
+        echo "$0 [iface] {expr....}"
+        exit 1
+fi
+ifaces=$(ip link show | grep UP | cut -f 2 -d:  )
+ifaces=$(echo $ifaces)
+IFACE=${1}
+if [ -n "${ifaces##*$IFACE*}" ]
+then
+        echo "invalid interface '${IFACE}'"
+        echo "one of: ${ifaces}"
+        exit 1
+fi
+
+shift
+CAPEXP=${*}
+
+# test mawk / awk for line-buffering
+INTERACTIVE=$(awk -W interactive 'BEGIN{0}' 2>&1)
+# gawk doesn't line-buffer, so we set interactive only for mawk/awk
+INTERACTIVE=${INTERACTIVE:+XXXXX}
+INTERACTIVE=${INTERACTIVE:--W interactive}
+INTERACTIVE=${INTERACTIVE//XXXXX/}
+
+tcpdump -l -i "${IFACE}" -nn udp port 161 "${CAPEXP:+and $CAPEXP}" 2>&1 | \
+        awk ${INTERACTIVE} -v dbfile="${DBFILE}" \
+        'BEGIN {
+                while(( getline line<dbfile) > 0 ) {
+                        if ( seen[line]!=1 ) { 
+                                print line > "/dev/stderr";
+                                seen[line]=1;
+                        };
+                };
+                close(dbfile);
+        };
+
+          match($0,/C=/) {
+                split($0,snmpl,"=");
+                split(snmpl[2],snmp," ");
+                cstr=snmp[1]; 
+                if (seen[cstr]!=1) {
+                        print cstr >> dbfile;
+		        fflush(dbfile);
+                        print cstr;
+                        seen[cstr]=1;
+                };
+          };'
+
+# end
