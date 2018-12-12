@@ -39,7 +39,7 @@ tcpdump -l -i "${IFACE}" -nn udp port 161 "${CAPEXP:+and $CAPEXP}" 2>&1 | \
         };
 
           match($0,/C=/) {
-                split($0,snmpl,"=");
+                split($0,snmpl,"C=");
                 split(snmpl[2],snmp," ");
                 cstr=snmp[1]; 
                 if (seen[cstr]!=1) {
