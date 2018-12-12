@@ -20,6 +20,7 @@ Random one-offs that need a temporary home
   * browser-tab	- push URL opens to a new window in the preferred browser, while unshortening URLs
   * dkms-force	- I don't remember what this is for.  It's probably a secret
   * ipcapuniq   - awk example to capture and display unique IPv4/IPv6 addresses
+  * snmpcapuniq - awk example to automatically capture and display unique SNMP community strings
   * jmake	- auto-job your makes based on detected CPU quantity
   * mqueuerm	- purge the stuck deferred mail queue singly or in masse
   * stopwatch	- hey,look, a stopwatch script
