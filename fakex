@@ -58,7 +58,8 @@ start() {
         sleep 1
         DISPLAY=${DISPLAY} xhost +localhost
 
-        x11vnc -q -rfbport ${RFBPORT} -forever -alwaysshared -bg -nopw -display ${DISPLAY}
+	# -noxrecord works around x11vnc "stack smash" bug
+        x11vnc -q ${LISTEN} -rfbport ${RFBPORT} -forever -noxrecord -alwaysshared -bg -nopw -display ${DISPLAY}
 }
 
 prereqs
@@ -66,10 +67,15 @@ prereqs
 case "$1" in
         start) start
                 ;;
+        startg) ADDR=$(ip -4 addr show scope global  dev $(awk 'BEGIN { IGNORECASE=1 } /^[a-z0-9]+[ \t]+00000000/ { print $1 }' /proc/net/route
+) | awk '/inet/ { split($2, arr, "/"); print arr[1];}')
+        	LISTEN="-listen $ADDR"
+        	start
+        	;;
         stop) stop
                 ;;
         status) status
                 ;;
-        *) echo "${PROG} [start|stop|status]"
+        *) echo "${PROG} [start|startg|stop|status]"
                 ;;
 esac
