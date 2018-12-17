@@ -1,0 +1,17 @@
+#!/bin/bash
+
+if [ -z "$1" ]
+then
+	echo "usage: $0 [file] [flip]"
+	echo " 0 = 90CounterCLockwise and Vertical Flip"
+	echo " 1 = 90Clockwise"
+	echo " 2 = 90CounterClockwise (default)"
+	echo " 3 = 90Clockwise and Vertical Flip"
+else
+	FLIP=${2:-2}  # Default to 90-degrees CCW (left)
+	FLIP=${FLIP//[^0-3]/}
+
+	TIMEBASE="-r 65535/2733"        # work around timebase errors
+
+	ffmpeg -noautorotate -i ${1} -acodec copy -q:v 10 -vf "transpose=${FLIP}" rot-${1}
+fi

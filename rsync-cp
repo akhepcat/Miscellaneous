@@ -1,0 +1,67 @@
+#!/bin/bash
+PROG="${0##*/}"
+
+usage() {
+	echo -e "${PROG} - local password manager\n"
+	echo -e "usage:\n\$ ${PROG} (options) [src] [dst]"
+	echo -e "\t-d, --dryrun\t\t Dry-run test, don't copy any files"
+	echo -e "\t-h, --help\t\t this help.\n"
+	exit 1
+}
+
+optspec=":dh-"
+while getopts "$optspec" optchar; do
+    case "${optchar}" in
+        -)
+            case "${OPTARG}" in
+                help)
+                    usage
+                    ;;
+                dryrun)
+                    DRY=1 
+                    ;;
+                *)
+                    if [ "$OPTERR" = 1 ] && [ "${optspec:0:1}" != ":" ]; then
+                        echo "Unknown option --${OPTARG}" >&2
+                    fi
+                    ;;
+            esac;;
+        d)
+            DRY=1
+            ;;
+        h)
+            usage
+            ;;
+        *)
+            if [ "$OPTERR" != 1 ] || [ "${optspec:0:1}" = ":" ]; then
+                echo "Non-option argument: '-${OPTARG}'" >&2
+            fi
+            ;;
+    esac
+done
+
+src="${!OPTIND}"
+shift "$((OPTIND-1))"
+dst="${!OPTIND}"
+
+if [ \( ! -d "${src}" -a ! -z "${src##*:*}" \) -a \( ! -d "${dst}" -a ! -z "${dst##*:*}" \) ]
+then
+	echo "ERROR in file specification"
+	usage
+else
+
+        rsync -avxWAXSH ${DRY:+--dry-run} --numeric-ids --info=progress2 "${src}" "${dst}"
+
+# -a  : all files, with permissions, etc..
+# -v  : verbose, mention files
+# -x  : stay on one file system
+# -W  : whole files (not delta changes)
+# -A  : preserve ACLs/permissions (not included with -a)
+# -X  : preserve extended attributes (not included with -a)
+# -H  : preserve hard links (not included with -a)
+# -S  : Sparse file support
+# --info=progress2 : only show grand total of progress
+# --numeric-ids : just transfer uid/gid, don't map names
+
+
+fi

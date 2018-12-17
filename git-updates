@@ -36,34 +36,54 @@ while getopts ':chd:' opt; do
   esac
 done
 
-for DIR in $(find . -maxdepth ${DEPTH:-3}  -type d -iname .git)
+for DIR in $(find . -maxdepth ${DEPTH:-3}  -type d -iname .git -o -iname .hg )
 do
 	# echo ./proxyapp/.git | cut -f 2 -d/
 	SUBDIR=${DIR:2}
-	SUBDIR=${SUBDIR//\/.git}
 
-	if [ -d "${SUBDIR}/.git/svn/refs" ];
+	if [ -z "${SUBDIR##*.git*}" ]
 	then
-		echo -n "checking git-svn repo ${SUBDIR}: "
-		cd ${SUBDIR}
-		if [ ${CHECK:-0} -eq 1 ]
+		SUBDIR=${SUBDIR//\/.git}
+
+		if [ -d "${SUBDIR}/.git/svn/refs" ];
 		then
-			git diff --quiet
-			test $? -eq 1 && echo "git-svn repo ${SUBDIR} has pending changes"
-		else
-			git svn fetch
+			echo -n "checking git-svn repo ${SUBDIR}: "
+			cd ${SUBDIR}
+			if [ ${CHECK:-0} -eq 1 ]
+			then
+				git diff --quiet
+				test $? -eq 1 && echo "git-svn repo ${SUBDIR} has pending changes"
+			else
+				git svn fetch
+			fi
+		elif [ -e "${SUBDIR}/.git/config" -a -n "$(grep -w url ${SUBDIR}/.git/config)" ]
+		then
+			cd ${SUBDIR}
+			if [ ${CHECK:-0} -eq 1 ]
+			then
+				git diff --quiet
+				test $? -eq 1 && echo "git repo ${SUBDIR} has pending changes"
+			else
+				echo -n "checking git repo ${SUBDIR}: "
+				git pull
+			fi
 		fi
-	elif [ -e "${SUBDIR}/.git/config" -a -n "$(grep -w url ${SUBDIR}/.git/config)" ]
+		cd ${CWD}
+	elif [ -z "${SUBDIR##*.hg*}" ]
 	then
-		cd ${SUBDIR}
-		if [ ${CHECK:-0} -eq 1 ]
+		SUBDIR=${SUBDIR//\/.hg}
+		if [ -e "${SUBDIR}/.hg/hgrc" -a -n "$(grep -w default ${SUBDIR}/.hg/hgrc)" ]
 		then
-			git diff --quiet
-			test $? -eq 1 && echo "git repo ${SUBDIR} has pending changes"
-		else
-			echo -n "checking git repo ${SUBDIR}: "
-			git pull
+			cd ${SUBDIR}
+			if [ ${CHECK:-0} -eq 1 ]
+			then
+				hg update --check >/dev/null 2>&1
+				test $? -eq 1 && echo "mercurial repo ${SUBDIR} has pending changes"
+			else
+				echo -n "checking mercurial repo ${SUBDIR}: "
+				hg update
+			fi
+			cd ${CWD}
 		fi
 	fi
-	cd ${CWD}
 done
