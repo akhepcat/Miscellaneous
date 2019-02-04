@@ -1,6 +1,5 @@
 #!/bin/bash
 
-
 usage() {
   echo "$(cd $HOME/jnlps/; ls *.jnlp | sed 's/\.jnlp//g')"
   exit 1
@@ -15,13 +14,21 @@ else
 fi
 
 JNLP="${JNLP//.jnlp/}.jnlp"
+JNLP=${JNLP//.jws/}
 
-if [ ! -e "$HOME/jnlps/${JNLP}" ]
+if [ -e "$HOME/jnlps/${JNLP}.jnlp" ]
 then
-  echo "invalid java webstart package"
+    JWS="$HOME/jnlps/${JNLP}.jnlp"
+elif [ -e "$HOME/jnlps/${JNLP}.jws" ]
+then
+    JWS="$HOME/jnlps/${JNLP}.jws"
+elif [ -e "${1}" ]
+then
+    JWS="${$1}"
+else
+  echo "invalid java webstart package ${JNLP}"
   usage
 fi
-	
 
 # use one or more of these to work around java swing display corruption
 #    -Dsun.java2d.opengl=true
@@ -30,4 +37,4 @@ fi
 
 
 #/usr/lib/jvm/java-7-oracle/jre/bin/
-javaws -J"-Dsun.java2d.d3d=false" -Xnosplash -wait ${HOME}/jnlps/${JNLP}
+javaws -J"-Dsun.java2d.d3d=false" -Xnosplash -wait "${JWS}"
