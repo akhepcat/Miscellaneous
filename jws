@@ -24,7 +24,7 @@ then
     JWS="$HOME/jnlps/${JNLP}.jws"
 elif [ -e "${1}" ]
 then
-    JWS="${$1}"
+    JWS="${1}"
 else
   echo "invalid java webstart package ${JNLP}"
   usage
