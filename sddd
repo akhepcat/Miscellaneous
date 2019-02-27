@@ -14,7 +14,7 @@ fi
 
 INFILE="$1"
 OUTFILE="$2"
-BS=${3//[^0-9]/}
+BS=${3//[^0-9kKmMgGbB]/}
 BS=${BS:-512}
 
 if [ ! -r "${INFILE}" ];
