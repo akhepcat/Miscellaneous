@@ -1,0 +1,40 @@
+#!/bin/bash
+
+tmpfile=$(mktemp)
+hashcat -I 2>&1 > ${tmpfile}
+
+declare -A devices
+plid=0
+did=0
+idx=0
+
+while read line
+do
+  if [ -n "${line}" -a -z "${line##Platform ID*}" ]
+  then
+    plid=${line//Platform ID #/}
+  else
+
+    if [ -n "${line}" -a -z "${line##Device ID*}" ]
+    then
+      did=${line//Device ID #/}
+      idx="${plid}-${did}"
+      devices[$idx]=1
+    fi
+  fi
+done < "${tmpfile}"
+
+echo "finished parsing OCL devices"
+rm -f "${tmpfile}"
+
+for key in "${!devices[@]}"
+do
+  if [ ${devices[$key]} -eq 1 ]
+  then
+    dtype=${key#*-}
+    didx=${key%-*}
+
+    hashcat --workload-profile=4 --force --opencl-platforms=${dtype} -opencl-devices=${didx} --benchmark 2>&1
+
+  fi
+done
