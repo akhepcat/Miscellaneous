@@ -1,5 +1,14 @@
 #!/bin/bash
 
+MODES=(0 100 500 1000 1400 1500 1700 1800 2500 3000 3200 5500 5600 6211 6800 7100 7500 11300 11600 12500 13000 13100 13400 15300 15900 18100 18900)
+
+if [ -n "$1" -a "${1}" = "single" ]
+then
+	ONEHIT=1
+else
+	ONEHIT=0
+fi
+
 tmpfile=$(mktemp)
 hashcat -I 2>&1 > ${tmpfile}
 
@@ -34,7 +43,14 @@ do
     dtype=${key#*-}
     didx=${key%-*}
 
-    hashcat --workload-profile=4 --force --opencl-platforms=${dtype} -opencl-devices=${didx} --benchmark 2>&1
-
+    if [ ${ONEHIT} -eq 0 ];
+    then
+      hashcat --workload-profile=4 --force --opencl-platforms=${dtype} -opencl-devices=${didx} --benchmark 2>&1
+    else
+      for idx in "${!MODES[@]}"
+      do
+        hashcat --workload-profile=4 --force --opencl-platforms=${dtype} -opencl-devices=${didx} --benchmark -m ${MODES[$idx]} 2>&1
+      done
+    fi
   fi
 done
