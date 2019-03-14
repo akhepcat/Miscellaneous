@@ -1,6 +1,14 @@
 #!/bin/bash
 
 MODES=(0 100 500 1000 1400 1500 1700 1800 2500 3000 3200 5500 5600 6211 6800 7100 7500 11300 11600 12500 13000 13100 13400 15300 15900 18100 18900)
+#
+# You can easily parse and import using:
+#
+#  $ oclhcbench | grep -E '^(Hashmode|Speed)' | \
+#       sed 's/,/;/g; s/Hashmode:/Hashmode:,/g; s/ - /,/g; s/Speed/,Speed/g; s|H/s|H/s,|g; s/: /, /g; s/Iterations,/Iterations:/g;' |  \
+#       awk 'NR%2{printf "%s ",$0;next;}1'  > oclhcbench.csv
+#
+
 
 if [ -n "$1" -a "${1}" = "single" ]
 then
