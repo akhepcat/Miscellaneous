@@ -9,7 +9,7 @@ usage() {
 	exit 1
 }
 
-optspec=":dh-"
+optspec=":dih-"
 while getopts "$optspec" optchar; do
     case "${optchar}" in
         -)
@@ -19,6 +19,9 @@ while getopts "$optspec" optchar; do
                     ;;
                 dryrun)
                     DRY=1 
+                    ;;
+                ignore-existing|ignoreexisting)
+                    MARGS="--ignore-existing"
                     ;;
                 *)
                     if [ "$OPTERR" = 1 ] && [ "${optspec:0:1}" != ":" ]; then
@@ -31,6 +34,9 @@ while getopts "$optspec" optchar; do
             ;;
         h)
             usage
+            ;;
+        i)
+            MARGS="--ignore-existing"
             ;;
         *)
             if [ "$OPTERR" != 1 ] || [ "${optspec:0:1}" = ":" ]; then
@@ -50,7 +56,7 @@ then
 	usage
 else
 
-        rsync -avxWAXSH ${DRY:+--dry-run} --numeric-ids --info=progress2 "${src}" "${dst}"
+        rsync -avxWAXSH ${MARGS} ${DRY:+--dry-run} --numeric-ids --info=progress2 "${src}" "${dst}"
 
 # -a  : all files, with permissions, etc..
 # -v  : verbose, mention files

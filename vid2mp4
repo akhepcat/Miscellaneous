@@ -1,0 +1,23 @@
+#!/bin/bash
+PROG="${0##*/}"
+
+EXT2=${PROG//*2/}
+
+if [ -z "$*" ]; then
+  echo "${PROG} [filename]"
+  echo " -- output is [filename.${EXT2}]"
+  exit 1
+fi
+
+for vidfile in ${*}; 
+do
+
+  if [ -r "${vidfile}" ]; then
+    out="${vidfile%.*}.${EXT2}"
+  else
+    echo "can't find/read '${vidfile}'"
+    exit 1
+  fi
+
+  ffmpeg -i "${vidfile}" -y -map 0 -c copy -sn -movflags +faststart "${out}"  || ffmpeg -i "${vidfile}" -y -map 0 -sn -movflags +faststart "${out}"
+done
