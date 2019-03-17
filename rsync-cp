@@ -46,16 +46,21 @@ while getopts "$optspec" optchar; do
     esac
 done
 
-src="${!OPTIND}"
-shift "$((OPTIND-1))"
-dst="${!OPTIND}"
+if [ 1 -lt ${OPTIND} ]
+then
+	src="${!OPTIND}"
+	shift "$((OPTIND-1))"
+	dst="${!OPTIND}"
+else
+	src=$1
+	dst=$2
+fi
 
 if [ \( ! -d "${src}" -a ! -z "${src##*:*}" \) -a \( ! -d "${dst}" -a ! -z "${dst##*:*}" \) ]
 then
 	echo "ERROR in file specification"
 	usage
 else
-
         rsync -avxWAXSH ${MARGS} ${DRY:+--dry-run} --numeric-ids --info=progress2 "${src}" "${dst}"
 
 # -a  : all files, with permissions, etc..
