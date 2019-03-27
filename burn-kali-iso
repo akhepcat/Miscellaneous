@@ -1,0 +1,126 @@
+#!/bin/bash
+PROG="${0##*/}"
+
+perror() {
+	msg="$*"
+
+	echo "${msg:-Failed}"
+	exit 1
+}
+
+DDorDCF() {
+	DD=$(which dcfldd)
+	if [ -n "${DD}" ]
+	then
+	        OFLAG=$(${DD} --help | egrep -wo '(^\s*)direct' | sed 's/[^a-z]//ig')
+	        if [ -n "${OFLAG}" ]
+	        then
+	                DCFD=1
+	        else
+	                DCFD=0
+	        fi
+	fi
+	DD=$(which dd)
+	if [ -n "${DD}" ]
+	then
+	        OFLAG=$(${DD} --help | egrep -wo '(^\s*)direct' | sed 's/[^a-z]//ig')
+	        if [ -n "${OFLAG}" ]
+	        then
+	                DDD=1
+	        else
+	                DDD=0
+	        fi
+	fi
+
+	PROGRESS=$(${DD} --help | egrep -wo '(^\s*)status' | sed 's/[^a-z]//ig')
+	if [ -n "${PROGRESS}" ];
+	then
+	    if [ ${DDD:-0} -eq 1 -o ${DCFD:-0} -eq 0 ]
+	    then
+	        # Always prefer native DD
+	        DD=dd
+	        PROGRESS="status=progress"
+	    elif [ ${DDD:-0} -eq 0 -a ${DCFD:-0} -eq 1 ]
+	    then
+	        # only when DDD -eq 0 and DCFD -eq 1
+	        PROGRESS="status=on"
+	    else
+		PROGRESS=""
+	    fi
+	else
+		PROGRESS=""
+	fi
+
+	# Do we support direct io?  we've tested this twice, but this is the final test
+	OFLAG=$(${DD} --help | egrep -wo '(^\s*)direct' | sed 's/[^a-z]//ig')
+}
+
+prereqs() {
+	which lsscsi >/dev/null 2>&1 || perror "Can't find lsscsi"
+	which eject >/dev/null 2>&1 || perror "Can't find eject"
+	which parted >/dev/null 2>&1 || perror "Can't find parted"
+	which mkfs.ext4 >/dev/null 2>&1 || perror "Can't find mkfs.ext4"
+}
+
+usage() {
+	echo "usage:"
+#	echo ""
+	echo -e "    \$ ${PROG} [iso] {bs}"
+#	echo ""
+	echo -e "       ${PROG//?/ } iso - KALI iso filename"
+	echo -e "       ${PROG//?/ }  bs - optional blocksize to use for dd"
+	echo ""
+	exit 1
+}
+
+prereqs
+DDorDCF
+
+[[ -z "$1" ]] && usage
+
+[[ ! -r "$1" ]] && perror "Can't read ${1} file for burning"
+
+ISO=${1}
+BS=${2//[^0-9kKmMgGbB]/}
+BS=${BS:-512k}
+
+if [ ! \( \( "${USER}" = "root" \) -o \( -n "${EUID}" -a ${EUID} = 0 \) \) ]
+then
+        perror "root privs required. re-run with sudo."
+fi
+
+
+flash=$( lsscsi -s 2>&1 | grep -i 'Flash.*GB' | grep -o '/dev/sd.' )
+[[ -z "${flash}" ]] && perror "Can't determine flash drive"
+
+ionice -c2 -n7 ${DD} if="${ISO}" bs=${BS} conv=noerror,sync,notrunc ${OFLAG:+oflag=$OFLAG} ${PROGRESS} of="${flash}"
+[[ $? ]] || perror "Couldn't write iso ${ISO} to flash drive ${flash}"
+
+# length of ISO partition
+read start _ < <(du -bm ${ISO})
+[[ -z "${start}" ]] && perror "Can't determine size of iso ${ISO}"
+
+# end of the flash drive
+end=$( parted ${flash} print | grep ${flash} | grep -oE '[0-9]+MB' )
+[[ -z "${end}" ]] && perror "Can't determine size of flash drive ${flash}"
+
+# non-alignment errors-out with an actual value, capture it in case the first attempt fails
+start=$( parted -s -ao ${flash} mkpart primary $start $end 2>&1 | grep -oE 'we can manage is [0-9]+MB' | grep -oE '[0-9]+MB' )
+# ensure we actually create the partition if the alignment is necessary
+test -n "${start}" && parted -s -ao ${flash} mkpart primary $start $end
+
+#The new partition should be created, but we'll double-check
+part=$( parted ${flash} print | grep primary | tail -1 | awk '{print $1}' )
+[[ ${part:-0} -le 2 ]] && perror "Partition creation failed!"
+
+mkfs.ext4 -L persistence "${flash}${part}"
+MNT=$( mktemp -p /mnt -d )
+[[ -z "${MNT}" ]] && perror "Couldn't create temporary mount directory ${MNT}"
+
+mount "${flash}${part}" ${MNT} || perror "Couldn't mount ${flash}${part} into ${MNT}"
+echo "/ union" > ${MNT}/persistence.conf
+umount ${MNT} || perror "Couldn't unmount ${MNT}"
+rmdir ${MNT} || perror "Couldn't remove temporary mount directory ${MNT}"
+eject ${flash} || perror "Couldn't eject flash drive ${flash}"
+
+echo "done"
