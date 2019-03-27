@@ -151,18 +151,17 @@ fi
 
 
 # Build it
+cd ${BASE}/${REPO}
 
 ISO="${BASE}/${REPO}/images/kali-linux-lxde-rolling-amd64.iso"
-
 if [ ! -r "${ISO}" ]
 then
-	cd ${BASE}/${REPO}
 	echo "Compile it with the following command:"
 	echo ""
 	echo "sudo ./build.sh --variant lxde --verbose"
 fi
 # install it
 
-[[ -r "${ISO}" ] && echo "Now: burn-kali-image \"${ISO}\""
+[[ -r "${ISO}" ] && echo -e "Now, run:\nkali-burn-image \"${ISO}\""
 
 # done
