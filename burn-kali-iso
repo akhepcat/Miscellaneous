@@ -101,7 +101,7 @@ read start _ < <(du -bm ${ISO})
 [[ -z "${start}" ]] && perror "Can't determine size of iso ${ISO}"
 
 # end of the flash drive
-end=$( parted ${flash} print | grep ${flash} | grep -oE '[0-9]+MB' )
+end=$( parted ${flash} print | grep ${flash} | grep -oE '[0-9]+[GM]B' )
 [[ -z "${end}" ]] && perror "Can't determine size of flash drive ${flash}"
 
 # non-alignment errors-out with an actual value, capture it in case the first attempt fails
