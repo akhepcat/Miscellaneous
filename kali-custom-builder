@@ -1,0 +1,168 @@
+#!/bin/bash
+
+BASE=/usr/local/src/
+# Replace this with a direct URL after registration at https://software.intel.com/en-us/articles/opencl-drivers#cpu-section  to install intel-ocl-icd (and accept license)
+INTEL_OPENCL_URL=""
+# Replace this with the appropriate download url from https://www.veracrypt.fr/   to install veracrypt (and accept the license)
+VERACRYPT_URL=""
+
+# Must be root
+if [ ! \( \( "${USER}" = "root" \) -o \( -n "${EUID}" -a ${EUID} = 0 \) \) ]
+then
+        echo "root privs required. re-run with sudo."
+        exit 1
+fi
+
+# Fetch the repo so we have a place to work from
+
+cd ${BASE}
+REPO="live-build-config"
+
+echo "validating/preparing repository"
+if [ ! -r "${BASE}/${REPO}/.git/config" ]
+then
+
+	git clone git://git.kali.org/${REPO}.git
+
+	cd ${BASE}/${REPO}/
+
+	# System upgrades first
+
+	apt update
+	apt upgrade
+
+	FILE=$(curl --silent http://http.kali.org/pool/main/k/kali-archive-keyring/ | grep all\.deb | sed 's/.*href=//g;' | cut -f2 -d\")
+	wget http://http.kali.org/pool/main/k/kali-archive-keyring/${FILE} && dpkg -i ${FILE}
+
+	FILE=$(curl --silent https://archive.kali.org/kali/pool/main/l/live-build/ | grep kali1_all\.deb | sed 's/.*href=//g;' | cut -f2 -d\")
+	wget https://archive.kali.org/kali/pool/main/l/live-build/${FILE} && dpkg -i ${FILE}
+
+	apt install -y git live-build cdebootstrap debootstrap curl alien
+
+	cd /usr/share/debootstrap/scripts/
+	( echo "default_mirror http://http.kali.org/kali"; sed -e "s/debian-archive-keyring.gpg/kali-archive-keyring.gpg/g" sid ) > kali
+	ln -s kali kali-rolling
+	cd ${BASE}/${REPO}/
+
+	# Build the repo
+
+	LN=$(grep --line-number -A1 'ERROR:.*debootstrap' ${BASE}/${REPO}/build.sh | grep exit | awk '{print $1}' | sed 's/[^0-9]//g')
+	sed -i.bak "${LN}s/exit/#exit/" ${BASE}/${REPO}/build.sh
+	LN=$(grep --line-number -A1 'ERROR:.*live-build' ${BASE}/${REPO}/build.sh | grep exit | awk '{print $1}' | sed 's/[^0-9]//g')
+	sed -i.bak "${LN}s/exit/#exit/" ${BASE}/${REPO}/build.sh
+fi
+
+echo "checking custom packages"
+if [ -z "$(grep alien ${BASE}/${REPO}/kali-config/variant-lxde/package-lists/kali.list.chroot)" ]
+then
+	for pkg in alien aptitude joe kali-desktop-lxde kali-linux-forensic kali-linux-gpu kali-linux-pwtools princeprocessor nvidia-cuda-toolkit nvidia-driver nvidia-kernel-dkms nvidia-opencl-common nvidia-opencl-icd ocl-icd-libopencl1 beignet-opencl-icd
+	do
+		echo $pkg >> ${BASE}/${REPO}/kali-config/variant-lxde/package-lists/kali.list.chroot
+	done
+fi
+
+echo "adjusting default boot option"
+if [ ! -r ${BASE}/${REPO}/config/hooks/live/zzz-default-boot.binary ]
+then
+	cat > ${BASE}/${REPO}/config/hooks/live/zzz-default-boot.binary <<EOF
+#!/bin/sh
+
+if [ ! -d isolinux ]; then
+    cd binary
+fi
+
+CFG=isolinux/live.cfg
+
+# fix the default option
+LABEL="label live-persistence"
+sed -i.bak '/menu default/d' ${CFG}
+sed -i.bak "s/${LABEL}/${LABEL}\n    menu default/i" ${CFG}
+
+# Fix the timeout for automatic booting, in 10ths of a second
+sed -i.bak 's/timeout 0/timeout 100/;' isolinux/isolinux.cfg
+
+# Remove the bell:
+sed -i.bak 's/\x07//' isolinux/menu.cfg
+
+#done!
+EOF
+
+	chmod +x ${BASE}/${REPO}/config/hooks/live/zzz-default-boot.binary
+fi
+
+echo "checking for veracrypt"
+if [ ! -r ${BASE}/${REPO}/config/includes.chroot/usr/bin/veracrypt -a -n "${VERACRYPT_URL}" ]
+then
+	###
+	# Fetch and manually install the veracrypt tools:
+	FILE=$(curl --silent "${VERACRYPT_URL}" | grep 'veracrypt.*setup.tar.bz2"' | grep -vE 'legacy|freebsd' | cut -f2 -d\" | sed 's/&#43;/%2B/g;')
+	wget --referer="https://www.veracrypt.fr/" "${FILE}"
+
+	TAR=${FILE##*/}
+	FILE="${TAR%setup*}setup"
+
+	tar -xvf "${TAR}" "${FILE}-console-x64"		# extracts:  veracrypt-1.23-setup-console-x64
+	./${FILE}-console-x64 --noexec --tar xvf	# extracts: veracrypt_install_console_x64.sh
+
+	PACKAGE_START=$(grep '^PACKAGE_START' veracrypt_install_console_x64.sh | cut -f2 -d=)
+	if ! tail -n +$PACKAGE_START "veracrypt_install_console_x64.sh" > veracrypt.tar.gz
+	then
+	        echo "Error: Extraction of veracrypt.tar.gz failed"
+	        exit 1
+	fi
+
+	# Place the veracrypt files into the chroot filesystem for later inclusion
+	tar -xvf veracrypt.tar.gz -C ${BASE}/${REPO}/config/includes.chroot
+
+	rm -f veracrypt.tar.gz veracrypt_install_console_x64.sh veracrypt-1.23-setup-console-x64
+	###
+fi
+
+echo "checking for intel ocl cpu drivers"
+if [ ! -r ${BASE}/${REPO}/config/includes.chroot/etc/OpenCL/vendors/intel64.icd -a -n "${INTEL_OPENCL_URL}" ]
+then
+	# Download intel ocl-cpu drivers from its respective page:
+	# If this URL expires, a new one requires registration, we can't manually do it
+	# https://software.intel.com/en-us/articles/opencl-drivers#cpu-section
+
+	wget --referer="https://registrationcenter.intel.com/" "${INTEL_OPENCL_URL}"
+
+	TAR=${INTEL_OPENCL_URL##*/}
+
+	RPMS=$(tar -tf "${TAR}" | grep '\.rpm$' | grep -v pset)
+	for i in ${RPMS}
+	do
+	   file=$(basename "$i")
+	   tar -xvf "${TAR}" "$i" -O > "${file}"
+	   alien -t "${file}"
+	   rm -f "${file}"
+	   tfile="${file%-*}.tgz"
+
+	   tar -xvf "${tfile}" -C kali-live-build-config/config/includes.chroot
+	   rm -f "${tfile}"
+	done
+	rm -f ${TAR}
+
+	cd ${BASE}/${REPO}/etc/OpenCL/vendors/
+	ln -s $(find ../../../opt/intel/ -iname 'intel64.icd')
+fi
+
+# This completes the modifications to the standard build system.
+
+
+# Build it
+
+ISO="${BASE}/${REPO}/images/kali-linux-lxde-rolling-amd64.iso"
+
+if [ ! -r "${ISO}" ]
+then
+	cd ${BASE}/${REPO}
+	echo "Compile it with the following command:"
+	echo ""
+	echo "sudo ./build.sh --variant lxde --verbose"
+fi
+# install it
+
+[[ -r "${ISO}" ] && echo "Now: burn-kali-image \"${ISO}\""
+
+# done
