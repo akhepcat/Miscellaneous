@@ -166,7 +166,13 @@ then
 	echo "Compile it with the following command:"
 	echo ""
 	echo "sudo ./build.sh --variant lxde --verbose"
+else
+	# mayhap remaining from a prior build (remind about purge)
+	echo "ISO found (remove with purge command)"
 fi
+# if it exists after compilation, show it:
+[[ -r "${ISO}" ]] && ls -alF "${ISO}"
+
 # install it
 
 [[ -r "${ISO}" ]] && echo -e "Now, run:\nkali-burn-image \"${ISO}\""
