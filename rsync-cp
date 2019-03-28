@@ -2,7 +2,7 @@
 PROG="${0##*/}"
 
 usage() {
-	echo -e "${PROG} - local password manager\n"
+	echo -e "${PROG} - copy files using rsync\n"
 	echo -e "usage:\n\$ ${PROG} (options) [src] [dst]"
 	echo -e "\t-d, --dryrun\t\t Dry-run test, don't copy any files"
 	echo -e "\t-h, --help\t\t this help.\n"
