@@ -52,6 +52,13 @@ then
 	sed -i.bak "${LN}s/exit/#exit/" ${BASE}/${REPO}/build.sh
 fi
 
+if [ "$1" = "purge" ]
+then
+	echo "purging existing build data (customizations are not disturbed)"
+	cd ${BASE}/${REPO}
+	lb clean --purge
+fi
+
 echo "checking custom packages"
 if [ -z "$(grep alien ${BASE}/${REPO}/kali-config/variant-lxde/package-lists/kali.list.chroot)" ]
 then
@@ -148,7 +155,7 @@ then
 fi
 
 # This completes the modifications to the standard build system.
-
+echo "Completed customizations"
 
 # Build it
 cd ${BASE}/${REPO}
