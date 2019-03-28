@@ -1,6 +1,6 @@
 #!/bin/bash
 
-BASE=/usr/local/src/
+BASE=/usr/local/src
 # Replace this with a direct URL after registration at https://software.intel.com/en-us/articles/opencl-drivers#cpu-section  to install intel-ocl-icd (and accept license)
 INTEL_OPENCL_URL=""
 # Replace this with the appropriate download url from https://www.veracrypt.fr/   to install veracrypt (and accept the license)
@@ -97,7 +97,7 @@ EOF
 	chmod +x ${BASE}/${REPO}/config/hooks/live/zzz-default-boot.binary
 fi
 
-echo "checking for veracrypt"
+[[ -n "${VERACRYPT_URL}" ]] && echo "checking for veracrypt"
 if [ ! -r ${BASE}/${REPO}/config/includes.chroot/usr/bin/veracrypt -a -n "${VERACRYPT_URL}" ]
 then
 	###
@@ -125,7 +125,7 @@ then
 	###
 fi
 
-echo "checking for intel ocl cpu drivers"
+[[ -n "${INTEL_OPENCL_URL}" ]] && echo "checking for intel ocl cpu drivers"
 if [ ! -r ${BASE}/${REPO}/config/includes.chroot/etc/OpenCL/vendors/intel64.icd -a -n "${INTEL_OPENCL_URL}" ]
 then
 	# Download intel ocl-cpu drivers from its respective page:
