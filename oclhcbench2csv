@@ -35,11 +35,10 @@ psys() {
 dprint() {
 # "* Device #1: GeForce GTX 560M, 368/1473 MB allocatable, 4MCU" ->
 # 1,999999,INFO,0,GeForce GTX 560M; 368/1473 MB allocatable; 4MCU"
- dm="$*"
- dm1=${dm#\* Device #}
+ dm=${*}
+ dm1=${dm#Device #}
  dm2="${dm1#*: }"
  dm2=${dm2//,/;}
- dm2=${dm2//+( )/ }
  dm1=${dm1%:*}
  
  echo "${dm1},999999,Device Info,0H/s,${dm2}"
@@ -101,12 +100,15 @@ do
   if [ -n "${line}" ]
   then
     debug "line is not empty"
-
+    
     if [ ${inhm:-0} -eq 0 -a ${insp:-0} -eq 0 ]
     then
       if [ -z "${line%\* Device #*}" ]
       then
-        dprint "$line"
+        # kill extra spaces in the device line
+        line=${line//\*/}
+        set -- $line
+        dprint "$*"
       fi
     fi
 
