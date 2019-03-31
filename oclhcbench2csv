@@ -39,7 +39,7 @@ dprint() {
  dm1=${dm#\* Device #}
  dm2="${dm1#*: }"
  dm2=${dm2//,/;}
- dm2=${dm2//  / }
+ dm2=${dm2//+( )/ }
  dm1=${dm1%:*}
  
  echo "${dm1},999999,Device Info,0H/s,${dm2}"
@@ -52,7 +52,7 @@ hmprint() {
  hm1=${hm#Hashmode: }
  hm2=${hm1#* - }
  hm2=${hm2//,/;}
- hm2=${hm2//  / }
+ hm2=${hm2//+( )/ }
  hm1=${hm1%% *}
  
  HM2P="${hm1},${hm2}"
