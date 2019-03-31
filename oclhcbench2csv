@@ -4,29 +4,25 @@ inhm=0
 sidx=0
 insp=0
 
-if [ -n "$*" ]
-then
-  for opt in $*
-  do
-  	if [ "${opt,,}" = "debug" ]
-  	then
-  		debug=1
-  	elif [ "${opt,,}" = "total" ]
-  	then
-  		total=1
-  	else
-  		echo "IGN: unknown argument"
-  	fi
-  done
-fi
-
-echo "#device, #mode, #mdesc, #hashes, #info"
-
 debug() {
   if [ ${debug:-0} -gt 0 ]
   then
   	echo "$*"
   fi
+}
+
+psys() {
+# uname -nrpo
+# "myhostname 4.15.0-46-generic x86_64 GNU/Linux"
+  sys=$(uname -nrpo)
+  hn=${sys%% *}
+  sys=${sys#* }
+  kv=${sys%% *}
+  sys=${sys#* }
+  arch=${sys%% *}
+  sys=${sys#* }
+  
+  echo "*,999999,SYSINFO,0H/s,${hn};${sys};${kv};${arch}"
 }
 
 dprint() {
@@ -71,6 +67,25 @@ slprint() {
 	echo "${sl1},${HM2P},${sl2},${sl3}"
  fi
 }
+
+if [ -n "$*" ]
+then
+  for opt in $*
+  do
+  	if [ "${opt,,}" = "debug" ]
+  	then
+  		debug=1
+  	elif [ "${opt,,}" = "total" ]
+  	then
+  		total=1
+  	else
+  		echo "IGN: unknown argument"
+  	fi
+  done
+fi
+
+echo "#device, #mode, #mdesc, #hashes, #info"
+psys
 
 while read line
 do
