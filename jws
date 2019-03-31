@@ -13,7 +13,7 @@ else
 	JNLP=${1}
 fi
 
-JNLP="${JNLP//.jnlp/}.jnlp"
+JNLP=${JNLP//.jnlp/}
 JNLP=${JNLP//.jws/}
 
 if [ -e "$HOME/jnlps/${JNLP}.jnlp" ]
@@ -37,4 +37,10 @@ fi
 
 
 #/usr/lib/jvm/java-7-oracle/jre/bin/
-javaws -J"-Dsun.java2d.d3d=false" -Xnosplash -wait "${JWS}"
+if [ -e "${HOME}/jnlps/javaws" ]
+then
+	JWX="${HOME}/jnlps/javaws"
+else
+	JWX="javaws"	# system
+fi
+${JWX} -J"-Dsun.java2d.d3d=false" -Xnosplash -wait "${JWS}"
