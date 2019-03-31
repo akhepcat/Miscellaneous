@@ -29,7 +29,7 @@ psys() {
       mem=$(free  | grep ^Mem | awk '{print $2}')  # less accurate
   fi
   
-  echo "*,999999,SYSINFO,0H/s,${hn};${sys};${kv};${arch};${mem}kb"
+  echo "*,999999,System Info,0H/s,${hn};${sys};${kv};${arch};${mem}kb"
 }
 
 dprint() {
@@ -109,6 +109,11 @@ do
         line=${line//\*/}
         set -- $line
         dprint "$*"
+      elif [ -z "${line##*starting in benchmark mode*}" ]
+      then
+        ver=${line#*\(}
+        ver=${ver%\)*}
+        echo "*,999999,Hashcat Info,0H/s,${ver}"
       fi
     fi
 
