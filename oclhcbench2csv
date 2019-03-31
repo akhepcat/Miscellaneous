@@ -21,8 +21,15 @@ psys() {
   sys=${sys#* }
   arch=${sys%% *}
   sys=${sys#* }
+
+  if [ -n "${sys}" -a -z "${sys##*Linux*}" ]
+  then
+      mem=$(grep MemTotal: /proc/meminfo | awk '{print $2}')  # closer to actual
+  else
+      mem=$(free  | grep ^Mem | awk '{print $2}')  # less accurate
+  fi
   
-  echo "*,999999,SYSINFO,0H/s,${hn};${sys};${kv};${arch}"
+  echo "*,999999,SYSINFO,0H/s,${hn};${sys};${kv};${arch};${mem}kb"
 }
 
 dprint() {
