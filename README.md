@@ -29,6 +29,7 @@ Random one-offs that need a temporary home
   * mqueuerm	- purge the stuck deferred mail queue singly or in masse
   * NoPrinterShutdown	- Because shutting down your Pi when the printer goes away is fun
   * oclhcbench - automatically detect and benchmark your OpenCL drivers with hashcat.
+  * oclhcbench2csv - parse the output from oclhcbench into a CSV format for direct spreadsheet import
   * resolve-hosts.pl - use hostfile and dhcp logs to resolve unknown hosts
   * rsync-cp - use rsync to copy files.  silly!
   * sddd        - useful script for dd'ing images onto an SD card, with better (default) options  
