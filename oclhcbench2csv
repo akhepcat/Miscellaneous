@@ -4,6 +4,22 @@ inhm=0
 sidx=0
 insp=0
 
+if [ -n "$*" ]
+then
+  for opt in $*
+  do
+  	if [ "${opt,,}" = "debug" ]
+  	then
+  		debug=1
+  	elif [ "${opt,,}" = "total" ]
+  	then
+  		total=1
+  	else
+  		echo "IGN: unknown argument"
+  	fi
+  done
+fi
+
 echo "#device, #mode, #mdesc, #hashes, #info"
 
 debug() {
@@ -49,7 +65,11 @@ slprint() {
  sl3=${sl3//,/;}
  sl2="${sl2%H/s*}H/s"
  sl2=${sl2// /} 
- [[ "${sl1}" != "*" ]] && echo "${sl1},${HM2P},${sl2},${sl3}"
+ [[ "${sl1}" = "*" ]] && sl3="grand total for all devices"
+ if [ "${sl1}" != "*" -o ${total:-0} -eq 1 ]
+ then
+	echo "${sl1},${HM2P},${sl2},${sl3}"
+ fi
 }
 
 while read line
