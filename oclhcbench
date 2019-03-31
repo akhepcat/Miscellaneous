@@ -11,7 +11,11 @@ MODES=(0 100 500 1000 1400 1500 1700 1800 2500 3000 3200 5500 5600 6211 6800 710
 if [ -n "$1" -a "${1}" = "single" ]
 then
 	ONEHIT=1
+elif [ -n "$1" -a "${1}" = "group" ]
+then
+	GROUP=1
 else
+	GROUP=0
 	ONEHIT=0
 fi
 
@@ -42,21 +46,29 @@ done < "${tmpfile}"
 echo "finished parsing OCL devices"
 rm -f "${tmpfile}"
 
-for key in "${!devices[@]}"
-do
-  if [ ${devices[$key]} -eq 1 ]
-  then
-    dtype=${key#*-}
-    didx=${key%-*}
-
-    if [ ${ONEHIT} -eq 0 ];
+if [ ${GROUP:-0} -eq 0 ]
+then
+  for key in "${!devices[@]}"
+  do
+    if [ ${devices[$key]} -eq 1 ]
     then
-      hashcat --workload-profile=4 --force --opencl-platforms=${dtype} -opencl-devices=${didx} --benchmark 2>&1
-    else
-      for idx in "${!MODES[@]}"
-      do
-        hashcat --workload-profile=4 --force --opencl-platforms=${dtype} -opencl-devices=${didx} --benchmark -m ${MODES[$idx]} 2>&1
-      done
+      dtype=${key#*-}
+      didx=${key%-*}
+
+      if [ ${ONEHIT} -eq 0 ];
+      then
+        hashcat --workload-profile=4 --force --opencl-platforms=${dtype} -opencl-devices=${didx} --benchmark 2>&1
+      else
+        for idx in "${!MODES[@]}"
+        do
+          hashcat --workload-profile=4 --force --opencl-platforms=${dtype} -opencl-devices=${didx} --benchmark -m ${MODES[$idx]} 2>&1
+        done
+      fi
     fi
-  fi
-done
+  done
+else
+  for idx in "${!MODES[@]}"
+  do
+    hashcat --workload-profile=4 --force --opencl-device-types=1,2,3 --benchmark -m ${MODES[$idx]} 2>&1
+  done
+fi
