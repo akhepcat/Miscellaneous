@@ -52,8 +52,8 @@ then
   do
     if [ ${devices[$key]} -eq 1 ]
     then
-      dtype=${key#*-}
-      didx=${key%-*}
+      didx=${key#*-}
+      dtype=${key%-*}
 
       if [ ${ONEHIT} -eq 0 ];
       then
