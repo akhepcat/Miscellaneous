@@ -39,6 +39,8 @@ dprint() {
  dm1=${dm#Device #}
  dm2="${dm1#*: }"
  dm2=${dm2//,/;}
+# split reports like this: " CPU @ 3.10GHz" 
+ dm2=${dm2// CPU @/;}
  dm1=${dm1%:*}
  
  echo "${dm1},999999,Device Info,0H/s,${dm2}"

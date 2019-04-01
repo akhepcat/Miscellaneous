@@ -28,7 +28,7 @@ check_emu() {
 	if [ "${HOST}" != "${HOST##*arm*}" ]
 	then
 		HOST=arm
-	elif [ "${HOST}" != "${HOST##*x86_64*}" ]
+	elif [ "${HOST}" != "${HOST##*x86_64*}" -o "${HOST}" != "${HOST##*x86-64*}" ]
 	then
 		HOST=x86_64
 	fi
@@ -42,7 +42,7 @@ check_emu() {
 	TEMU=$(file -L "${LDLIB}" )
 
 	# we can see the library, so we can figure out the emulation
-	if [ -z "${TEMU##*x86_64*}" -o -z "${TEMU##*32-bit*80386*}" ]
+	if [ -z "${TEMU##*x86_64*}" -o -z "${TEMU##*x86-64*}" -o -z "${TEMU##*32-bit*80386*}" ]
 	then
 		# Intel 32-bit and 64-bit are handled by aarch64
 		EMU=aarch64
