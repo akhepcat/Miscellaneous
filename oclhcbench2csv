@@ -29,7 +29,7 @@ psys() {
       mem=$(free  | grep ^Mem | awk '{print $2}')  # less accurate
   fi
   
-  echo "*,999999,System Info,0H/s,${hn};${sys};${kv};${arch};${mem}kb"
+  echo "*,999999,System Info,0,${hn};${sys};${kv};${arch};${mem}kb"
 }
 
 dprint() {
@@ -43,7 +43,7 @@ dprint() {
  dm2=${dm2// CPU @/;}
  dm1=${dm1%:*}
  
- echo "${dm1},999999,Device Info,0H/s,${dm2}"
+ echo "${dm1},999999,Device Info,0,${dm2}"
 }
 
 hmprint() {
@@ -122,7 +122,7 @@ do
       then
         ver=${line#*\(}
         ver=${ver%\)*}
-        echo "*,999999,Hashcat Info,0H/s,${ver}"
+        echo "*,999999,Hashcat Info,0,${ver}"
       fi
     fi
 
