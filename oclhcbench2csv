@@ -71,6 +71,13 @@ slprint() {
  sl3=${sl3//,/;}
  sl2="${sl2%H/s*}H/s"
  sl2=${sl2// /} 
+ sl2=${sl2,,}
+ sl2=${sl2//gh\/s/ * 1000000000}
+ sl2=${sl2//mh\/s/ * 1000000}
+ sl2=${sl2//kh\/s/ * 1000}
+ sl2=${sl2//h\/s/ * 1}
+ sl2=$( echo "scale=0; (${sl2}) / 1" | bc )
+
  [[ "${sl1}" = "*" ]] && sl3="grand total for all devices"
  if [ "${sl1}" != "*" -o ${total:-0} -eq 1 ]
  then
