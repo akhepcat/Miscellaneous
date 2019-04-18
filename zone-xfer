@@ -1,0 +1,38 @@
+#!/bin/bash
+
+server=${1}
+domain=${2}
+view=${3}
+
+keyfile=/etc/bind/named.keys
+
+usage() {
+   echo "$0 server domain [view]"
+   echo "   if [view] is specified, will attempt to read the key from ${keyfile}, parse and use it."
+   echo "      this requires the key name to be equal to the view name"
+}
+
+if [ -z "${server}" ]
+then
+  usage
+elif [ -z "${domain}" ]
+then
+  usage
+else
+
+  if [ -n "${view}" ]
+  then
+    secret=$(grep -iEw 'key|secret' "${keyfile}" | grep -A1 "${view}" | grep secret | awk '{print $2}' | cut -f 1 -d\; | tr -d [\'\"]  )
+    algo=$(grep -iEw 'key|algorithm' "${keyfile}" | grep -A1 "${view}" | grep algorithm | awk '{print $2}' | cut -f 1 -d\; | tr -d [\'\"]  )
+    if [ -n "${secret}" ]
+    then
+      viewk="-y ${algo}:${view}:${secret}"
+    else
+      echo "Couldn't find secret for view ${view}"
+      exit 1
+    fi
+  fi
+
+  dig axfr @${server} "${domain}" ${viewk}
+
+fi
