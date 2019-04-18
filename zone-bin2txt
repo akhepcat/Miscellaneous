@@ -1,0 +1,16 @@
+#!/bin/bash
+
+if [ -z "$*" ]
+then
+	echo "$0 [zone] [zonefile]"
+	exit 1
+fi
+
+if [ -r "${2}" ]
+then
+	named-compilezone -f raw -F text -o - ${1} ${2}
+else
+	echo "$0 - error reading zonefile '${2}'"
+	exit 1
+fi
+
