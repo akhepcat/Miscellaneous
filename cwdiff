@@ -1,0 +1,11 @@
+#!/bin/bash
+F1=$1
+F2=$2
+if [ -z "$F1" -o -z "$F2" ]
+then
+   echo "usage:   cwdiff [file1] [file2]"
+   echo "   word-colored differences between two files"
+   exit 1
+fi
+
+git diff --color-words --word-diff "$F1" "$F2"
