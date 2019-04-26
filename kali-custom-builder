@@ -62,7 +62,7 @@ fi
 echo "checking custom packages"
 if [ -z "$(grep alien ${BASE}/${REPO}/kali-config/variant-lxde/package-lists/kali.list.chroot)" ]
 then
-	for pkg in alien aptitude joe kali-desktop-lxde kali-linux-forensic kali-linux-gpu kali-linux-pwtools princeprocessor nvidia-cuda-toolkit nvidia-driver nvidia-kernel-dkms nvidia-opencl-common nvidia-opencl-icd ocl-icd-libopencl1 beignet-opencl-icd
+	for pkg in alien aptitude joe kali-desktop-lxde kali-linux-forensic kali-linux-gpu kali-linux-pwtools princeprocessor nvidia-cuda-toolkit nvidia-driver nvidia-kernel-dkms nvidia-opencl-common nvidia-opencl-icd ocl-icd-libopencl1 beignet-opencl-icd dislocker libdislocker0.7
 	do
 		echo $pkg >> ${BASE}/${REPO}/kali-config/variant-lxde/package-lists/kali.list.chroot
 	done
