@@ -1,0 +1,48 @@
+#!/bin/bash
+PROG=${0##*/}
+# rdig host.3ld.2ld.dom
+#
+#  walks backward until it finds the authoritative name server for each tld (excepting '.')
+#
+
+FQDN=${1}
+
+FQDN=${FQDN,,}	#lowercase it all
+FQDN=${FQDN//[0-9a-f:.]/}  #zero out bare IPv4/IPv6 addresses
+
+if [ -z "${FQDN}" ];
+then 
+	echo "Usage:"
+	echo -e "\t${PROG} [fqdn]"
+	exit 1
+fi
+
+#restore the original domain from the command line
+FQDN=${1}
+
+myfqdn=${FQDN}
+
+while [[ "${myfqdn}" != "${FQDN##*.}" ]]
+do
+	echo "testing ${myfqdn}"
+	MYSOA=$(dig +short "${myfqdn}" SOA)
+	if [ -n "${MYSOA}" ]
+	then
+		echo -e "${myfqdn} \t IN \t SOA ${MYSOA}"
+		
+		MYNS=$(dig +short "${myfqdn}" NS)
+		if [ -n "${MYNS}" ]
+		then
+			for NS in ${MYNS}
+			do
+				NSIP=$(dig +short ${NS})
+				echo -e "${myfqdn} \t IN \t NS ${NS} \t A \t ${NSIP}"
+			done
+		fi
+	else
+		echo "no SOA for ${myfqdn}"
+	fi
+#	dig +noall +answer "${myfqdn}" NS
+	myfqdn=${myfqdn#*.}
+	echo ""
+done
