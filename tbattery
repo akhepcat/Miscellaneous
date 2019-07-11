@@ -1,0 +1,38 @@
+#!/bin/bash
+WIDTH=100
+COLUMNS=${COLUMNS:-175}
+
+if [ $COLUMNS -gt ${WIDTH} ]
+then
+	scale=1
+elif [ $COLUMNS -gt $(( $WIDTH / 2 )) ]
+then
+	scale=2
+else
+	scale=4
+fi
+
+now=$(cat /sys/class/power_supply/BAT0/charge_now)
+full=$(cat /sys/class/power_supply/BAT0/charge_full)
+
+BATP=$(echo "scale = 2; print (( $now / $full ) * 100) / $scale" | bc)
+BATP=$(echo "($BATP + .5) /1" | bc)
+#echo battery=$BATP
+
+PADL=$(( ($WIDTH / $scale) - $BATP - 2))
+PADR=$(( ($WIDTH / $scale) - $PADL - 1 ))
+
+if [ ${BATP} -gt 70 ]
+then
+	# green
+	color="\e[0m\e[100m\e[92m"
+elif [ ${BATP} -gt 40 ]
+then
+	# yellow
+	color="\e[0m\e[100m\e[93m"
+else
+	# red
+	color="\e[0m\e[100m\e[91m"
+fi
+
+printf "%bE%${PADL}s%b%b%${PADR}s\e[0mF\n" '\e[7m' " " "${color}${BATP}" '\e[0m\e[100m\e[4m' " "
