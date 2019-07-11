@@ -34,7 +34,8 @@ Random one-offs that need a temporary home
   * rsync-cp - use rsync to copy files.  silly!
   * sddd        - useful script for dd'ing images onto an SD card, with better (default) options  
   * snmpcapuniq - awk example to automatically capture and display unique SNMP community strings
-  * stopwatch	- hey,look, a stopwatch script
+  * stopwatch   - hey,look, a stopwatch script
+  * tbattery    - a text-mode battery monitor with color and minimal scaling
   * urldecode   - multi-use script to en/de-code html/url, based on (symlinked) filename  
   * vid2mp4 - converts any video to a pretty close bitrate approximate web-streaming-optimized mp4
   * vidrotate - rotate your video files
