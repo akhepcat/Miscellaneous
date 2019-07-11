@@ -19,7 +19,7 @@ BATP=$(echo "scale = 2; print ( $now / $full ) * 100" | bc)
 BATP=$(echo "($BATP + .5) /1" | bc)
 #echo battery=$BATP
 
-PADL=$(( ($WIDTH / $scale) - ( $BATP / $scale ) - 2))
+PADL=$(( ($WIDTH / $scale) - ( (100 - $BATP) / $scale ) - 2))
 PADR=$(( ($WIDTH / $scale) - $PADL - 1 ))
 
 if [ ${BATP} -gt 70 ]
