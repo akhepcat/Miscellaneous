@@ -1,6 +1,6 @@
 #!/bin/bash
 WIDTH=100
-COLUMNS=${COLUMNS:-175}
+COLUMNS=${COLUMNS:-$(tput cols)}
 
 if [ $COLUMNS -gt ${WIDTH} ]
 then
@@ -15,11 +15,11 @@ fi
 now=$(cat /sys/class/power_supply/BAT0/charge_now)
 full=$(cat /sys/class/power_supply/BAT0/charge_full)
 
-BATP=$(echo "scale = 2; print (( $now / $full ) * 100) / $scale" | bc)
+BATP=$(echo "scale = 2; print ( $now / $full ) * 100" | bc)
 BATP=$(echo "($BATP + .5) /1" | bc)
 #echo battery=$BATP
 
-PADL=$(( ($WIDTH / $scale) - $BATP - 2))
+PADL=$(( ($WIDTH / $scale) - ( $BATP / $scale ) - 2))
 PADR=$(( ($WIDTH / $scale) - $PADL - 1 ))
 
 if [ ${BATP} -gt 70 ]
