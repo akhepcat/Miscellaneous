@@ -4,6 +4,8 @@ URL="${*:-http://localhost/}"
 PREFERCHROME=1
 DEBUG=${DEBUG:-1}
 FORCEPREFER=0
+USE_PROXY=0
+PROX="$(cat ~/.proxy.cnf)"	# one proxy per line, in uri format; socks/http supported
 
 DBGLOG=/tmp/urls
 
@@ -118,22 +120,32 @@ do
 	     -o -z "${URL##*http*//tinyurl.com/*}" -o -z "${URL##*http*//url.ca/*}" -o -z "${URL##*http*//buff.ly/*}"  -o -z "${URL##*http*//j.mp/*}" \
 	     -o -z "${URL##*http*//bzfd.it/*}" -o -z "${URL##*http*//is.gd/*}" -o -z "${URL##*http*//tr.im/*}" -o -z "${URL##*http*//su.pr/*}"  \
 	     -o -z "${URL##*http*//say.ly/*}" -o -z "${URL##*http*//ht.ly/*}" -o -z "${URL##*http*//trib.al/*}" -o -z "${URL##*http*//zpr.io/*}" \
+             -o -z "${URL##*http*//po.st/*}" \
 	     -o -z "${URL##*http*//cli.gs/*}" -o -z "${URL##*http*//v.gd/*}" -o -z "${URL##*http*//ph.ly/*}" -o -z "${URL##*http*//tiny.cc/*}" \
 	     -o -z "${URL##*http*//zite.to/*}" -o -z "${URL##*http*//fb.me/*}" -o -z "${URL##*http*//goo.gl/*}" -o -z "${URL##*http*//shar.es/*}" ]
 	then
 		test ${DEBUG} -gt 2 && echo "DBG: Retrieving redirection" >> $DBGLOG
-		NURL="$(curl -I -j --proxy socks4://sec-2.gci.net/ $URL 2>/dev/null |
-			grep -i location: | sed 's/.*http/http/; s/\r//;' )"
-		if [ -z "${NURL}" ]
+		if [ $USE_PROXY -eq 1 ]
 		then
-			test ${DEBUG} -gt 2 && echo "DBG: Secondary attempt at retrieving redirection" >> $DBGLOG
-			NURL="$(curl -I -j --proxy http://nms-6.gci.net:8888/ $URL 2>/dev/null | \
+			for PROXY in PROX 
+			do
+				NURL="$(curl -I -j ${PROXY:+--proxy $PROXY} $URL 2>/dev/null | \
+					grep -i location: | sed 's/.*http/http/; s/\r//;' )"
+
+				if [ -n "${NURL}" ]
+				then
+					last
+				fi
+			done
+
+			if [ -z "${NURL}" ]
+			then
+				echo "invalid redirect parsing occursed for >>${URL}<< !! Bailing out" >> $DBGLOG
+				exit 1
+			fi
+		else
+			NURL="$(curl -I -j  $URL 2>/dev/null | \
 				grep -i location: | sed 's/.*http/http/; s/\r//;' )"
-		fi
-		if [ -z "${NURL}" ]
-		then
-			echo "invalid redirect parsing occursed for >>${URL}<< !! Bailing out" >> $DBGLOG
-			exit 1
 		fi
 		URL=${NURL}
 	else
