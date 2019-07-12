@@ -29,6 +29,9 @@ PADL=$(( ($WIDTH / $scale) - ( (100 - $BATP) / $scale ) - 2))
 PADR=$(( ($WIDTH / $scale) - $PADL - 1 ))
 
 fcolor="\e[0m\e[100m"
+
+[[ ${BATP} -gt 98 ]] && fcolor="\e[0m"
+
 if [ ${BATP} -gt 70 ]
 then
 	# green
