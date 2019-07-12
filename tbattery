@@ -22,17 +22,26 @@ BATP=$(echo "($BATP + .5) /1" | bc)
 PADL=$(( ($WIDTH / $scale) - ( (100 - $BATP) / $scale ) - 2))
 PADR=$(( ($WIDTH / $scale) - $PADL - 1 ))
 
+fcolor="\e[0m\e[100m"
 if [ ${BATP} -gt 70 ]
 then
 	# green
-	color="\e[0m\e[100m\e[92m"
+	color="\e[0m\e[1m\e[92m"
+	ecolor="\e[0m\e[42m"
 elif [ ${BATP} -gt 40 ]
 then
 	# yellow
-	color="\e[0m\e[100m\e[93m"
+	color="\e[0m\e[1m\e[93m"
+	ecolor="\e[0m\e[43m"
+elif [ ${BATP} -gt 20 ]
+then
+	# magenta
+	color="\e[0m\e[1m\e[91m"
+	ecolor="\e[0m\e[1m\e[45m"
 else
 	# red
-	color="\e[0m\e[100m\e[91m"
+	color="\e[0m\e[1m\e[91m"
+	ecolor="\e[0m\e[1m\e[101m"
 fi
 
-printf "%bE%${PADL}s%b%b%${PADR}s\e[0mF\n" '\e[7m' " " "${color}${BATP}" '\e[0m\e[100m\e[4m' " "
+printf "%bE%${PADL}s%b%b%${PADR}s\e[0m\e[1mF\e[0m\n"  "${ecolor}"   " "   "${color}${BATP}"   "${fcolor}"    " "
