@@ -12,6 +12,12 @@ else
 	scale=4
 fi
 
+if [ ! -e /sys/class/power_supply/BAT0/charge_now ]
+then
+	echo "No battery found"
+	exit 1
+fi
+
 now=$(cat /sys/class/power_supply/BAT0/charge_now)
 full=$(cat /sys/class/power_supply/BAT0/charge_full)
 
