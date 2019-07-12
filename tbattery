@@ -20,6 +20,8 @@ fi
 
 now=$(cat /sys/class/power_supply/BAT0/charge_now)
 full=$(cat /sys/class/power_supply/BAT0/charge_full)
+charging=$(grep -qi charging /sys/class/power_supply/BAT0/status; echo $?)
+spark=$'\xE2\x8C\x81'
 
 BATP=$(echo "scale = 2; print ( $now / $full ) * 100" | bc)
 BATP=$(echo "($BATP + .5) /1" | bc)
@@ -53,4 +55,8 @@ else
 	ecolor="\e[0m\e[1m\e[101m"
 fi
 
+if [ ${charging:-0} -eq 0 ]
+then
+	BATP=${spark}${BATP}${spark}
+fi
 printf "%bE%${PADL}s%b%b%${PADR}s\e[0m\e[1mF\e[0m\n"  "${ecolor}"   " "   "${color}${BATP}"   "${fcolor}"    " "
