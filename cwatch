@@ -1,0 +1,45 @@
+#!/bin/bash
+PROG="${0##*/}"
+WIDTH=$(tput cols)
+
+trap cleanup SIGINT SIGTERM SIGKILL SIGQUIT SIGABRT SIGSTOP SIGSEGV
+
+cleanup() {
+	printf "\033[2J"
+        echo -e "\n"
+        exit 0
+}
+
+usage() {
+        echo "Usage:"
+        echo "${PROG} [-h] [-n N] [commandline]"
+        echo "        -n N - change the sleep time from the default of 2 to user supplied N"
+        echo "        -h   - this usage text"
+
+        exit 1
+}
+
+while getopts ':hn:' opt; do
+  case $opt in
+    n) SLEEP="${OPTARG//[^0-9]/}"
+       shift 2
+      ;;
+    h) usage;
+      ;;
+    *) echo "Invalid option: -$OPTARG";
+      usage;
+      ;;
+  esac
+done
+
+[[ -z "$*" ]] && usage
+
+printf "\033[2J"
+
+while true ; do
+  printf "\033[0;0H[%s] Output of %s:\n" "$(date)" "$*"
+  ${SHELL-/bin/bash} -c "$*"
+  printf "\033[0;${WIDTH}f"
+
+  sleep ${SLEEP:-2}	# genuine Quartz movement
+done
