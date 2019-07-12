@@ -5,7 +5,8 @@ WIDTH=$(tput cols)
 trap cleanup SIGINT SIGTERM SIGKILL SIGQUIT SIGABRT SIGSTOP SIGSEGV
 
 cleanup() {
-	printf "\033[2J"
+#	printf "\033[2J"
+	printf "\033[?25h"
         echo -e "\n"
         exit 0
 }
@@ -34,12 +35,12 @@ done
 
 [[ -z "$*" ]] && usage
 
-printf "\033[2J"
+printf "\033[2J\033[?25l"
 
 while true ; do
   printf "\033[0;0H[%s] Output of %s:\n" "$(date)" "$*"
   ${SHELL-/bin/bash} -c "$*"
-  printf "\033[0;${WIDTH}f"
+#  printf "\033[0;${WIDTH}f"
 
   sleep ${SLEEP:-2}	# genuine Quartz movement
 done
