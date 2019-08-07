@@ -1,0 +1,14 @@
+#!/bin/bash
+# I'm lazy and just want to pull a nice capture without doing the filtering each time
+MyV4Int=$(awk 'BEGIN { IGNORECASE=1 } /^[a-z0-9]+[ \t]+00000000/ { print $1 }' /proc/net/route 2>/dev/null | sort -u)
+MyV4Int=${MyV4Int##*default*dev }
+MyV4Int=${MyV4Int%% *}
+MyIntIPv4=$(ip -4 addr show dev $MyV4Int scope global)
+MyIntIPv4=${MyIntIPv4##*inet }
+MyIntIPv4=${MyIntIPv4%%brd*}
+MyIntIPv4=${MyIntIPv4%%/*}
+
+# echo def_int=${MyV4Int}
+# echo int_ip4=${MyIntIPv4}
+
+tcpdump --no-promiscuous-mode -i ${MyV4Int} -n host ${MyIntIPv4} and not \( arp or tcp port 22 \)
