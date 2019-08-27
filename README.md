@@ -10,6 +10,7 @@ Random one-offs that need a temporary home
   * do-chroot   - chroot into native or foreign architecture filesystems with ease  
   * dummyX - like fakeX, but using built-in xorg support
   * fakex       - sets up a virtual xwindow session suitable for VNC connectivity  
+  * gh          - "[g]rep [h]osts" is dumb.  But I have a specific use for it
   * git-updates - stupid recursive git repo updater, useful if you have lots of repos  
   * grouper-M-build.sh - hacked up copy of the build script for Nexus 7 wifi, aka grouper  
   * ipcapuniq   - awk example to capture and display unique IPv4/IPv6 addresses
