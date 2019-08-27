@@ -17,7 +17,7 @@ OUTFILE="$2"
 BS=${3//[^0-9kKmMgGbB]/}
 BS=${BS:-512}
 
-if [ ! -r "${INFILE}" ];
+if [ ! -r "${INFILE}" -a "${INFILE}" != "-" ];
 then
 	echo "Can't read from ${INFILE}, bailing out"
 	exit 1
@@ -70,4 +70,10 @@ fi
 OFLAG=$(${DD} --help | egrep -wo '(^\s*)direct' | sed 's/[^a-z]//ig')
 
 # We like to be nice to the IO subsystem:
-ionice -c2 -n7 ${DD} if="${INFILE}" bs=${BS} conv=noerror,sync,notrunc ${OFLAG:+oflag=$OFLAG} ${PROGRESS} of="${OUTFILE}" 
+
+if [ "${INFILE}" = "-" ]
+then
+	unset INFILE
+fi
+
+ionice -c2 -n7 ${DD} ${INFILE:+if="$INFILE"} bs=${BS} conv=noerror,sync,notrunc ${OFLAG:+oflag=$OFLAG} ${PROGRESS} of="${OUTFILE}" 
