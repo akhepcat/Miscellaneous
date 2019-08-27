@@ -1,0 +1,16 @@
+#!/bin/bash
+
+if [ -z "$*" ];
+then
+	echo "host?"
+	exit 1
+fi
+
+HOST="$1"
+
+if [ -z "${HOST//[0-9.]/}" ]  # check for bare IP address
+then
+	grep -iE "$*" /etc/hosts 
+else
+	grep -iE "$*" /etc/hosts | grep -viE '^\s*(#|0.0.0.0|127.)' | sed -r 's/[0-9A-Za-z_-]+__[0-9A-Za-z/_.-]+//g; s/#.*//g;' | egrep -io '^[0-9.]+\s+[^[:space:]]+'
+fi
