@@ -18,7 +18,7 @@ prereqs() {
 		echo ""
 		echo "can't find: ${reqs}"
                 echo ""
-                exit 1
+                [[ ${IGNORE:-0} -eq 0 ]] && exit 1
         fi
 
 }
