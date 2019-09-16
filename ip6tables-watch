@@ -15,4 +15,4 @@ then
         esac
 fi
 
-watch -n1 -d "iptables -vnxL ${FILTER} | grep -v -e pkts -e Chain | sort -nk1 | tac | column -t"
+watch -n1 -d "ip6tables -vnxL ${FILTER} | grep -v -e pkts -e Chain | sort -nk1 | tac | column -t"
