@@ -1,0 +1,18 @@
+#!/bin/bash
+FILTER=""
+
+if [ -n "${1}" ];
+then
+        case ${1} in
+                nat) FILTER="-t nat"
+                        ;;
+                mangle) FILTER="-t mangle"
+                        ;;
+                filter) FILTER="-t filter"
+                        ;;
+                *) echo "$0 [nat|mangle|filter]"; exit 1
+                        ;;
+        esac
+fi
+
+watch -n1 -d "iptables -vnxL ${FILTER} | grep -v -e pkts -e Chain | sort -nk1 | tac | column -t"
