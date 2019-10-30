@@ -2,6 +2,7 @@
 Random one-offs that need a temporary home
 
   * 4to6proxy.sh - proxy a localhost IPv4 port to a localhost IPv6 port
+  * apkpull	- list and pull APK's from an android device using ADB
   * apt-add-key	- simple GPG key add for apt with just the fingerprint
   * basecfg	- because I'm tired of using the same configure prefixing options, and automake/autoconf setup
   * browser-tab	- push URL opens to a new window in the preferred browser, while unshortening URLs
