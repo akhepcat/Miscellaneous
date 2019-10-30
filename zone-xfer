@@ -29,7 +29,8 @@ else
       viewk="-y ${algo}:${view}:${secret}"
     else
       echo "Couldn't find secret for view ${view}"
-      exit 1
+      echo "trying without secrets"
+      viewk="-y ${view}"
     fi
   fi
 
