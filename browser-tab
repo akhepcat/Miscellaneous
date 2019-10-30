@@ -183,6 +183,7 @@ PCROM=$(pgrep -f chrom | tail -1)
 [[ -n "${PCROM}" ]] && MYCHROME=$(ps -o args= -q ${PCROM} | tail -1 | awk '{print $1}')
 [[ -z "${MYCHROME}" ]] && MYCHROME=chromium-browser
 
+test ${DEBUG} -gt 1 && echo "DBG: decided on ${MYCHROME} for chrome browser" >> $DBGLOG
 
 if [ $PREFERCHROME -gt 0 ]
 then
