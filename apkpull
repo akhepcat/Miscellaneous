@@ -1,0 +1,52 @@
+#!/bin/bash
+PROG="${0##*/}"
+
+#adb devices
+usage() {
+	echo "search and retrieve an apk:"
+	echo "${PROG} [-l] [name]"
+	echo "	-l	list-only (no download)"
+	echo ""
+	exit 1
+}
+
+if [ "$1" = "-l" ]
+then
+    if [ -n "$2" ]
+    then
+	ARG=$2
+	LIST=1
+    else
+    	usage
+    fi
+elif [ -n "$1" ]
+then
+    ARG=$1
+else
+    usage
+fi
+
+pkgs=$(adb shell pm list packages -f | grep -i -- "${ARG}")
+count=$(wc -w <<< "$pkgs")
+
+if [ ${count} -eq 1 -a ${LIST:-0} -eq 0 ]
+then
+	path=${pkgs%=*}
+	adb pull ${path//package:/} >/dev/null 2>&1
+	path=${path%%-*}
+	path=${path##*/}
+	ver=$(adb shell pm dump ${path} | grep versionName | cut -f2 -d=)
+	abi=$(adb shell pm dump ${path} | grep primaryCpuAbi | cut -f2 -d=)
+	echo "retrieved apk:"
+	mv base.apk "${path}-${ver}-${abi}.apk"
+	ls -alF "${path}-${ver}-${abi}.apk"
+else
+	[[ ${LIST:-0} -eq 0 ]] && echo "too many pkgs, refine search"
+	echo "Found packages:"
+	for pkg in ${pkgs}
+	do
+		pkg=${pkg//package:/}
+		pkg=${pkg%=*}
+		echo "	${pkg}"
+	done
+fi
