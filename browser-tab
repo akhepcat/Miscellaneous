@@ -127,7 +127,7 @@ do
 		test ${DEBUG} -gt 2 && echo "DBG: Retrieving redirection" >> $DBGLOG
 		if [ $USE_PROXY -eq 1 ]
 		then
-			for PROXY in PROX 
+			for PROXY in ${PROX}
 			do
 				NURL="$(curl -I -j ${PROXY:+--proxy $PROXY} $URL 2>/dev/null | \
 					grep -i location: | sed 's/.*http/http/; s/\r//;' )"
