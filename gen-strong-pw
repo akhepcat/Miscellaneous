@@ -1,0 +1,69 @@
+#!/bin/bash
+PROG="${0##*/}"
+MIN=5
+WORDS=40
+COLUMNS=$(stty size | awk '{print $2}')
+
+cleanup() {
+	if [ -e "${TFILE}" ]
+	then
+		rm -f "${TFILE}"
+	fi
+}
+
+usage() {
+	echo "${PROG} [-l #] [-w #]"
+	echo ""
+	echo "generates a random word list with optional minimum-character-length words (default: ${MIN})"
+	echo "of up to -w #  words (default: ${WORDS})"
+	echo ""
+	exit
+}
+
+while getopts ":l:w:" param; do
+ case $param in
+  l) MIN=$OPTARG ;;
+  w) WORDS=$OPTARG ;;
+  *) usage ;;
+ esac
+done
+
+# only numbers, please.
+if [ -n "${MIN//[0-9]/}" ];
+then
+        usage
+fi
+if [ -n "${WORDS//[0-9]/}" ];
+then
+        usage
+fi
+
+TFILE=$(mktemp /tmp/${PROG}.XXXXXXX)
+
+echo "${PROG}:"
+echo -e "\tChoose a few words (at least three! preferably five or more), capitalize one, combine, add punctuation, and you're done"
+echo -e "\t(try combining the words with a space or additional punctuation)"
+echo -e "\tex:"
+echo -e "\t\tDispassionate-moustache!\t\tjazzier-velour?terminals\t\tpathologically_sugarier>burglarising*promoters"
+echo ""
+
+echo "Generating..."
+
+grep -wE --no-filename "[a-z]{$MIN,}" /usr/share/dict/* 2>/dev/null | grep -Ev "'s|[^ -~]" | tr [A-Z] [a-z] | sort -u > "${TFILE}"
+lines=$( wc -l "${TFILE}" | awk '{print $1}' )
+
+if [ ${lines:-0} -lt 4000 ]
+then
+	echo "*** WARNING ***"
+	echo "   You do not have enough word-lists to provide a secure token-space"
+	echo "   Download and install additional dictionaries into /usr/share/dict/"
+	echo "*** WARNING ***"
+fi
+
+echo -e "\nRandom words to generate pass-phrases from a combined ${lines} words, of min-length ${MIN}:"
+
+echo ""
+echo $(sort --random-sort "${TFILE}" | head -${WORDS} ) | fold --width=$(( COLUMNS - (COLUMNS * 100 /275) )) -s | column -s" " -t
+echo ""
+
+cleanup
