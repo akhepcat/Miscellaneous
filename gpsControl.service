@@ -1,6 +1,7 @@
 [Unit]
 Description=set GPS to stationary mode
 Before=gpsd.service
+Before=ubxtool.service
 
 [Service]
 Type=oneshot
@@ -10,3 +11,4 @@ ExecStart=/usr/local/bin/gpsControl -d $DEVICES -s
 [Install]
 WantedBy=multi-user.target
 Also=gpsd.service
+Also=ubxtool.service
