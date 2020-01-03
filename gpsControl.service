@@ -1,0 +1,12 @@
+[Unit]
+Description=set GPS to stationary mode
+Before=gpsd.service
+
+[Service]
+Type=oneshot
+EnvironmentFile=-/etc/default/gpsd
+ExecStart=/usr/local/bin/gpsControl -d $DEVICES -s
+
+[Install]
+WantedBy=multi-user.target
+Also=gpsd.service
