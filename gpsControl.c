@@ -88,9 +88,7 @@ void usage( void )
     printf("   -d = device \n");    
 }
 
-int openUART() {
-	char *dName;
-
+int openUART(char *dName) {
 	int fd = -1;
 	fd = open(dName, O_RDWR | O_NOCTTY | O_NDELAY);		//Open in non blocking read/write mode
 
