@@ -14,6 +14,10 @@
   with additional changes from https://ava.upuaut.net/?p=951
 */
 
+#define DEBUG(...) do { \
+	if(arguments.debug>0) { printf(__VA_ARGS__); } \
+	} while(0)
+
 
 /////  begin ARGP stuff
 
@@ -34,7 +38,8 @@ static struct argp_option options[] = {
   { "quiet",  'q', 0, 0, "Quiet mode (fewer messages)"                },
   { "toggle", 't', 0, 0, "Toggle baud rate between 9,600 and 115,200" },
   { "high",   'h', 0, 0, "Try synchronizing at 115,200 baud first"    },
-  { "device", 'd', "FILE", 0, "Serial device name of GPS"                  },
+  { "debug",  'D', 0, 0, "Enable some debugging messages"             },
+  { "device", 'd', "FILE", 0, "Serial device name of GPS"             },
   { 0 }
 };
 
@@ -46,8 +51,13 @@ struct arguments {
   int echo;
   int quiet;
   int high;
+  int debug;
   char *device;
 };
+
+struct arguments arguments;
+
+
 
 /* Parse a single option. */
 static error_t parse_opt (int key, char *arg, struct argp_state *state) {
@@ -63,7 +73,8 @@ static error_t parse_opt (int key, char *arg, struct argp_state *state) {
     case 't': arguments->toggle = 1;       break;
     case 'e': arguments->echo = 1;         break;
     case 'h': arguments->high = 1;         break;
-    case 'd': arguments->device=arg;   break;
+    case 'D': arguments->debug = 1;        break;
+    case 'd': arguments->device=arg;	   break;
 
    case ARGP_KEY_END:
       if( arguments->baudCheck + arguments->readPortCfg + arguments->echo 
@@ -234,6 +245,7 @@ void setTermOptions( int fd, int baud ) {
 int openUART( char *device, int quiet, int hint ) {
 
 	int fd = -1;
+	DEBUG( "DEBUG: openUART(%s)\n", device);
 	fd = open(device, O_RDWR | O_NOCTTY | O_NDELAY);		//Open in non blocking read/write mode
 
 	if (fd == -1) {
@@ -242,6 +254,7 @@ int openUART( char *device, int quiet, int hint ) {
 	}
 	
 	// we try twice...
+	DEBUG( "DEBUG: checking supported baudrates\n");
 	int try = (hint ? B115200 : B9600);
 	int i;
 	for( i = 0; i < 2; i++ ) {
@@ -256,6 +269,7 @@ int openUART( char *device, int quiet, int hint ) {
 
 	// we failed, so close the port...
 	close( fd );
+	DEBUG( "DEBUG: failed to synchronize baudrate\n");
 	return -1;
 }
 
@@ -445,8 +459,6 @@ int main( int argc, char *argv[] ) {
 
 //// begin ARGP stuff
 
-  struct arguments arguments;
-
   /* Default values. */
   arguments.baudCheck = 0;
   arguments.readPortCfg = 0;
@@ -454,6 +466,7 @@ int main( int argc, char *argv[] ) {
   arguments.quiet = 0;
   arguments.toggle = 0;
   arguments.high = 0;
+  arguments.device = 0;
 
   /* Parse our arguments; every option seen by parse_opt will
      be reflected in arguments. */
@@ -461,17 +474,26 @@ int main( int argc, char *argv[] ) {
 
 //// end ARGP stuff
 
+	if( arguments.device == 0 ) { 
+		printf( "ERROR: No device given\n" );
+		exit(1);
+	}
+
+	DEBUG( "INFO: opening device '%s'\n", arguments.device);
 	int fd = openUART( arguments.device, arguments.quiet, arguments.high );
 	if( fd < 0 ) exit( 1 );
 
 	if( arguments.baudCheck ) {
+		DEBUG( "INFO: baudcheck finished '%s'\n", arguments.device);
 		close( fd );
 		exit( 0 );
 	}
 	else if( arguments.toggle ) {
+		DEBUG( "INFO: toggling baudrate\n");
 		toggle( fd, arguments.quiet );
 	}
 	else if( arguments.readPortCfg ) {
+		DEBUG( "INFO: reading config\n");
 		int result = sendUbxMsg( fd, getPortQueryMsg() );
 		if( result ) {
 			UBXMsg answer = rcvUbxMsg( fd );
@@ -479,7 +501,9 @@ int main( int argc, char *argv[] ) {
 		}
 	}
 	else if( arguments.echo ) {
+		DEBUG( "INFO: serial-port echo (ctrl-c to stop)\n");
 		echo( fd );
 	}
 	exit( 0 );
 }
+
