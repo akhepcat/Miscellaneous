@@ -101,8 +101,8 @@ fi
 test ${DEBUG} -gt 2 && echo "DBG: URL for possible unshorting: >>${URL}<<" >> $DBGLOG
 
 
-CHROME=$(echo $(pgrep -f chromium; pgrep -f chrome) | wc -w)
-FIREFOX=$(pgrep -f firefox | wc -l)
+CHROME=$(echo $(pgrep -x chromium; pgrep -x chrome) | wc -w)
+FIREFOX=$(pgrep -x firefox | wc -l)
 
 CRUN=$((CHROME > 0))
 FRUN=$((FIREFOX > 0))
@@ -179,8 +179,8 @@ then
   fi
 fi
 
-PCROM=$(pgrep -f chrom | tail -1)
-[[ -n "${PCROM}" ]] && MYCHROME=$(ps -o args= -q ${PCROM} | tail -1 | awk '{print $1}')
+PCROM=$(pgrep -x 'chrom[ei]' | tail -1)
+[[ -n "${PCROM}" ]] && MYCHROME=$(ps -o args= -q ${PCROM} | grep -iv chromium | tail -1 | awk '{print $1}')
 [[ -z "${MYCHROME}" ]] && MYCHROME=chromium-browser
 
 test ${DEBUG} -gt 1 && echo "DBG: decided on ${MYCHROME} for chrome browser" >> $DBGLOG
@@ -192,34 +192,42 @@ then
 	if [ $FORCEPREFER -gt 0 -o $CRUN -gt 0 -a $CHROME -gt 0 ]
 	then
 		test ${DEBUG} -gt 0 && echo "DBG: and sent >>$URL<< to chrome -remote" >> $DBGLOG
+		test ${DEBUG} -gt 4 && echo "called: ${MYCHROME} -remote \"$URL\" " >> $DBGLOG
 		${MYCHROME} -remote "${URL}"
 	elif [ $FRUN -gt 0 -a $FIREFOX -gt 0 ]
 	then
 		test ${DEBUG} -gt 0 && echo "DBG: but sent >>$URL<< to firefox -remote" >> $DBGLOG
+		test ${DEBUG} -gt 4 && echo "called: /usr/bin/firefox -new-tab -url \"$URL\" " >> $DBGLOG
 		/usr/bin/firefox -new-tab -url "${URL}"
 	elif [ $FIREFOX -gt 0 ]
 	then
 		test ${DEBUG} -gt 0 && echo "DBG: but sent >>$URL<< to new firefox" >> $DBGLOG
+		test ${DEBUG} -gt 4 && echo "called: /usr/bin/firefox -url \"$URL\" " >> $DBGLOG
 		/usr/bin/firefox -url "${URL}"
 	else
 		test ${DEBUG} -gt 0 && echo "DBG: and sent >>$URL<< to new chrome" >> $DBGLOG
+		test ${DEBUG} -gt 4 && echo "called: ${MYCHROME} \"$URL\" " >> $DBGLOG
 		${MYCHROME} "${URL}"
 	fi
 else
 	if [ $FRUN -gt 0 -a $FIREFOX -gt 0 ]
 	then
 		test ${DEBUG} -gt 0 && echo "DBG: and sent >>$URL<< to firefox -remote" >> $DBGLOG
+		test ${DEBUG} -gt 4 && echo "called: /usr/bin/firefox -new-tab -url \"$URL\" " >> $DBGLOG
 		/usr/bin/firefox -new-tab -url "${URL}"
 	elif [ $CRUN -gt 0 -a $CHROME -gt 0 ]
 	then
 		test ${DEBUG} -gt 0 && echo "DBG: but sent >>$URL<< to chrome -remote" >> $DBGLOG
+		test ${DEBUG} -gt 4 && echo "called: ${MYCHROME} -remote \"$URL\" " >> $DBGLOG
 		${MYCHROME} -remote "${URL}"
 	elif [ $CHROME -gt 0 ]
 	then
 		test ${DEBUG} -gt 0 && echo "DBG: but sent >>$URL<< to new chrome" >> $DBGLOG
 		${MYCHROME}  "${URL}"
+		test ${DEBUG} -gt 4 && echo "called: ${MYCHROME} \"$URL\" " >> $DBGLOG
 	else
 		test ${DEBUG} -gt 0 && echo "DBG: and sent >>$URL<< to new firefox" >> $DBGLOG
+		test ${DEBUG} -gt 4 && echo "called: /usr/bin/firefox -url \"$URL\" " >> $DBGLOG
 		/usr/bin/firefox -url "${URL}"
 	fi
 fi
