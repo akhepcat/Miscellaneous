@@ -1,0 +1,23 @@
+#!/bin/bash
+
+if [ 0 -eq $(python -m serial.tools.list_ports |& echo $?) ]
+then
+    python -m serial.tools.list_ports -v
+else
+
+    for device in $(find /sys/devices -type d -iname ttyACM*)
+    do 
+	acm=${device##*/}
+	dpath=${device/\/tty\/*/}
+	dpath=${dpath%/*}
+
+	vendor=$(cat ${dpath}/idVendor)
+	prod=$(cat ${dpath}/idProduct)
+	mfr=$(cat ${dpath}/manufacturer)
+	product=$(cat ${dpath}/product)
+	serial=$(cat ${dpath}/serial)
+	serial=${serial//_/}
+
+	printf "%4s:%4s %20.20s %20.20s %20.20s - %s\n" ${vendor} ${prod} "${mfr}" "${product}" "${serial}" ${acm}
+    done
+fi
