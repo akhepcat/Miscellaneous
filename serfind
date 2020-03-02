@@ -1,6 +1,7 @@
 #!/bin/bash
 
-if [ 0 -eq $(python -m serial.tools.list_ports |& echo $?) ]
+python -m serial.tools.list_ports 2>&1| grep -q "No module"
+if [ 1 -eq $? ]
 then
     python -m serial.tools.list_ports -v
 else
