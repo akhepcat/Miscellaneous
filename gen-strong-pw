@@ -12,18 +12,24 @@ cleanup() {
 }
 
 usage() {
-	echo "${PROG} [-l #] [-w #]"
+	echo "${PROG} [-l #] [-w #] [-D path] [-d file] -f"
 	echo ""
 	echo "generates a random word list with optional minimum-character-length words (default: ${MIN})"
 	echo "of up to -w #  words (default: ${WORDS})"
+	echo "  -D path    # use path for dictionary location (all files sourced)"
+	echo "  -d file    # use file  as the single-source dictionary"
+	echo "  -f         # force usage of filespec, even if less than optimal wordcount"
 	echo ""
 	exit
 }
 
-while getopts ":l:w:" param; do
+while getopts ":fl:w:d:D:" param; do
  case $param in
   l) MIN=$OPTARG ;;
   w) WORDS=$OPTARG ;;
+  D) DPATH=$OPTARG ;;
+  d) DFILE=$OPTARG ;;
+  f) FORCE=1 ;;
   *) usage ;;
  esac
 done
@@ -38,6 +44,21 @@ then
         usage
 fi
 
+if [ -n "${DPATH}" -a ! -d "${DPATH}" ]
+then
+	echo "${DPATH} is not a directory"
+	usage
+elif [ -n "${DPATH}" -a -n "${DFILE}" ]
+then
+	echo "cannot use both -D  and -d  simulataneously"
+	usage
+fi
+if [ -n "${DFILE}" -a ! -r "${DFILE}" ]
+then
+	echo "${DFILE} is not a regular file, or cannot read"
+	usage
+fi
+
 TFILE=$(mktemp /tmp/${PROG}.XXXXXXX)
 
 echo "${PROG}:"
@@ -49,10 +70,19 @@ echo ""
 
 echo "Generating..."
 
-grep -wE --no-filename "[a-z]{$MIN,}" /usr/share/dict/* 2>/dev/null | grep -Ev "'s|[^ -~]" | tr [A-Z] [a-z] | sort -u > "${TFILE}"
+if [ -n "${DPATH}" ]
+then
+	DSPEC="$(ls ${DPATH}/*)"
+elif [ -n "${DFILE}" ]
+then
+	DSPEC=${DFILE}
+else
+	DSPEC="$(ls /usr/share/dict/*)"
+fi
+grep -wE --no-filename "[a-z]{$MIN,}" ${DSPEC} 2>/dev/null | grep -Ev "'s|[^ -~]" | tr [A-Z] [a-z] | sort -u > "${TFILE}"
 lines=$( wc -l "${TFILE}" | awk '{print $1}' )
 
-if [ ${lines:-0} -lt 4000 ]
+if [ ${lines:-0} -lt 4000 -a ${FORCE:-0} -ne 1 ]
 then
 	echo "*** WARNING ***"
 	echo "   You do not have enough word-lists to provide a secure token-space"
