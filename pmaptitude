@@ -1,0 +1,37 @@
+#!/bin/bash
+#  PMaptitude - pacman-interface from aptitude
+#
+#  super insecure.  Don't use this on multi-user systems.
+#  really, just don't use this
+#
+PROG=${0##*/}
+CMD="$1"
+shift
+
+ARGS="${*}"
+# some very basic, not at all effective, sanitizing
+ARGS="${ARGS//[\'\`\$\(\)]/}"
+
+case "$CMD" in
+	search) pacman -Ss ${ARGS// /|}
+		;;
+	install) pacman -S ${ARGS}
+		;;
+	update) pacman -Syy
+		;;
+	upgrade|dist-upgrade) pacman -Syu
+		;;
+	remove|purge) pacman -Rs ${ARGS}
+		;;
+	clean|autoclean) pacman -Sc
+		;;
+	autoremove) pacman -Qdtq | pacman -Rs -
+		;;
+	show) pacman -Si ${ARGS}
+		;;
+	*) echo "ERR: null or unsupported apt command for pacman"
+	   echo "USAGE:"
+	   echo "    $PROG [search|install|remove|purge|show] {pkgspec}"
+	   echo "             [update|upgrade|dist-upgrade|clean|autoclean|autoremove]"	
+		;;
+esac
