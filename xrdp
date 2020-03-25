@@ -1,0 +1,30 @@
+#!/bin/sh
+
+DISPLAY=${DISPLAY:-:0}
+PATH=${PATH}:/usr/sbin
+
+PORT=$(lsof -i -n | grep x11vnc | cut -f 2 -d: | awk '{print $1}')
+XAUTH=$(ps wwwwaux | grep xauth | sed 's/.*-auth//g' | grep var)
+if [ -z "${XAUTH}" -a -n "$1" ]
+then
+	XAUTH=$1
+fi
+XAUTH="${XAUTH:+-auth $XAUTH}"
+
+if [ -n "${PORT}" ]
+then
+	echo "already listening on port ${PORT}"
+	exit
+fi
+
+# OPTS="-noxdamage -nowf|-nowcr -fixscreen -cursor most|arrow | -noxfixes"
+OPTS="-speeds dsl -xwarppointer  -xinerama" #-threads 
+
+x11vnc -q ${OPTS} -bg -notruecolor -overlay -nobell -nodragging ${XAUTH} -display ${DISPLAY}
+# -progressive 100 -nap
+
+if [ $LOCAL ];
+then
+  vncviewer -fullscreen -owncmap -depth 8 -encodings "tight" -compresslevel 9 -quality 0 localhost${DISPLAY}
+fi
+
