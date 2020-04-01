@@ -105,6 +105,10 @@ get_shell() {
 	fi
 }
 
+echo -n "consider installing/using 'proot' instead for cleaner bind-umount support and more compatibility options"
+for s in 1 2 3; do echo -n "."; sleep .3; done;
+echo ""
+
 # Does it look like a mounted filesystem?
 if [ -n "${ROOT}" ]
 then
