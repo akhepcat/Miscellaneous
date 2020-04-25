@@ -35,7 +35,7 @@ then
 	fi
 elif [ ${redhat:-0} ]
 then
-	# Need to detect the current version
+	lzv=$(rpm -q zoom --info | grep Version | cut -f2 -d)
 	# need to compare current version vs remote version
 	
 	wget -O /tmp/zoom-${rzv}-x86_64.rpm https://zoom.us/client/latest/zoom_x86_64.rpm
@@ -48,6 +48,7 @@ then
 	
 	wget -O /tmp/zoom-${rzv}-x86_64.pkg.tar.xz https://zoom.us/client/latest/zoom_x86_64.pkg.tar.xz
 	ls -alF /tmp/zoom-${rzv}-x86_64.pkg.tar.xz
+	echo "You'll need to manually install from the package"
 else
 	echo "Can't determine version for automatic upgrade"
 fi
