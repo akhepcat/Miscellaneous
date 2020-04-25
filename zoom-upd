@@ -4,6 +4,10 @@ ubuntu=0
 redhat=0
 unk=0
 
+rzv=$(curl -A "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36" \
+	--silent https://zoom.us/download | grep -E 'linux-ver-text.*Version' | sed 's/.*Version //; s|</span>.*||;' )
+
+# expand the detection for different OS's as needed
 if [ -n "$(which apt)" ]
 then
 	ubuntu=1
@@ -14,28 +18,34 @@ else
 	unk=1
 fi
 
-lzv=$(dpkg -l zoom | grep ^ii | awk '{print $3}')
 
-rzv=$(curl -A "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36" \
-	--silent https://zoom.us/download | grep -E 'linux-ver-text.*Version' | sed 's/.*Version //; s|</span>.*||;' )
-
-echo "cur: ${lzv:-0}"
-echo "rem: ${rzv:-0}"
-
-dpkg --compare-versions $lzv lt $rzv && echo "upgrade needed"
-
+# expand the individual OS sections as needed
 if [ ${ubuntu:-0} ]
 then
-	wget -O /tmp/zoom-${rzv}-amd64.deb https://zoom.us/client/latest/zoom_amd64.deb
-	sudo dpkg -i /tmp/zoom-${rzv}-amd64.deb
-	rm -i /tmp/zoom-${rzv}-amd64.deb
+	lzv=$(dpkg -l zoom | grep ^ii | awk '{print $3}')
+	dpkg --compare-versions $lzv lt $rzv
+	if [ $? -eq 0 ]
+	then
+		echo "Upgrade needed"
+		wget -O /tmp/zoom-${rzv}-amd64.deb https://zoom.us/client/latest/zoom_amd64.deb
+		sudo dpkg -i /tmp/zoom-${rzv}-amd64.deb
+		rm -i /tmp/zoom-${rzv}-amd64.deb
+	else
+		echo "no newer version available"
+	fi
 elif [ ${redhat:-0} ]
 then
+	# Need to detect the current version
+	# need to compare current version vs remote version
+	
 	wget -O /tmp/zoom-${rzv}-x86_64.rpm https://zoom.us/client/latest/zoom_x86_64.rpm
 	sudo rpm -Uvh /tmp/zoom-${rzv}-x86_64.rpm
 	rm -i /tmp/zoom-${rzv}-x86_64.rpm
 elif [ ${unk:-0} ]
 then
+	# Need to detect the current version
+	# need to compare current version vs remote version
+	
 	wget -O /tmp/zoom-${rzv}-x86_64.pkg.tar.xz https://zoom.us/client/latest/zoom_x86_64.pkg.tar.xz
 	ls -alF /tmp/zoom-${rzv}-x86_64.pkg.tar.xz
 else
