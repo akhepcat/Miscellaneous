@@ -8,10 +8,10 @@ rzv=$(curl -A "Mozilla/5.0 (X11; Linux x86_64)" \
 	--silent https://zoom.us/download | grep -E 'linux-ver-text.*Version' | sed 's/.*Version //; s|</span>.*||;' )
 
 # expand the detection for different OS's as needed
-if [ -n "$(which apt)" ]
+if [ -n "$(which apt 2>/dev/null)" ]
 then
 	ubuntu=1
-elif [ -n "$(which rpm)" ]
+elif [ -n "$(which rpm 2>/dev/null)" ]
 then
 	redhat=1
 else
@@ -20,9 +20,9 @@ fi
 
 
 # expand the individual OS sections as needed
-if [ ${ubuntu:-0} ]
+if [ 1 -eq ${ubuntu:-0} ]
 then
-	lzv=$(dpkg -l zoom | grep ^ii | awk '{print $3}')
+	lzv=$(dpkg -l zoom 2>&1 | grep ^ii | awk '{print $3}')
 	dpkg --compare-versions $lzv lt $rzv
 	if [ $? -eq 0 ]
 	then
@@ -33,15 +33,18 @@ then
 	else
 		echo "no newer version available"
 	fi
-elif [ ${redhat:-0} ]
+elif [ 1 -eq ${redhat:-0} ]
 then
-	lzv=$(rpm -q zoom --info | grep Version | cut -f2 -d)
+	lzv=$(rpm -q zoom --info 2>&1 | grep Version | cut -f2 -d:)
 	# need to compare current version vs remote version
 	
 	wget -O /tmp/zoom-${rzv}-x86_64.rpm https://zoom.us/client/latest/zoom_x86_64.rpm
-	sudo rpm -Uvh /tmp/zoom-${rzv}-x86_64.rpm
+
+	# because we might need dependencies
+	sudo yum install /tmp/zoom-${rzv}-x86_64.rpm
+
 	rm -i /tmp/zoom-${rzv}-x86_64.rpm
-elif [ ${unk:-0} ]
+elif [ 1 -eq ${unk:-0} ]
 then
 	# Need to detect the current version
 	# need to compare current version vs remote version
