@@ -14,6 +14,9 @@ then
 elif [ -n "$(which rpm 2>/dev/null)" ]
 then
 	redhat=1
+elif [ -n "$(which pacman 2>/dev/null)" ]
+then
+	arch=1
 else
 	unk=1
 fi
@@ -44,13 +47,23 @@ then
 	sudo yum install /tmp/zoom-${rzv}-x86_64.rpm
 
 	rm -i /tmp/zoom-${rzv}-x86_64.rpm
-elif [ 1 -eq ${unk:-0} ]
+elif [ 1 -eq ${arch:-0} ]
 then
 	# Need to detect the current version
 	# need to compare current version vs remote version
 	
 	wget -O /tmp/zoom-${rzv}-x86_64.pkg.tar.xz https://zoom.us/client/latest/zoom_x86_64.pkg.tar.xz
-	ls -alF /tmp/zoom-${rzv}-x86_64.pkg.tar.xz
+
+	# This grabs dependencies
+	pacman -U /tmp/zoom-${rzv}-x86_64.pkg.tar.xz
+
+	rm -i /tmp/zoom-${rzv}-x86_64.pkg.tar.xz
+elif [ 1 -eq ${unk:-0} ]
+then
+	# Need to detect the current version
+	# need to compare current version vs remote version
+	
+	wget -O /tmp/zoom-${rzv}-x86_64.tar.xz https://zoom.us/client/latest/zoom_x86_64.tar.xz
 	echo "You'll need to manually install from the package"
 else
 	echo "Can't determine version for automatic upgrade"
