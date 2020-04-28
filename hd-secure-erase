@@ -1,0 +1,40 @@
+#!/bin/bash
+
+DISK=${1}
+SECPASS="password1"
+
+if [ -z "${DISK}" -o ! -b "${DISK}" ]
+then 
+	echo "which disk to secure erase?"
+	exit 1
+fi
+
+frozen=$(hdparm -I ${DISK} 2>&1 | grep -Ei 'not.*frozen')
+
+if [ -z "${frozen}" ]
+then
+	echo "You must suspend/resume to memory and try again:"
+	echo 'echo -n mem > /sys/power/state'
+	exit 1
+fi
+
+echo "THIS IS DESTRUCTIVE. YOU MAY BRICK YOUR DRIVE. YOU HAVE BEEN WARNED"
+
+echo "using security password:  ${SECPASS}"
+
+hdparm --user-master u --security-set-pass ${SECPASS} ${DISK}
+hdparm -I ${DISK} 2>&1 | grep -A 20 '^Security:'
+
+echo "next step will erase disk, and take lots of time"
+
+echo "ctrl-c to abort now, or wait 5 seconds to continue"
+
+sleep 5
+
+time hdparm --user-master u --security-erase ${SECPASS} ${DISK}
+
+echo "Drive ${DISK} is now securely erased"
+hdparm -I ${DISK} 2>&1 | grep -A 20 '^Security:'
+
+# hdparm --security-disable ${SECPASS} ${DISK}
+# should unlock a drive
