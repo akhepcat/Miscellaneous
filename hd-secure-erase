@@ -21,7 +21,7 @@ fi
 
 echo "THIS IS DESTRUCTIVE. YOU MAY BRICK YOUR DRIVE. YOU HAVE BEEN WARNED"
 
-echo "using security password:  ${SECPASS}"
+#echo "using security password:  ${SECPASS}"
 
 hdparm --user-master u --security-set-pass ${SECPASS} ${DISK}
 # Show the status, steal the duration with redirection!
