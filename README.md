@@ -44,3 +44,4 @@ Random one-offs that need a temporary home
   * vidrotate - rotate your video files
   * x509crypt   - uses public/private key certificates to encrypt/decrypt a file  
   * Xsshauth - share your xauth over ssh
+  * zoom-upd - Because Zoom, Inc.  doesn't make it easy to know if you need to upgrade, or to automatically upgrade
