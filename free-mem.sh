@@ -2,8 +2,9 @@
 #
 # Dumb cron-able script to drop caches every night and free up some memory.
 # Is it *really* needed?  probably not.  Until it is.
-
-kInst=$(grep MemTotal /proc/meminfo | awk '{print $2}')
+# 
+# we used to use MemTotal, but really MemAvailable is probably "more right" more often
+kInst=$(grep MemAvailable /proc/meminfo | awk '{print $2}')
 kFree=$(grep MemFree /proc/meminfo | awk '{print $2}')
 
 kLim=$(( kInst / 4 ))
