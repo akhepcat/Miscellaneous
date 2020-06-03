@@ -8,8 +8,8 @@ ubuntu=0
 redhat=0
 unk=0
 
-rzv=$(curl -A "Mozilla/5.0 (X11; Linux x86_64)" \
-	--silent https://zoom.us/download | grep -E 'linux-ver-text.*Version' | sed 's/.*Version //; s|</span>.*||;' )
+rzv=$(wget -O - -U "Mozilla/5.0 (X11; Linux x86_64)" --quiet \
+	https://zoom.us/download | grep -E 'linux-ver-text.*Version' | sed 's/.*Version //; s|</span>.*||;' )
 
 # expand the detection for different OS's as needed
 if [ -n "$(which apt 2>/dev/null)" ]
