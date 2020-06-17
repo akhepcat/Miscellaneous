@@ -1,0 +1,41 @@
+#!/bin/bash
+#
+#  Run this inside of screen, then 'watch' a status version live or in another screen.
+drive=$1
+
+if [ -z "${drive}" -o ! -b "${drive}" ]
+then
+        echo "$0 [drive]"
+        exit 1
+fi
+
+start() {
+        smartctl --test=long ${drive}
+        status
+}
+
+stop() {
+        running=$(smartctl -a ${drive} 2>&1 | grep -i 'Self-test routine in progress')
+        if [ -n "${running}" ]
+        then
+                echo "Interrupting a self-test in progress"
+                smartctl -X ${drive}
+        else
+                echo "No test running"
+        fi
+}
+
+status() {
+        smartctl -a ${drive} 2>&1 | grep -i -A3 '^Self-test execution'
+}
+
+case $2 in
+        start) start
+                ;;
+        stop) stop
+                ;;
+        status) status
+                ;;
+        *) echo "$0 [drive] [start|stop|status]"
+                ;;
+esac
