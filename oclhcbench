@@ -32,11 +32,22 @@ do
   if [ -n "${line}" -a -z "${line##Platform ID*}" ]
   then
     plid=${line//Platform ID #/}
+  elif [ -n "${line}" -a -z "${line##OpenCL Platform ID*}" ]
+  then
+    plid=${line//OpenCL Platform ID #/}
+    
   else
 
-    if [ -n "${line}" -a -z "${line##Device ID*}" ]
+    # Backend Device ID #2 (Alias: #1)
+   #or
+    # Backend Device ID #3
+   #or
+    #   Device ID #2
+
+    if [ -n "${line}" -a -z "${line##*Device ID*}" ]
     then
-      did=${line//Device ID #/}
+      did=${line//*Device ID #/}
+      did=${did// */}
       idx="${plid}-${did}"
       devices[$idx]=1
     fi
@@ -55,13 +66,14 @@ then
       didx=${key#*-}
       dtype=${key%-*}
 
+      PLAT="-D ${dtype}"
       if [ ${ONEHIT} -eq 0 ];
       then
-        hashcat --workload-profile=4 --force --opencl-platforms=${dtype} -opencl-devices=${didx} --benchmark 2>&1
+        hashcat --workload-profile=4 --force ${PLAT} -d ${didx} --benchmark 2>&1
       else
         for idx in "${!MODES[@]}"
         do
-          hashcat --workload-profile=4 --force --opencl-platforms=${dtype} -opencl-devices=${didx} --benchmark -m ${MODES[$idx]} 2>&1
+          hashcat --workload-profile=4 --force ${PLAT} -d ${didx} --benchmark -m ${MODES[$idx]} 2>&1
         done
       fi
     fi
