@@ -20,7 +20,7 @@ else
 fi
 
 tmpfile=$(mktemp)
-hashcat -I 2>&1 > ${tmpfile}
+hashcat --force -I 2>&1 > ${tmpfile}
 
 declare -A devices
 plid=0
