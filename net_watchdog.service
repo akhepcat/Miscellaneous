@@ -1,0 +1,10 @@
+[Unit]
+Description=network watchdog for end-to-end connectivity validation
+
+[Service]
+Type=oneshot
+EnvironmentFile=-/etc/default/net_watchdog
+ExecStart=/usr/local/sbin/net_watchdogd $DEVICE
+
+[Install]
+WantedBy=multi-user.target
