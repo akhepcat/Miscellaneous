@@ -18,7 +18,8 @@ fi
 
 kLim=$(( kInst / 4 ))
 
-if [ ${kLim:-0} -gt ${kMin} ]
+# make adjustments for lo-mem (2GB or less) devices
+if [ ${kInst:-0} -lt 2097152 -a ${kLim:-0} -gt ${kMin} ]
 then
         kLim=${kMin}
 fi
