@@ -23,7 +23,7 @@ do_shutdown() {
         REASON=$1
 
         logger "watchdog: ${REASON:-%ERR:} no network, rebooting"
-        echo shutdown -r +3  "watchdog:  ${REASON:-%ERR:} No Network, rebooting"
+        shutdown -r +3  "watchdog:  ${REASON:-%ERR:} No Network, rebooting"
         exit 1
 }
 
@@ -61,9 +61,6 @@ do
                                 GW4=$(( 16#$GW4 ))
 
                                 GW="${GW1}.${GW2}.${GW3}.${GW4}"
-
-                                echo "GW is ${GW}"
-
                                 ALIVE=$(ping -w 1 -c 1 ${GW} >/dev/null 2>&1)
 
                                 if [ $? -eq 1 ]
