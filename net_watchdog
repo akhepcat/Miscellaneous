@@ -1,0 +1,120 @@
+#!/bin/bash
+### BEGIN INIT INFO
+# Provides:		net_watchdog
+# Required-Start:	$network $syslog
+# Required-Stop:	$network $syslog
+# Default-Start:	2 3 4 5
+# Default-Stop:		0 1 6
+# Short-Description:	Reboot system if network goes unresponsive between host and default gw
+### END INIT INFO
+
+# User variables
+
+IFACE=${1:-eth0}
+SLEEP=60                # 60 for prod
+COUNTER=15		# 15 cycles of $SLEEP before "reboot"
+
+# internal variables
+PROG="${0##*/}"
+
+LINK=0
+IP=""
+GW=""
+LINK_CNT=0
+IP_CNT=0
+GW_CNT=0
+RT_CNT=0
+
+# one function to rule them all
+
+do_shutdown() {
+        REASON=$1
+
+        logger "watchdog: ${REASON:-%ERR:} no network, rebooting"
+        echo shutdown -r +3  "watchdog:  ${REASON:-%ERR:} No Network, rebooting"
+        exit 1
+}
+
+# Main loop
+while true
+do
+        LINK=$(cat /sys/class/net/${IFACE}/carrier)
+
+        if [ 1 -eq ${LINK:-0} ]
+        then
+
+                MyV4Int=$(awk 'BEGIN { IGNORECASE=1 } /^[a-z0-9]+[ \t]+00000000/ { print $1 }' /proc/net/route 2>/dev/null | head -1)
+                if [ "${IFACE:-lo1}" = "${MyV4Int:-lo0}" ]
+                then
+                        MyV4Int=${MyV4Int##*default*dev }
+                        MyV4Int=${MyV4Int%% *}
+
+                        MyIntIPv4=$(ip -4 addr show dev $MyV4Int scope global)
+                        MyIntIPv4=${MyIntIPv4##*inet }
+                        MyIntIPv4=${MyIntIPv4%%brd*}
+                        MyIntIPv4=${MyIntIPv4%%/*}
+
+                        if [ -n "${MyIntIPv4}" ]
+                        then
+                                GW=$(awk 'BEGIN { IGNORECASE=1 } /^[a-z0-9]+[ \t]+00000000/ { print $3 }' /proc/net/route)
+                                GW1=${GW##??????}
+                                GW2=${GW//$GW1/}
+                                GW2=${GW2##????}
+                                GW3=${GW//$GW2$GW1/}
+                                GW3=${GW3##??}
+                                GW4=${GW%%??????}
+                                GW1=$(( 16#$GW1 ))
+                                GW2=$(( 16#$GW2 ))
+                                GW3=$(( 16#$GW3 ))
+                                GW4=$(( 16#$GW4 ))
+
+                                GW="${GW1}.${GW2}.${GW3}.${GW4}"
+
+                                echo "GW is ${GW}"
+
+                                ALIVE=$(ping -w 1 -c 1 ${GW} >/dev/null 2>&1)
+
+                                if [ $? -eq 1 ]
+                                then
+                                        RT_CNT=$(( $RT_CNT + 1 ))
+                                        if [ ${RT_CNT:-0} -gt ${COUNTER:-15} ]
+                                        then
+                                                echo "${COUNTER:-15} cycles without IP link to gw, rebooting"
+                                                do_shutdown "%ENOGW:"
+                                        fi
+                                else
+                                        # Getting here means everything is working right, so reset counters
+
+                                        RT_CNT=0
+                                        IP_CNT=0
+                                        GW_CNT=0
+                                        LINK_CNT=0
+                                fi
+                        else
+                                IP_CNT=$(( $IP_CNT + 1 ))
+                                if [ ${IP_CNT:-0} -gt ${COUNTER:-15} ]
+                                then
+                                        echo "${COUNTER:-15} cycles without local IP, rebooting"
+                                        do_shutdown "%ENOIP:"
+                                fi
+                        fi
+                else
+                        GW_CNT=$(( $GW_CNT + 1 ))
+                        if [ ${GW_CNT:-0} -gt ${COUNTER:-15} ]
+                        then
+                                echo "${COUNTER:-15} cycles without a default route, rebooting"
+                                do_shutdown "%ENOROUTE:"
+                        fi
+                fi
+
+        else
+                LINK_CNT=$(( $LINK_CNT + 1 ))
+                if [ ${LINK_CNT:-0} -gt ${COUNTER:-15} ]
+                then
+                        echo "${COUNTER:-15} cycles without link, rebooting"
+                        do_shutdown "%ENOLINK:"
+                fi
+        fi
+
+        sleep ${SLEEP}
+done
