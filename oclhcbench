@@ -66,7 +66,7 @@ then
       didx=${key#*-}
       dtype=${key%-*}
 
-      PLAT="-D ${dtype}"
+      PLAT="-D 1,2"
       if [ ${ONEHIT} -eq 0 ];
       then
         hashcat --workload-profile=4 --force ${PLAT} -d ${didx} --benchmark 2>&1
