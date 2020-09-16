@@ -6,7 +6,7 @@
  
 IP=${1//[^0-9a-fA-F.:]/}
 
-if [ "$1" != ${IP} ]
+if [ "$1" != "${IP}" ]
 then
         echo "invalid IPv4 or IPv6 address"
         exit 1
