@@ -1,0 +1,40 @@
+#!/bin/bash
+# (c) 2020 Leif Sawyer
+# License: GPL 3.0 (see https://github.com/akhepcat/)
+# Permanent home:  https://github.com/akhepcat/Miscellaneous/
+# Direct download: https://raw.githubusercontent.com/akhepcat/Miscellaneous/master/findroute
+ 
+IP=${1//[^0-9a-fA-F.:]/}
+
+if [ "$1" != ${IP} ]
+then
+        echo "invalid IPv4 or IPv6 address"
+        exit 1
+fi
+
+if [ -z "${IP}" ]
+then
+        echo "IPv4/IPv6 address to find route for?"
+        exit 1
+fi
+
+if [ "${IP##*:*}" != "${IP}" ]
+then
+   six="-6"
+   tcidr=128
+else
+   six=""
+   tcidr=32
+fi
+
+for cidr in $(seq $tcidr -1 0)
+do
+        status=$(ip ${six} route show ${IP}/${cidr})
+        if [ -n "${status}" ]
+        then
+                status=${status// via/, routing via}
+                echo "${IP} contained in ${status}"
+                exit 0
+        fi
+done
+echo "unable to determine route. that's odd"
