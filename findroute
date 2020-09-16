@@ -3,7 +3,14 @@
 # License: GPL 3.0 (see https://github.com/akhepcat/)
 # Permanent home:  https://github.com/akhepcat/Miscellaneous/
 # Direct download: https://raw.githubusercontent.com/akhepcat/Miscellaneous/master/findroute
- 
+
+links=$(ip link show | grep '^[0-9]' | grep -vw lo: | wc -l)
+if [ ${links:-999} -lt 2 ]
+then
+	echo "all routes:  $(ip route show default)"
+	exit 0
+fi
+
 IP=${1//[^0-9a-fA-F.:]/}
 
 if [ "$1" != "${IP}" ]
