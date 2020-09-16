@@ -1,4 +1,9 @@
 #!/bin/bash
+# (c) 2020 Leif Sawyer
+# License: GPL 3.0 (see https://github.com/akhepcat/)
+# Permanent home:  https://github.com/akhepcat/Miscellaneous/
+# Direct download: https://raw.githubusercontent.com/akhepcat/Miscellaneous/master/Xsshauth
+# 
 
 # 9018 sshd: username@pts/4
 USERLIST=$(pgrep -fa "sshd:.*@" | awk '{print $3}' | cut -f1 -d@)

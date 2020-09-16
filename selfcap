@@ -1,4 +1,9 @@
 #!/bin/bash
+# (c) 2020 Leif Sawyer
+# License: GPL 3.0 (see https://github.com/akhepcat/)
+# Permanent home:  https://github.com/akhepcat/Miscellaneous/
+# Direct download: https://raw.githubusercontent.com/akhepcat/Miscellaneous/master/selfcap
+# 
 # I'm lazy and just want to pull a nice capture without doing the filtering each time
 MyV4Int=$(awk 'BEGIN { IGNORECASE=1 } /^[a-z0-9]+[ \t]+00000000/ { print $1 }' /proc/net/route 2>/dev/null | sort -u)
 MyV4Int=${MyV4Int##*default*dev }

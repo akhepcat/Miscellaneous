@@ -1,4 +1,9 @@
 #!/bin/bash
+# (c) 2020 Leif Sawyer
+# License: GPL 3.0 (see https://github.com/akhepcat/)
+# Permanent home:  https://github.com/akhepcat/Miscellaneous/
+# Direct download: https://raw.githubusercontent.com/akhepcat/Miscellaneous/master/serfind
+# 
 
 python -m serial.tools.list_ports 2>&1| grep -q "No module"
 if [ 1 -eq $? ]

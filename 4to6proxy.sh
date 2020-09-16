@@ -1,4 +1,9 @@
 #!/bin/bash
+# (c) 2020 Leif Sawyer
+# License: GPL 3.0 (see https://github.com/akhepcat/)
+# Permanent home:  https://github.com/akhepcat/Miscellaneous/
+# Direct download: https://raw.githubusercontent.com/akhepcat/Miscellaneous/master/4to6proxy.sh
+# 
 PROG="${0##*/}"
 
 trap cleanup SIGINT SIGTERM SIGKILL SIGQUIT SIGABRT SIGSTOP SIGSEGV

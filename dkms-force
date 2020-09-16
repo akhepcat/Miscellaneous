@@ -1,4 +1,9 @@
 #!/bin/bash
+# (c) 2020 Leif Sawyer
+# License: GPL 3.0 (see https://github.com/akhepcat/)
+# Permanent home:  https://github.com/akhepcat/Miscellaneous/
+# Direct download: https://raw.githubusercontent.com/akhepcat/Miscellaneous/master/dkms-force
+# 
 for module in $(dkms status | sed 's/, /\//g; s/:.*//g' | cut -f 1-2 -d/)
 do
     for VER in $(ls -1 /boot/vmlinuz-* | cut -f2- -d-)

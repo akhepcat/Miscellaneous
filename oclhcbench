@@ -1,4 +1,9 @@
 #!/bin/bash
+# (c) 2020 Leif Sawyer
+# License: GPL 3.0 (see https://github.com/akhepcat/)
+# Permanent home:  https://github.com/akhepcat/Miscellaneous/
+# Direct download: https://raw.githubusercontent.com/akhepcat/Miscellaneous/master/oclhcbench
+# 
 
 MODES=(0 100 500 1000 1400 1500 1700 1800 2500 3000 3200 5500 5600 6211 6800 7100 7500 11300 11600 12500 13000 13100 13400 15300 15900 18100 18900)
 #

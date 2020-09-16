@@ -1,5 +1,9 @@
 #!/bin/bash
-#
+# (c) 2020 Leif Sawyer
+# License: GPL 3.0 (see https://github.com/akhepcat/)
+# Permanent home:  https://github.com/akhepcat/Miscellaneous/
+# Direct download: https://raw.githubusercontent.com/akhepcat/Miscellaneous/master/free-mem.sh
+# 
 # Dumb cron-able script to drop caches every night and free up some memory.
 # Is it *really* needed?  probably not.  Until it is.
 # 
