@@ -211,7 +211,7 @@ ${EXTRA}
 
 <hr />
 (c) 2020 KL5BN, Leif Sawyer<br />
-<a href="https://github.com/akhepcat/Miscellaneous/svpass.sh">Use the source, Luke!</a>
+<a href="https://github.com/akhepcat/Miscellaneous/blob/master/svpass.sh">Use the source, Luke!</a>
 </body>
 </html>
 HTML
