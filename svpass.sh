@@ -21,7 +21,7 @@ URL="https://www.amsat.org/track/"	# the location to interface
 
 ## head -16 svpass.sh | tail -14 > ${HOME}/.config/.svpass
 ##########################################################################
-[[ -r ${HOME}/.config/.svpass ]] && . ${HOME}/.config/svpass.cfg   # overload the static config
+[[ -r ${HOME}/.config/svpass.cfg ]] && . ${HOME}/.config/svpass.cfg   # overload the static config
 
 [[ -r ${cache} ]] && CLAST=$(stat  --format="%Y" ${cache})
 
@@ -152,6 +152,7 @@ do
 	LOSAZ=$(echo $line | cut -f7 -d\|)
 	LOST=$(echo $line | cut -f8 -d\|)
 
+	# convert to local time, 'set  TZ' env variable to force a different zone
 	NEWD=$(date --date="${DATE} ${AOST} UTC" '+%Y-%m-%d %H:%M:%S')
 	WIND=$(date --date="${DATE} ${AOST} UTC" '+%s')
 	THEN=$(date --date="${DATE} ${LOST} UTC" '+%s')
@@ -201,7 +202,7 @@ cat <<HTML
 </table>
 </div>
 
-<p>${COUNT} valid passes remaining in cache</p>
+<p>${COUNT} valid passes (of $count) remaining in cache</p>
 ${EXTRA}
 
 <!-- for the clock, you can use: https://www.ricocheting.com/code/javascript/html-generator/date-time-clock -->
