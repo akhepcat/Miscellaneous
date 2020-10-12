@@ -21,7 +21,7 @@ URL="https://www.amsat.org/track/"	# the location to interface
 
 ## head -16 svpass.sh | tail -14 > ${HOME}/.config/.svpass
 ##########################################################################
-[[ -r ${HOME}/.config/.svpass ]] && . ${HOME}/.config/.svpass   # overload the static config
+[[ -r ${HOME}/.config/.svpass ]] && . ${HOME}/.config/svpass.cfg   # overload the static config
 
 [[ -r ${cache} ]] && CLAST=$(stat  --format="%Y" ${cache})
 
@@ -209,6 +209,9 @@ ${EXTRA}
 <script type="text/javascript" src="lib/jsclock.js">
 </script>
 
+<hr />
+(c) 2020 KL5BN, Leif Sawyer<br />
+<a href="https://github.com/akhepcat/Miscellaneous/svpass.sh">Use the source, Luke!</a>
 </body>
 </html>
 HTML
