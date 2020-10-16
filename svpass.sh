@@ -94,6 +94,9 @@ It is converted from UTC time to local ${city} time, and provided here as a conv
 <br />
 No guarantee of the accuracy is given.
 </p>
+<p>The crew's usual waking period is 0730 - 1930 UTC, so this script will try to highlight those good passes that occur
+when the crew is awake.
+</p>
 <p>The script updates the page every 5 minutes to provide a visual indicator of fresh vs stale passes. <br />
 <br />
 Last update at $(date)</p>
@@ -109,11 +112,9 @@ then
 		-d "lang=en&satellite=${SV}&lat=${lat}&lng=${long}&ele=${elev}&loc=${loc}&count=${count}&submit=true&doPredict=%20Predict%20&saveme=0" \
 		--output "${cache}" \
 		"${URL}"
-
-	caption="Data fetched from remote"
-else
-	caption="Data fetched from local cache"
 fi
+
+caption="local cache last update: $(date -r ${cache} )"
 
 cat <<HTML
 <div style="align: center;">
@@ -125,6 +126,9 @@ cat <<HTML
   <tr><td style="background-color: #fff2e6;width: 75%;margin-left:auto;margin-right:auto;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td>marginal pass</td></tr>
   <tr><td style="background-color: #ffcccc;width: 75%;margin-left:auto;margin-right:auto;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td>bad pass</td></tr>
   <tr><td style="background-color: #656565;width: 75%;margin-left:auto;margin-right:auto;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td>stale</td></tr>
+  <tr><td colspan="2" style="background-color: #222222;"></td></tr>
+  <tr><td style="width: 75%;margin-left:auto;margin-right:auto;">[any background color]</td><td style="font-weight: bolder; color: black;">Crew Awake</td></tr>
+  <tr><td style="width: 75%;margin-left:auto;margin-right:auto;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td style="font-weight: lighter; color: purple;">Crew Asleep</td></tr>
 </table>
 
 <p>&nbsp;</p>
@@ -150,14 +154,16 @@ do
 	ELEV=$(echo $line | cut -f5 -d\|)
 	MAXAZ=$(echo $line | cut -f6 -d\|)
 	LOSAZ=$(echo $line | cut -f7 -d\|)
-	LOST=$(echo $line | cut -f8 -d\|)
+	LAST=$(echo $line | cut -f8 -d\|)
 
 	# convert to local time, 'set  TZ' env variable to force a different zone
 	NEWD=$(date --date="${DATE} ${AOST} UTC" '+%Y-%m-%d %H:%M:%S')
 	WIND=$(date --date="${DATE} ${AOST} UTC" '+%s')
-	THEN=$(date --date="${DATE} ${LOST} UTC" '+%s')
-	LOST=$(date --date="${DATE} ${LOST} UTC" '+%Y-%m-%d %H:%M:%S')
+	THEN=$(date --date="${DATE} ${LAST} UTC" '+%s')
+	LOST=$(date --date="${DATE} ${LAST} UTC" '+%Y-%m-%d %H:%M:%S')
 
+	HB=$(date --date="${DATE} 07:30 UTC" '+%s')
+	HE=$(date --date="${DATE} 19:30 UTC" '+%s')
 
 	# highlight the good passes
 	if [ ${ELEV:-0} -gt 13 ]
@@ -172,7 +178,6 @@ do
 		bg="#ffcccc"
 	fi
 
-
 	if [ $((THEN + 43200 )) -lt $NOW ]
 	then
 		# It's older than 12H, so we'll skip it.
@@ -183,12 +188,19 @@ do
 		then
 			bg="#ffff33"
 		fi
+		if [ $WIND -gt $HB -a $THEN -le $HE ]
+		then
+			font="font-weight: bolder; color: black;"
+		else
+			font="font-weight: lighter; color: purple;"
+		fi
+
 		COUNT=$((COUNT +1))
 	else
 		bg="#656565"
 	fi
 
-	[[ -n "${bg}" ]] && echo -e "<tr style='background-color: ${bg};'> <td>${NEWD}</td> <td>${DURT}</td> <td>${AZIM}</td> <td>${ELEV}</td> <td>${MAXAZ}</td> <td>${LOSAZ}</td> <td>${LOST}</td> </tr>\n"
+	[[ -n "${bg}" ]] && echo -e "<tr style='background-color: ${bg}; ${font}'> <td>${NEWD}</td> <td>${DURT}</td> <td>${AZIM}</td> <td>${ELEV}</td> <td>${MAXAZ}</td> <td>${LOSAZ}</td> <td>${LOST}</td> </tr>\n"
 
 done
 
