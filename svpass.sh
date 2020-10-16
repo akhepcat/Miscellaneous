@@ -23,7 +23,7 @@ URL="https://www.amsat.org/track/"	# the location to interface
 ##########################################################################
 [[ -r ${HOME}/.config/svpass.cfg ]] && . ${HOME}/.config/svpass.cfg   # overload the static config
 
-[[ -r ${cache} ]] && CLAST=$(stat  --format="%Y" ${cache})
+[[ -r ${cache} ]] && CLAST=$(stat  --format="%Y" ${cache}) || CLAST=0
 
 rlat=$(printf '%.*f\n' 2 $lat)
 rlong=$(printf '%.*f\n' 2 $long)
@@ -92,7 +92,8 @@ div.clockbox {
 The data in the table below is scraped from <a href="${URL}">${URL}</a> once every 7 days, and cached locally.<br />
 It is converted from UTC time to local ${city} time, and provided here as a convenience.
 <br />
-No guarantee of the accuracy is given.
+No guarantee of the accuracy is given.   Verification against alternate sources, such as <a href="https://www.n2yo.com/passes/?s=25544">N2YO.com</a>
+is highly advisable.
 </p>
 <p>The crew's usual waking period is 0730 - 1930 UTC, so this script will try to highlight those good passes that occur
 when the crew is awake.
@@ -102,19 +103,36 @@ when the crew is awake.
 Last update at $(date)</p>
 HTML
 
+# Amsat's east/west logic is backward!
+if [ ${long//./} -lt 0 ]
+then
+	longdir="longdir="
+	long=${long//-/}
+else
+	longdir="longdir=-"
+fi
+if [ ${lat//./} -lt 0 ]
+then
+	latdir="longdir=-"
+	lat=${lat//-/}
+else
+	latdir="latdir="
+fi
+
+[[ -r "${cache}" ]] && caption="local cache last update: $(date -r ${cache} )"
 
 if [ $(( ${CLAST:-0} + (86400 * 7) )) -lt ${NOW} ]
 then
-	curl --silent \
+	caption="Refreshing now"	
+	curl \
 		-H "Content-Type: application/x-www-form-urlencoded" \
 		--referer "${URL}" \
 		-X POST \
-		-d "lang=en&satellite=${SV}&lat=${lat}&lng=${long}&ele=${elev}&loc=${loc}&count=${count}&submit=true&doPredict=%20Predict%20&saveme=0" \
+		-d "lang=en&satellite=${SV}&lat=${lat}&lng=${long}&${latdir}&${longdir}&ele=${elev}&loc=${loc}&count=${count}&submit=true&doPredict=%20Predict%20&saveme=0" \
 		--output "${cache}" \
 		"${URL}"
 fi
 
-caption="local cache last update: $(date -r ${cache} )"
 
 cat <<HTML
 <div style="align: center;">
@@ -165,18 +183,7 @@ do
 	HB=$(date --date="${DATE} 07:30 UTC" '+%s')
 	HE=$(date --date="${DATE} 19:30 UTC" '+%s')
 
-	# highlight the good passes
-	if [ ${ELEV:-0} -gt 13 ]
-	then
-		bg="#99ff99"
-	elif [ ${ELEV:-0} -gt 7 ]
-	then
-		#marginal
-		bg="#fff2e6"
-	else
-		#bad
-		bg="#ffcccc"
-	fi
+	font="font-weight: lighter; color: purple;"
 
 	if [ $((THEN + 43200 )) -lt $NOW ]
 	then
@@ -187,13 +194,29 @@ do
 		if [ $NOW -ge $WIND -a $((NOW - 500)) -lt $THEN ]
 		then
 			bg="#ffff33"
-		fi
-		if [ $WIND -gt $HB -a $THEN -le $HE ]
+
+		elif [ ${ELEV:-0} -gt 13 ]
 		then
-			font="font-weight: bolder; color: black;"
+		# highlight the good passes
+			bg="#99ff99"
+
+			if [ $WIND -gt $HB -a $THEN -le $HE ]
+			then
+				font="font-weight: bolder; color: black;"
+			fi
+		elif [ ${ELEV:-0} -gt 7 ]
+		then
+			#marginal
+			bg="#fff2e6"
+			if [ $WIND -gt $HB -a $THEN -le $HE ]
+			then
+				font="font-weight: bold; color: black;"
+			fi
 		else
-			font="font-weight: lighter; color: purple;"
+			#bad
+			bg="#ffcccc"
 		fi
+
 
 		COUNT=$((COUNT +1))
 	else
