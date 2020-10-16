@@ -210,7 +210,7 @@ do
 			bg="#fff2e6"
 			if [ $WIND -gt $HB -a $THEN -le $HE ]
 			then
-				font="font-weight: bold; color: black;"
+				font="font-weight: bold; color: #595959;"
 			fi
 		else
 			#bad
