@@ -4,11 +4,16 @@
 # Permanent home:  https://github.com/akhepcat/Miscellaneous/
 # Direct download: https://raw.githubusercontent.com/akhepcat/Miscellaneous/master/dkms-force
 # 
-for module in $(dkms status | sed 's/, /\//g; s/:.*//g' | cut -f 1-2 -d/)
+if [ "$1" = "force" ]
+then
+	FORCE="--force"
+fi
+
+for module in $(dkms status | sed 's/, /\//g; s/:.*//g' | cut -f 1-2 -d/ | sort -ufi )
 do
     for VER in $(ls -1 /boot/vmlinuz-* | cut -f2- -d-)
     do
 	echo "Working on ${module} for ${VER}"
-	dkms build $module -k ${VER} && dkms install $module -k ${VER} || break
+	dkms build $module -k ${VER} && dkms install ${FORCE} $module -k ${VER} || break
     done
 done
