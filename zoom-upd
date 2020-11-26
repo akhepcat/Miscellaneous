@@ -25,7 +25,12 @@ else
 	exit 1
 fi
 
-rzv=$(${FETCH} ${UA} "Mozilla/5.0 (X11; Linux x86_64)" ${OUT} - https://zoom.us/download | grep -E 'linux-ver-text.*Version' | sed 's/.*Version //; s|</span>.*||;' )
+
+# handle version strings of '5.4.3 (54779.1115)'
+# or '5.4 (54779.1115)'
+# or '5.4.54779.1115'
+rzv=$(${FETCH} ${UA} "Mozilla/5.0 (X11; Linux x86_64)" ${OUT} - https://zoom.us/download |  grep -E 'linux-ver-text.*Version' | \
+sed 's/.*Version //; s|</span>.*||; s/\([0-9]\+\)\.\([0-9]\+\)\.\([0-9]\+\) (\([0-9]\+\.[0-9]\+\))/\1.\2.\4/; s/\([0-9]\+\)\.\([0-9]\+\) (\([0-9]\+\.[0-9]\+\))/\1.\2.\3/;' )
 
 # expand the detection for different OS's as needed
 if [ -n "$(which apt 2>/dev/null)" ]
@@ -45,6 +50,8 @@ fi
 # expand the individual OS sections as needed
 if [ 1 -eq ${ubuntu:-0} ]
 then
+
+
 	lzv=$(dpkg -l zoom 2>&1 | grep ^ii | awk '{print $3}')
 	dpkg --compare-versions ${lzv:-0} lt ${rzv:-0}
 	if [ $? -eq 0 ]
