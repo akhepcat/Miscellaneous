@@ -69,6 +69,8 @@ def drop_privileges(user=None, rundir=None, caps=None):
             old_umask = os.umask(0o22)
         prctl.cap_effective.limit(*caps)
 
+arguments = len(sys.argv) - 1
+out = open(sys.argv[1], 'a') if (arguments > 0) else sys.stdout
 
 # Create a datagram socket
 UDPServerSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
@@ -76,15 +78,13 @@ UDPServerSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
 # Bind to address and ip
 UDPServerSocket.bind((localIP, localPort))
 
-print("# SNMP logger up and listening")
+out.write("# SNMP logger up and listening" + '\n')
 
 if(noprctl > 0) :
     drop_privileges(user='nobody', rundir='/tmp', caps='')
 else:
     drop_privileges(user='nobody', rundir='/tmp', caps=[prctl.CAP_NET_BIND_SERVICE])
 
-arguments = len(sys.argv) - 1
-out = open(sys.argv[1], 'a') if (arguments > 0) else sys.stdout
 
 # Listen for incoming datagrams
 while(True):
