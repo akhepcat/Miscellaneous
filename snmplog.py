@@ -19,7 +19,7 @@ import struct
 import prctl
 
 localIP     = "0.0.0.0"
-localPort   = 961
+localPort   = 161
 bufferSize  = 1024
 
 msgFromServer       = "ERROR"
