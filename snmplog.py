@@ -16,7 +16,14 @@
 import socket
 import struct
 
-import prctl
+noprctl=1
+try:
+    import prctl
+except ModuleNotFoundError:
+    pass
+else:
+    noprctl=0
+
 
 localIP     = "0.0.0.0"
 localPort   = 161
@@ -69,7 +76,12 @@ UDPServerSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
 UDPServerSocket.bind((localIP, localPort))
 
 print("# SNMP logger up and listening")
-drop_privileges(user='nobody', rundir='/tmp', caps=[prctl.CAP_NET_BIND_SERVICE])
+
+if(noprctl > 0) :
+    drop_privileges(user='nobody', rundir='/tmp', caps='')
+else:
+    drop_privileges(user='nobody', rundir='/tmp', caps=[prctl.CAP_NET_BIND_SERVICE])
+
 print("# privs should be dropped")
 
 # Listen for incoming datagrams
