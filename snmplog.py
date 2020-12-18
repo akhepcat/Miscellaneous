@@ -27,7 +27,7 @@ else:
 
 
 localIP     = "0.0.0.0"
-localPort   = 961
+localPort   = 161
 bufferSize  = 1024
 
 msgFromServer       = "ERROR"
@@ -79,6 +79,7 @@ UDPServerSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
 UDPServerSocket.bind((localIP, localPort))
 
 out.write("# SNMP logger up and listening" + '\n')
+out.flush()
 
 if(noprctl > 0) :
     drop_privileges(user='nobody', rundir='/tmp', caps='')
@@ -102,6 +103,7 @@ while(True):
     clientMsg += str(string)
 
     out.write(clientMsg + '\n')
+    out.flush()
 
     # Sending a reply to client
     UDPServerSocket.sendto(bytesToSend, address)
