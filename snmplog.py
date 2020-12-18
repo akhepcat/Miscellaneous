@@ -15,6 +15,7 @@
 
 import socket
 import struct
+import sys
 
 noprctl=1
 try:
@@ -26,7 +27,7 @@ else:
 
 
 localIP     = "0.0.0.0"
-localPort   = 161
+localPort   = 961
 bufferSize  = 1024
 
 msgFromServer       = "ERROR"
@@ -82,7 +83,8 @@ if(noprctl > 0) :
 else:
     drop_privileges(user='nobody', rundir='/tmp', caps=[prctl.CAP_NET_BIND_SERVICE])
 
-print("# privs should be dropped")
+arguments = len(sys.argv) - 1
+out = open(sys.argv[1], 'a') if (arguments > 0) else sys.stdout
 
 # Listen for incoming datagrams
 while(True):
@@ -99,7 +101,7 @@ while(True):
     clientMsg = "Message from Client{}: community:".format(address)
     clientMsg += str(string)
 
-    print(clientMsg)
+    out.write(clientMsg + '\n')
 
     # Sending a reply to client
     UDPServerSocket.sendto(bytesToSend, address)
