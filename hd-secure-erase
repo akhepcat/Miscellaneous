@@ -19,6 +19,19 @@ cleanup() {
 	exit 0
 }
 
+if [ -z "$(which hdparm)" ]
+then
+	echo "missing hdparm"
+	exit 1
+elif [ -z "$(which blkid)" ]
+then
+	echo "missing blkid"
+	exit 1
+elif [ -z "$(which lsblk)" ]
+then
+	echo "missing lsblk"
+	exit 1
+fi
 
 DISK=${1}
 SECPASS="password1"
@@ -38,9 +51,13 @@ then
 	exit 1
 fi
 
-frozen=$(hdparm -I ${DISK} 2>&1 | grep -Ei 'not.*frozen')
+frozen=$(hdparm -I ${DISK} 2>&1 | grep -Ei 'not.*frozen|failed')
 
-if [ -z "${frozen}" ]
+if [ -n "${frozen}" -a -z "${frozen##*failed*}" ]
+then
+	echo "invalid device type for ${DISK}"
+	exit 1
+elif [ -n "${frozen}" -a -z "${frozen##*frozen*}" ]
 then
 	echo "You must suspend/resume to memory and try again:"
 	echo 'echo -n mem > /sys/power/state'
