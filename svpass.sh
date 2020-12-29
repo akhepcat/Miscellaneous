@@ -126,6 +126,7 @@ then
 	caption="Refreshing now"	
 	curl \
 		-H "Content-Type: application/x-www-form-urlencoded" \
+		--silent \
 		--referer "${URL}" \
 		-X POST \
 		-d "lang=en&satellite=${SV}&lat=${lat}&lng=${long}&${latdir}&${longdir}&ele=${elev}&loc=${loc}&count=${count}&submit=true&doPredict=%20Predict%20&saveme=0" \
