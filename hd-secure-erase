@@ -4,6 +4,34 @@
 # Permanent home:  https://github.com/akhepcat/Miscellaneous/
 # Direct download: https://raw.githubusercontent.com/akhepcat/Miscellaneous/master/hd-secure-erase
 # 
+CWD=$(pwd)
+PROG="${0##*/}"
+
+trap cleanup SIGINT SIGTERM SIGKILL SIGQUIT SIGABRT SIGSTOP SIGSEGV
+
+cleanup() {
+	if [ ${STATUS:-0} -eq 474 ]
+	then
+		hdparm --security-disable ${SECPASS} ${DISK}
+		# we aborted, so the above should unlock the drive
+	fi
+	echo -e "\n\n"
+	exit 0
+}
+
+if [ -z "$(which hdparm)" ]
+then
+	echo "missing hdparm"
+	exit 1
+elif [ -z "$(which blkid)" ]
+then
+	echo "missing blkid"
+	exit 1
+elif [ -z "$(which lsblk)" ]
+then
+	echo "missing lsblk"
+	exit 1
+fi
 
 DISK=${1}
 SECPASS="password1"
@@ -15,9 +43,21 @@ then
 	exit 1
 fi
 
-frozen=$(hdparm -I ${DISK} 2>&1 | grep -Ei 'not.*frozen')
+ISDISK=$(lsblk -d -o TYPE -n "${DISK}" 2>&1 | grep disk)
 
-if [ -z "${frozen}" ]
+if [ "${ISDISK}" != "disk" ]
+then
+	echo "device ${DISK} is not a disk"
+	exit 1
+fi
+
+frozen=$(hdparm -I ${DISK} 2>&1 | grep -Ei 'not.*frozen|failed')
+
+if [ -n "${frozen}" -a -z "${frozen##*failed*}" ]
+then
+	echo "invalid device type for ${DISK}"
+	exit 1
+elif [ -n "${frozen}" -a -z "${frozen##*frozen*}" ]
 then
 	echo "You must suspend/resume to memory and try again:"
 	echo 'echo -n mem > /sys/power/state'
@@ -28,6 +68,7 @@ echo "THIS IS DESTRUCTIVE. YOU MAY BRICK YOUR DRIVE. YOU HAVE BEEN WARNED"
 
 #echo "using security password:  ${SECPASS}"
 
+STATUS=474
 hdparm --user-master u --security-set-pass ${SECPASS} ${DISK}
 # Show the status, steal the duration with redirection!
 DUR=$(hdparm -I ${DISK} 2>&1 | grep -A 20 '^Security:' | tee /dev/stderr | grep 'ENHANCED SECURITY ERASE UNIT' | cut -f2 -d. | awk '{print $1}' )
@@ -43,9 +84,9 @@ echo "ctrl-c to abort now, or wait 5 seconds to continue"
 sleep 5
 
 time hdparm --user-master u --security-erase ${SECPASS} ${DISK}
+STATUS=0
 
 echo "Drive ${DISK} is now securely erased"
 hdparm -I ${DISK} 2>&1 | grep -A 20 '^Security:'
 
-# hdparm --security-disable ${SECPASS} ${DISK}
-# should unlock a drive
+cleanup

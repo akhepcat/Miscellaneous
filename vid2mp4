@@ -24,5 +24,6 @@ do
     exit 1
   fi
 
-  ffmpeg -i "${vidfile}" -y -map 0 -c copy -sn -movflags +faststart "${out}"  || ffmpeg -i "${vidfile}" -y -map 0 -sn -movflags +faststart "${out}"
+  ffmpeg -i "${vidfile}" -y -map 0 -c:v copy -c:a copy -sn -movflags +faststart "${out}"  || \
+  	ffmpeg -i "${vidfile}" -y -map 0 -c:v h264 -c:a aac -b:a 128k -sn -movflags +faststart "${out}"
 done
