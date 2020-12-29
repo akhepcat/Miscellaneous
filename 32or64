@@ -26,6 +26,10 @@ case "${MACH}" in
 		;;
 	arm) BITS=32
 		;;
+	armv6l) BITS=32
+		;;
+	armv7l) BITS=32
+		;;
 	aarch) BITS=32
 		;;
 	x86_64) BITS=64
