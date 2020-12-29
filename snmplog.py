@@ -27,11 +27,12 @@ else:
 
 
 localIP     = "0.0.0.0"
-localPort   = 161
+localPort   = 6161
 bufferSize  = 1024
 
-msgFromServer       = "ERROR"
-bytesToSend         = str.encode(msgFromServer)
+msgHeader	= b'\x30\x32\x01\x01'
+msgVersion	= b'\x01\x04\xa2\x20\x02\x04'
+msgRequestId	= b'\x00\x00\x00\x00\x02\x01\x00\x02\x01\x00'
 
 
 def drop_privileges(user=None, rundir=None, caps=None):
@@ -95,6 +96,7 @@ while(True):
     message = bytesAddressPair[0]
     address = bytesAddressPair[1]
 
+    vhead = struct.unpack_from('4', message, 0)
     length = message[6]
     type = str(int(length)) + "s"
     string = struct.unpack_from(type, message, 7)
@@ -106,4 +108,5 @@ while(True):
     out.flush()
 
     # Sending a reply to client
+    bytesToSend = b''.join([b''.join(vhead), msgVersion, length.to_bytes(1, 'little'), b''.join(string), msgRequestId])
     UDPServerSocket.sendto(bytesToSend, address)
