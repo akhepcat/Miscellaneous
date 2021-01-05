@@ -1,0 +1,37 @@
+#!/bin/bash
+
+# fix broken packages
+dpkg --configure -a
+if [ $? -ne 0 ]
+then
+	echo "manually fix broken packages"
+	exit 1
+fi
+
+# update the local repo info
+apt-get update
+if [ $? -ne 0 ]
+then
+	echo "check network connectivity and apt repo sources"
+	exit 1
+fi
+
+
+# install updates
+apt-get -y dist-upgrade
+if [ $? -ne 0 ]
+then
+	echo "manually check upgrade failures"
+	echo "'dpkg --configure -a'    may provide additional information"
+	exit 1
+fi
+
+# Clean up old packages
+apt-get -y autoclean && apt-get -y autoremove
+if [ $? -ne 0 ]
+then
+	echo "manually check for cleanup issues"
+	exit 1
+fi
+
+# All done!
