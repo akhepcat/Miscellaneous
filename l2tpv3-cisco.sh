@@ -1,4 +1,9 @@
 #!/bin/bash
+# (c) 2020 Leif Sawyer
+# License: GPL 3.0 (see https://github.com/akhepcat/)
+# Permanent home:  https://github.com/akhepcat/Miscellaneous/
+# Direct download: https://raw.githubusercontent.com/akhepcat/Miscellaneous/master/l2tpv3-cisco.sh
+# 
 # using l2tpV3 between linux and cisco is sometimes weird.
 # this script is how I get the linux side up.
 # This will also auto-generate the cisco-side config.

@@ -1,5 +1,9 @@
 #!/bin/bash
-#
+# (c) 2020 Leif Sawyer
+# License: GPL 3.0 (see https://github.com/akhepcat/)
+# Permanent home:  https://github.com/akhepcat/Miscellaneous/
+# Direct download: https://raw.githubusercontent.com/akhepcat/Miscellaneous/master/free-mem.sh
+# 
 # Dumb cron-able script to drop caches every night and free up some memory.
 # Is it *really* needed?  probably not.  Until it is.
 # 
@@ -18,7 +22,8 @@ fi
 
 kLim=$(( kInst / 4 ))
 
-if [ ${kLim:-0} -gt ${kMin} ]
+# make adjustments for lo-mem (2GB or less) devices
+if [ ${kInst:-0} -lt 2097152 -a ${kLim:-0} -gt ${kMin} ]
 then
         kLim=${kMin}
 fi

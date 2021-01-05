@@ -1,0 +1,46 @@
+#!/bin/bash
+#!/bin/bash
+# (c) 2020 Leif Sawyer
+# License: GPL 3.0 (see https://github.com/akhepcat/)
+# Permanent home:  https://github.com/akhepcat/Miscellaneous/
+# Direct download: https://raw.githubusercontent.com/akhepcat/Miscellaneous/master/32or64
+# 
+
+#  Prints either 32 or 64,  or 'error'
+MACH=$(uname -m)
+if [ -z "${MACH}" -o "${MACH}" = "unknown" ]
+then
+	# Try some alternatives
+
+	# ARM
+	if [ -n "$(which getconf)" ]
+	then
+		MACH=$(getconf LONG_BIT)
+	elif [ -n "$(which dpkg)" ]
+	then
+		MACH=$(dpkg --print-architecture)
+	fi
+fi
+case "${MACH}" in
+	386) BITS=32
+		;;
+	arm) BITS=32
+		;;
+	armv6l) BITS=32
+		;;
+	armv7l) BITS=32
+		;;
+	aarch) BITS=32
+		;;
+	x86_64) BITS=64
+		;;
+	amd64) BITS=64
+		;;
+	arm64) BITS=64
+		;;
+	aarch64) BITS=64
+		;;
+	other)  BITS="error parsing mach: ${MACH}"
+		;;
+esac
+echo "${BITS}"

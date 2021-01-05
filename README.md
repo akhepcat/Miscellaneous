@@ -4,6 +4,7 @@ Random one-offs that need a temporary home
   * 4to6proxy.sh - proxy a localhost IPv4 port to a localhost IPv6 port
   * apkpull	- list and pull APK's from an android device using ADB
   * apt-add-key	- simple GPG key add for apt with just the fingerprint
+  * apt-upg	- all-in-one full upgrade and cleanup with minimal error checking
   * basecfg	- because I'm tired of using the same configure prefixing options, and automake/autoconf setup
   * browser-tab	- push URL opens to a new window in the preferred browser, while unshortening URLs
   * dhcp-lease-list - rehosting this script, with minor cleanups
@@ -11,6 +12,7 @@ Random one-offs that need a temporary home
   * do-chroot   - chroot into native or foreign architecture filesystems with ease  
   * dummyX - like fakeX, but using built-in xorg support
   * fakex       - sets up a virtual xwindow session suitable for VNC connectivity  
+  * findroute   - find the interface a destination IPv4/IPv6 packet will take
   * gen-strong-pw - uses word lists in /usr/share/dict to generate a random selection of words to build a pass-phrase
   * gh          - "[g]rep [h]osts" is dumb.  But I have a specific use for it
   * git-updates - stupid recursive git repo updater, useful if you have lots of repos  

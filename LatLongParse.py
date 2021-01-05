@@ -1,4 +1,9 @@
 #!/usr/bin/python
+# (c) 2020 Leif Sawyer
+# License: GPL 3.0 (see https://github.com/akhepcat/)
+# Permanent home:  https://github.com/akhepcat/Miscellaneous/
+# Direct download: https://raw.githubusercontent.com/akhepcat/Miscellaneous/master/LatLongParse.py
+# 
 # input:  csv of lat,long  figures
 # output: csv of lat,long,city,state,country  
 #

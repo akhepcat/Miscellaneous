@@ -1,4 +1,9 @@
 #!/bin/bash
+# (c) 2020 Leif Sawyer
+# License: GPL 3.0 (see https://github.com/akhepcat/)
+# Permanent home:  https://github.com/akhepcat/Miscellaneous/
+# Direct download: https://raw.githubusercontent.com/akhepcat/Miscellaneous/master/md5dups
+# 
 # reads a list of MD5sums and filenames and outputs only the duplicates
 #
 # you could feed it with something like this, finding non-null, non-linked files

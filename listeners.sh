@@ -1,5 +1,9 @@
 #!/bin/bash
-# (c) 20170707 - lsawyer
+# (c) 20170707 Leif Sawyer
+# License: GPL 3.0 (see https://github.com/akhepcat/)
+# Permanent home:  https://github.com/akhepcat/Miscellaneous/
+# Direct download: https://raw.githubusercontent.com/akhepcat/Miscellaneous/master/listeners.sh
+# 
 # replicates:
 #       lsof -i -n -P | grep LISTEN | sort -n -k +2 -t: | grep -vE '127.0.0.1|::1' | uniq -f 7
 # without multiple execs

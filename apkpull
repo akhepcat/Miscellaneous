@@ -1,4 +1,9 @@
 #!/bin/bash
+# (c) 2020 Leif Sawyer
+# License: GPL 3.0 (see https://github.com/akhepcat/)
+# Permanent home:  https://github.com/akhepcat/Miscellaneous/
+# Direct download: https://raw.githubusercontent.com/akhepcat/Miscellaneous/master/apkpull
+# 
 PROG="${0##*/}"
 
 #adb devices
@@ -38,8 +43,11 @@ then
 	ver=$(adb shell pm dump ${path} | grep versionName | cut -f2 -d=)
 	abi=$(adb shell pm dump ${path} | grep primaryCpuAbi | cut -f2 -d=)
 	echo "retrieved apk:"
-	mv base.apk "${path}-${ver}-${abi}.apk"
-	ls -alF "${path}-${ver}-${abi}.apk"
+	fn="${path}-${ver}-${abi}.apk"
+	fn=${fn//$'\n'/}
+	fn=${fn//$'\r'/}
+	mv base.apk "${fn}"
+	ls -alF "${fn}"
 else
 	[[ ${LIST:-0} -eq 0 ]] && echo "too many pkgs, refine search"
 	echo "Found packages:"

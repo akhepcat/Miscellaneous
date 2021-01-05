@@ -1,4 +1,9 @@
 #!/usr/bin/perl
+# (c) 2020 Leif Sawyer
+# License: GPL 3.0 (see https://github.com/akhepcat/)
+# Permanent home:  https://github.com/akhepcat/Miscellaneous/
+# Direct download: https://raw.githubusercontent.com/akhepcat/Miscellaneous/master/urldecode
+# 
 #  Very basic wrapper script to en/de-code html/url encoded text
 #
 #  symlink to this file, and change the name to reflect the function
