@@ -25,7 +25,16 @@ do_mounts() {
 }
 
 do_umounts() {
-	[[ ${MOUNTED:-0} -eq 1 ]] && umount --recursive ${ROOT}/sys ${ROOT}/proc ${ROOT}/dev >/dev/null 2>&1
+	if [ ${MOUNTED:-0} -eq 1 ]
+	then
+		umount --force --lazy --recursive ${ROOT}/sys ${ROOT}/proc ${ROOT}/dev >/dev/null 2>&1
+		echo "sometimes umounting kills the permissions on the directory /dev/shm, and umounts /dev/pts"
+		echo "run: "
+		echo "     sudo chmod 1777 /dev/shm"
+		echo "     sudo mount -t devpts none /dev/pts"
+		echo "to restore, after removing/ejecting any media"
+	fi
+
 }
 
 check_emu() {
