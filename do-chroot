@@ -13,26 +13,64 @@ cleanup() {
 	exit 0
 }
 
+resolv_conf() {
+	if [ -L "${ROOT:-undefined_rootfs}/etc/resolv.conf" ]
+	then
+		if [ -n "$(ls -l ${ROOT:-undefined_rootfs}/etc/resolv.conf 2>&1 | egrep -i 'run/.*(resolvconf|networkmanager)')" ]
+		then
+			# it's a symbolic link to a dynamic resolv file, so we can overwrite it with impunity
+			# first get the actual location
+			LRC=${ROOT:-undefined_rootfs}$(ls -l ${ROOT:-undefined_rootfs}/etc/resolv.conf | sed 's/.*-> //g;')
+			# check for /var/run -> /run, since that breaks chrooting (use relative links, dists!)
+			VRR=$(ls -dl ${ROOT:-undefined_rootfs}/var/run | sed 's/.*-> //g;')
+			if [ -L "${ROOT:-undefined_rootfs}/var/run" -a "${VRR}" = "/run" ]
+			then
+				# remove the 'var' part
+				LRC=${LRC//\/var/}
+			fi
+			# touch it so that we know the full path exists
+			mkdir -p "${LRC//resolv.conf/}"
+			touch -a "${LRC}"
+			cat /etc/resolv.conf > "${LRC}"
+		else
+			echo "resolv.conf may need manually updating for full network connectivity"
+		fi
+	else
+		# it's a real file
+		echo "resolv.conf may need manually updating for full network connectivity"
+	fi
+}
+
 do_mounts() {
 	# grab all the mountpoints, and submountpoints...
-	[[ ! -e ${ROOT}/dev/tty0 ]] && mount --rbind /dev ${ROOT}/dev
-	[[ ! -e ${ROOT}/dev/pts/ptmx ]] && mount --rbind /dev/pts ${ROOT}/dev/pts
-	[[ ! -e ${ROOT}/proc/version ]] && mount --rbind /proc ${ROOT}/proc
+	[[ ! -e ${ROOT:-undefined_rootfs}/dev/tty0 ]] && ${DEBUG:+echo} mount --rbind /dev ${ROOT:-undefined_rootfs}/dev
+	[[ ! -e ${ROOT:-undefined_rootfs}/dev/pts/ptmx ]] && ${DEBUG:+echo} mount --rbind /dev/pts ${ROOT:-undefined_rootfs}/dev/pts
+	[[ ! -e ${ROOT:-undefined_rootfs}/proc/version ]] && ${DEBUG:+echo} mount --rbind /proc ${ROOT:-undefined_rootfs}/proc
 	# don't rbind /sys, because we don't want the cgroups!
-	[[ ! -e ${ROOT}/sys/devices/cpu ]] && mount --bind /sys ${ROOT}/sys
+	[[ ! -e ${ROOT:-undefined_rootfs}/sys/devices/cpu ]] && ${DEBUG:+echo} mount --bind /sys ${ROOT:-undefined_rootfs}/sys
 
 	MOUNTED=1
 }
 
 do_umounts() {
-	if [ ${MOUNTED:-0} -eq 1 ]
+	if [ ${MOUNTED:-0} -eq 1 -a -n "${ROOT:-undefined_rootfs}" ]
 	then
-		umount --force --lazy --recursive ${ROOT}/sys ${ROOT}/proc ${ROOT}/dev >/dev/null 2>&1
-		echo "sometimes umounting kills the permissions on the directory /dev/shm, and umounts /dev/pts"
-		echo "run: "
-		echo "     sudo chmod 1777 /dev/shm"
-		echo "     sudo mount -t devpts none /dev/pts"
-		echo "to restore, after removing/ejecting any media"
+		${DEBUG:+echo} umount --force --lazy \
+			${ROOT:-undefined_rootfs}/sys \
+			${ROOT:-undefined_rootfs}/proc \
+			${ROOT:-undefined_rootfs}/dev/pts \
+			${ROOT:-undefined_rootfs}/dev
+
+		echo "Sometimes umounting kills the permissions on the directory /dev/shm, and umounts both /dev/pts and /proc/sys/fs/binfmt_misc"
+		echo "Attempting to detect and fix"
+		if [ "$(stat --format='%a' /dev/shm)" != "1777" ]
+		then
+			chmod 1777 /dev/shm
+		fi
+		[[ ! -e /dev/pts/ptmx ]] && mount -t devpts none /dev/pts
+		[[ ! -e /proc/sys/fs/binfmt_misc/status ]] && mount -t binfmt_misc none /proc/sys/fs/binfmt_misc
+	else
+		echo "not mounted, or ${ROOT:-chrootfs} not accessible"
 	fi
 
 }
@@ -52,7 +90,7 @@ check_emu() {
 		HOST=""
 	fi
 	# this should only find one, but compatibility libs will show up first, so only use the last found
-	LDLIB=$(find ${ROOT}/lib ${ROOT}/lib64 -maxdepth 1 -type f -iname 'ld-uclibc*' -o -iname 'ld-linux*' 2>/dev/null | tail -1)
+	LDLIB=$(find ${ROOT:-undefined_rootfs}/lib ${ROOT:-undefined_rootfs}/lib64 -maxdepth 1 -type f -iname 'ld-uclibc*' -o -iname 'ld-linux*' 2>/dev/null | tail -1)
 	TEMU=$(file -L "${LDLIB}" )
 
 	# we can see the library, so we can figure out the emulation
@@ -60,10 +98,10 @@ check_emu() {
 	then
 		# Intel 32-bit and 64-bit are handled by aarch64
 		EMU=aarch64
-	elif [ -n "$(ls -l ${ROOT}/lib/ld-linux* 2>/dev/null | grep armeb )" ]
+	elif [ -n "$(ls -l ${ROOT:-undefined_rootfs}/lib/ld-linux* 2>/dev/null | grep armeb )" ]
 	then
 		EMU=armeb
-	elif [ -n "$(ls -l ${ROOT}/lib/ld-linux* 2>/dev/null | grep arm-)" ]
+	elif [ -n "$(ls -l ${ROOT:-undefined_rootfs}/lib/ld-linux* 2>/dev/null | grep arm-)" ]
 	then
 		EMU=arm
 	elif [ -z "${TEMU##*32*ARM*}" ]
@@ -95,22 +133,22 @@ check_emu() {
 
 get_shell() {
 
-	if [ -r ${ROOT}/bin/bash ];
+	if [ -r ${ROOT:-undefined_rootfs}/bin/bash ];
 	then
 		SHELL=/bin/bash
-	elif [ -r ${ROOT}/sbin/bash ];
+	elif [ -r ${ROOT:-undefined_rootfs}/sbin/bash ];
 	then
 		SHELL=/sbin/bash
-	elif [ -r ${ROOT}/sbin/ash ];
+	elif [ -r ${ROOT:-undefined_rootfs}/sbin/ash ];
 	then
 		SHELL=/sbin/ash
-	elif [ -r ${ROOT}/bin/ash ];
+	elif [ -r ${ROOT:-undefined_rootfs}/bin/ash ];
 	then
 		SHELL=/bin/ash
-	elif [ -r ${ROOT}/sbin/sh ];
+	elif [ -r ${ROOT:-undefined_rootfs}/sbin/sh ];
 	then
 		SHELL=/sbin/sh
-	elif [ -r ${ROOT}/sbin/sh ];
+	elif [ -r ${ROOT:-undefined_rootfs}/sbin/sh ];
 	then
 		SHELL=/sbin/sh
 	else
@@ -119,24 +157,22 @@ get_shell() {
 	fi
 }
 
-echo -n "consider installing/using 'proot' instead for cleaner bind-umount support and more compatibility options"
-for s in 1 2 3; do echo -n "."; sleep .3; done;
-echo ""
-
 # Does it look like a mounted filesystem?
 if [ -n "${ROOT}" ]
 then
     ROOT=${ROOT%/}	# strip off a trailing '/'
-    if [ -d "${ROOT}/etc" ]
+    if [ -d "${ROOT:-undefined_rootfs}/etc" ]
     then
 	check_emu
 
 	do_mounts
 
-	[[ -r "${ROOT}/etc/hostname" ]] && export debian_chroot=$(cat ${ROOT}/etc/hostname)
-	if [ -n "${EMU}" -a ! -r "${ROOT}/usr/bin/qemu-${EMU}-static" ]
+	resolv_conf
+
+	[[ -r "${ROOT:-undefined_rootfs}/etc/hostname" ]] && export debian_chroot=$(cat ${ROOT:-undefined_rootfs}/etc/hostname)
+	if [ -n "${EMU}" -a ! -r "${ROOT:-undefined_rootfs}/usr/bin/qemu-${EMU}-static" ]
 	then
-		cp /usr/bin/qemu-${EMU}-static ${ROOT}/usr/bin/ 2>/dev/null
+		cp /usr/bin/qemu-${EMU}-static ${ROOT:-undefined_rootfs}/usr/bin/ 2>/dev/null
 		if [ $? -ne 0 ];
 		then
 			echo "can't cp emulation binary; check filesystem"
@@ -146,11 +182,11 @@ then
 
 	get_shell
 
-	chroot ${ROOT} ${SHELL}
+	chroot ${ROOT:-undefined_rootfs} ${SHELL}
 
-	echo "clean to umount ${ROOT}"
+	echo "clean to umount ${ROOT:-undefined_rootfs}"
     else
-	echo "Can't chroot to dir ${ROOT} - is it a valid filesystem?"
+	echo "Can't chroot to dir ${ROOT:-undefined_rootfs} - is it a valid filesystem?"
     fi
 else
     echo "chroot to where?"
