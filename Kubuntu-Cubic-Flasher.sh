@@ -46,8 +46,15 @@ PROXY="127.127.127.127"
 PROXYPORT="127"
 
 echo -n "Wait 10 seconds or press any key to continue; ctrl-c to abort."
+LOOP=10
 while true
 do
+	if [ ${LOOP} -lt 1 ]
+	then
+		break
+	else
+		LOOP=$((LOOP - 1))
+	fi		
 	echo -n "."
 	read -t 1 -n 1
 	if [ $? = 0 ]
@@ -249,8 +256,15 @@ ln -s /etc/firefox/policies/policies.json /usr/lib/firefox/distribution/
 
 echo "The last step is to remove temp files, history, and ALL PACKAGE MANAGERS"
 echo -n "Wait 10 seconds or press any key to continue; ctrl-c to abort."
+LOOP=10
 while true
 do
+	if [ ${LOOP} -lt 1 ]
+	then
+		break
+	else
+		LOOP=$((LOOP - 1))
+	fi		
 	echo -n "."
 	read -t 1 -n 1
 	if [ $? = 0 ]
