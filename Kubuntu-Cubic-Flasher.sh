@@ -209,7 +209,7 @@ cat > /etc/firefox/policies/policies.json <<EOF
 		"Locked": true
 	},
 	"Homepage": {
-		"URL": "https://www.google.com/",
+		"URL": "about:blank",
 		"Locked": true,
 		"StartPage": "previous-session"
 	},
@@ -220,7 +220,7 @@ cat > /etc/firefox/policies/policies.json <<EOF
 	"Proxy": {
 		"Mode": "manual",
 		"Locked": true,
-		"HTTPProxy": "https://127.127.127.127:127",
+		"HTTPProxy": "127.127.127.127:127",
 		"Passthrough": "<local>, 10.0.0.0/8, 192.168.0.0/16, 172.16.0.0/12, *.${DOMAIN}, ${DOMAIN}",
 		"UseHTTPProxyForAllProtocols": true,
 		"UseProxyForDNS": false
