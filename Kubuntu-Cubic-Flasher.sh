@@ -13,6 +13,7 @@ if [ "${HOSTNAME}" != "cubic"  -a "${USER}" != "root" ]
 then
 	echo "this doesn't look like the cubic chroot environment, aborting"
 	echo "Usage:"
+	echo " 0) edit this script to change the IPRANGE, DOMAIN, or DOMAINLIST variables as needed (default: RFC1918, ${DOMAIN:-example.com})"
 	echo " 1) Start cubic"
 	echo " 2) choose the project directory"
 	echo " 3) choose the Ubuntu iso  ( this script assume 32-bit bionic )"
@@ -36,6 +37,13 @@ then
 	echo "either edit the script, or call it using 'DOMAIN=mydomain.net  ./${PROG}'"
 	echo ""
 fi
+
+# This prevents the user from browsing outside an enterprise.
+# Setting all these "empty" will allow Internet browsing, which may not be good!
+IPRANGE="10.0.0.0/8, 192.168.0.0/16, 172.16.0.0/12"
+DOMAINLIST="*.${DOMAIN}, ${DOMAIN}"
+PROXY="127.127.127.127"
+PROXYPORT="127"
 
 echo -n "Wait 10 seconds or press any key to continue; ctrl-c to abort."
 while true
@@ -145,18 +153,18 @@ pref("extensions.webcompat.perform_ua_overrides", true, locked);
 pref("media.eme.enabled", true, locked);
 pref("media.gmp-gmpopenh264.abi", "x86-gcc3", locked);
 pref("media.gmp-widevinecdm.abi", "x86-gcc3", locked);
-pref("network.proxy.backup.ftp", "127.127.127.127", locked);
-pref("network.proxy.backup.ftp_port", 127, locked);
-pref("network.proxy.backup.ssl", "127.127.127.127", locked);
-pref("network.proxy.backup.ssl_port", 127, locked);
-pref("network.proxy.ftp", "127.127.127.127", locked);
-pref("network.proxy.ftp_port", 127, locked);
-pref("network.proxy.http", "127.127.127.127", locked);
-pref("network.proxy.http_port", 127, locked);
-pref("network.proxy.no_proxies_on", "<local>, 10.0.0.0/8, 192.168.0.0/16, 172.16.0.0/12, ${DOMAIN}, *.${DOMAIN}", locked);
+pref("network.proxy.backup.ftp", "${PROXY}", locked);
+pref("network.proxy.backup.ftp_port", ${PROXYPORT}, locked);
+pref("network.proxy.backup.ssl", "${PROXY}", locked);
+pref("network.proxy.backup.ssl_port", ${PROXYPORT}, locked);
+pref("network.proxy.ftp", "${PROXY}", locked);
+pref("network.proxy.ftp_port", ${PROXYPORT}, locked);
+pref("network.proxy.http", "${PROXY}", locked);
+pref("network.proxy.http_port", ${PROXYPORT}, locked);
+pref("network.proxy.no_proxies_on", "<local>, ${IPRANGE:+$IPRANGE,} ${DOMAINLIST}", locked);
 pref("network.proxy.share_proxy_settings", true, locked);
-pref("network.proxy.ssl", "127.127.127.127", locked);
-pref("network.proxy.ssl_port", 127, locked);
+pref("network.proxy.ssl", "${PROXY}", locked);
+pref("network.proxy.ssl_port", ${PROXYPORT}, locked);
 pref("network.proxy.type", 1, locked);
 pref("network.trr.mode", 5, locked);
 pref("plugins.notifyMissingFlash", false, locked);
@@ -220,8 +228,8 @@ cat > /etc/firefox/policies/policies.json <<EOF
 	"Proxy": {
 		"Mode": "manual",
 		"Locked": true,
-		"HTTPProxy": "127.127.127.127:127",
-		"Passthrough": "<local>, 10.0.0.0/8, 192.168.0.0/16, 172.16.0.0/12, *.${DOMAIN}, ${DOMAIN}",
+		"HTTPProxy": "${PROXY}:${PROXYPORT}",
+		"Passthrough": "<local>, ${IPRANGE:+$IPRANGE,} ${DOMAINLIST}",
 		"UseHTTPProxyForAllProtocols": true,
 		"UseProxyForDNS": false
 	},
@@ -238,7 +246,6 @@ cat > /etc/firefox/policies/policies.json <<EOF
 EOF
 
 ln -s /etc/firefox/policies/policies.json /usr/lib/firefox/distribution/
-
 
 echo "The last step is to remove temp files, history, and ALL PACKAGE MANAGERS"
 echo -n "Wait 10 seconds or press any key to continue; ctrl-c to abort."
