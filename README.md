@@ -26,6 +26,7 @@ Random one-offs that need a temporary home
   * kali-custom-builder - automatically build a custom kali to boot from persistence with NVidia and Intel OpenCL drivers
   * kmakeme - quickly make and install linux kernels
   * ksktest - tests for the ksk rollover
+  * Kubuntu-Cubic-Flasher.sh - Create a custom LiveCD, Enterprise style, with Firefox 79, and Adobe Flash, using Cubic.
   * l2tpv3-cisco.sh - setup L2TPv3 tunnels between Cisco and Linux  
   * listeners.sh - show only listening services (uses lsof)  
   * lsof-n.sh - don't have lsof? this will approximate it for network connections on linux
