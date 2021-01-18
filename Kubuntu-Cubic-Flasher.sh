@@ -178,53 +178,53 @@ ln -s /etc/firefox/prefs.js /usr/lib/firefox/defaults/pref/all-flashy.js
 ln -s /etc/firefox/prefs.js /usr/lib/firefox/browser/defaults/preferences/autoconfig.js
 
 # per https://github.com/mozilla/policy-templates/blob/v2.1/README.md  (for FF 79)
-cat > /etc/firefox/policies/policies.json <<EOF
 # Disable things for security reasons
+cat > /etc/firefox/policies/policies.json <<EOF
 {
     "policies": {
-	"AppAutoUpdate": false
+	"AppAutoUpdate": false,
 	"Certificates": {
 		"ImportEnterpriseRoots": true
-	}
-	"DisableMasterPasswordCreation": true
-	"DisableAppUpdate": true
-	"DisableFirefoxAccounts": true
-	"DisableFirefoxStudies": true 
-	"DisableFormHistory": true
-	"DisableForgetButton": true
-	"DisableFormHistory": true
-	"DisablePasswordReveal": true
-	"DisablePocket": true
-	"DisableProfileRefresh": true
-	"DisableSystemAddonUpdate": true
-	"DisableTelemetry": true
+	},
+	"DisableMasterPasswordCreation": true,
+	"DisableAppUpdate": true,
+	"DisableFirefoxAccounts": true,
+	"DisableFirefoxStudies": true ,
+	"DisableFormHistory": true,
+	"DisableForgetButton": true,
+	"DisableFormHistory": true,
+	"DisablePasswordReveal": true,
+	"DisablePocket": true,
+	"DisableProfileRefresh": true,
+	"DisableSystemAddonUpdate": true,
+	"DisableTelemetry": true,
 	"DNSOverHTTPS": {
 		"Enabled":  false,
 		"Locked": true
-	}
-	"DontCheckDefaultBrowser": true 
-	"ExtensionUpdate": false
+	},
+	"DontCheckDefaultBrowser": true ,
+	"ExtensionUpdate": false,
 	"FlashPlugin": {
 		"Default": true,
 		"Locked": true
-	}
+	},
 	"Homepage": {
 		"URL": "https://www.google.com/",
 		"Locked": true,
 		"StartPage": "previous-session"
-	}
-	"OfferToSaveLoginsDefault": false
-	"OverrideFirstRunPage": ""
-	"OverridePostUpdatePage": ""
-	"PasswordManagerEnabled": false
+	},
+	"OfferToSaveLoginsDefault": false,
+	"OverrideFirstRunPage": "",
+	"OverridePostUpdatePage": "",
+	"PasswordManagerEnabled": false,
 	"Proxy": {
 		"Mode": "manual",
 		"Locked": true,
 		"HTTPProxy": "https://127.127.127.127:127",
-		"Passthrough": "<local>, 10.0.0.0/8, 192.168.0.0/16, 172.16.0.0/12, *.${DOMAIN}, ${DOMAIN}"
+		"Passthrough": "<local>, 10.0.0.0/8, 192.168.0.0/16, 172.16.0.0/12, *.${DOMAIN}, ${DOMAIN}",
 		"UseHTTPProxyForAllProtocols": true,
 		"UseProxyForDNS": false
-	}
+	},
 	"UserMessaging": {
 		"WhatsNew": false,
 		"ExtensionRecommendations": false,
