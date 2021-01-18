@@ -24,7 +24,7 @@ case "$CMD" in
 		;;
 	update) pacman -Syy
 		;;
-	upgrade|dist-upgrade) pacman -Syu
+	upgrade|dist-upgrade) pacman -Syu ${ARGS}
 		;;
 	remove|purge) pacman -Rs ${ARGS}
 		;;
