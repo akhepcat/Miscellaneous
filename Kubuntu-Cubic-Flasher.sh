@@ -1,4 +1,11 @@
 #!/bin/bash
+# (c) 2020 Leif Sawyer
+# License: GPL 3.0 (see https://github.com/akhepcat/)
+# Permanent home:  https://github.com/akhepcat/Miscellaneous/
+# Direct download: https://raw.githubusercontent.com/akhepcat/Miscellaneous/master/Kubuntu-Cubic-Flasher.sh
+# 
+PROG="${0##*/}"
+
 ## This is meant to be run *inside* of the Cubic chroot
 # Check to make sure we're inside the right environment
 
@@ -26,7 +33,7 @@ if [ "${DOMAIN:-example.com}" = "example.com" ]
 then
 	echo "Warning:  DOMAIN variable not overridden (using '${DOMAIN}' will probably not do what you want)"
 	echo ""
-	echo "either edit the script, or call it using 'DOMAIN=mydomain.net  ./$0'"
+	echo "either edit the script, or call it using 'DOMAIN=mydomain.net  ./${PROG}'"
 	echo ""
 fi
 
