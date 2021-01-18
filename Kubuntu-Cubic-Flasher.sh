@@ -99,78 +99,78 @@ mkdir -p /etc/firefox/policies/ \
 
 cat > /etc/firefox/prefs.js <<EOF
 // Lots of changes for Enterprise-ish security
-user_pref("app.normandy.first_run", false);
-user_pref("app.normandy.migrationsApplied", 10);
-user_pref("app.normandy.startupRolloutPrefs.doh-rollout.enabled", false);
-user_pref("app.shield.optoutstudies.enabled", false);
-user_pref("app.update.enabled", false);
-user_pref("app.update.auto", false);
-user_pref("app.update.mode", 0);
-user_pref("app.update.service.enabled", false);
-user_pref("browser.bookmarks.restore_default_bookmarks", false);
-user_pref("browser.discovery.enabled", false);
-user_pref("browser.laterrun.enabled", true);
-user_pref("browser.newtabpage.activity-stream.asrouter.userprefs.cfr.addons", false);
-user_pref("browser.newtabpage.activity-stream.asrouter.userprefs.cfr.features", false);
-user_pref("browser.newtabpage.activity-stream.feeds.section.highlights", false);
-user_pref("browser.newtabpage.activity-stream.feeds.section.topstories", false);
-user_pref("browser.newtabpage.activity-stream.feeds.snippets", false);
-user_pref("browser.newtabpage.activity-stream.feeds.topsites", false);
-user_pref("browser.newtabpage.activity-stream.showSearch", false);
-user_pref("browser.newtabpage.enabled", false);
-user_pref("browser.rights.3.shown", true);
-user_pref("browser.search.hiddenOneOffs", "Amazon.com,Bing,DuckDuckGo,eBay,Wikipedia (en)");
-user_pref("browser.search.region", "US");
-user_pref("browser.search.suggest.enabled", false);
-user_pref("browser.shell.checkDefaultBrowser", false);
-user_pref("browser.startup.homepage_override.mstone","ignore");
-user_pref("browser.startup.homepage", "about:blank");
-user_pref("browser.startup.page", 3);
-user_pref("browser.urlbar.placeholderName", "Google");
-user_pref("browser.urlbar.suggest.topsites", false);
-user_pref("datareporting.healthreport.service.enabled", false);
-user_pref("datareporting.healthreport.uploadEnabled", false);
-user_pref("datareporting.policy.dataSubmissionEnabled", false);
-user_pref("doh-rollout.balrog-migration-done", true);
-user_pref("doh-rollout.disable-heuristics", true);
-user_pref("doh-rollout.doneFirstRun", true);
-user_pref("doh-rollout.skipHeuristicsCheck", true);
-user_pref("extensions.lastAppVersion","");
-user_pref("extensions.pendingOperations", false);
-user_pref("extensions.ui.dictionary.hidden", true);
-user_pref("extensions.ui.locale.hidden", true);
-user_pref("extensions.update.autoUpdateDefault", false);
-user_pref("extensions.webcompat.perform_injections", true);
-user_pref("extensions.webcompat.perform_ua_overrides", true);
-user_pref("media.eme.enabled", true);
-user_pref("media.gmp-gmpopenh264.abi", "x86-gcc3");
-user_pref("media.gmp-widevinecdm.abi", "x86-gcc3");
-user_pref("network.proxy.backup.ftp", "10.0.0.1");
-user_pref("network.proxy.backup.ftp_port", 443);
-user_pref("network.proxy.backup.ssl", "10.0.0.1");
-user_pref("network.proxy.backup.ssl_port", 443);
-user_pref("network.proxy.ftp", "10.0.0.1");
-user_pref("network.proxy.ftp_port", 443);
-user_pref("network.proxy.http", "10.0.0.1");
-user_pref("network.proxy.http_port", 443);
-user_pref("network.proxy.no_proxies_on", "<local>, 10.0.0.0/8, 192.168.0.0/16, 172.16.0.0/12, ${DOMAIN}, *.${DOMAIN}");
-user_pref("network.proxy.share_proxy_settings", true);
-user_pref("network.proxy.ssl", "203.0.113.254");
-user_pref("network.proxy.ssl_port", 443);
-user_pref("network.proxy.type", 1);
-user_pref("network.trr.mode", 5);
-user_pref("plugins.notifyMissingFlash", false);
-user_pref("plugins.hide_infobar_for_outdated_plugin", true);
-user_pref("plugins.update.url","");
-user_pref("plugin.flash.blockliststate", 0);
-user_pref("services.sync.clients.lastSync", "0");
-user_pref("signon.autofillForms", false);
-user_pref("signon.generation.enabled", false);
-user_pref("signon.management.page.breach-alerts.enabled", false);
-user_pref("signon.rememberSignons", false);
-user_pref("toolkit.telemetry.reportingpolicy.firstRun", false);
-user_pref("toolkit.crashreporter.enabled", false);
-user_pref("trailhead.firstrun.didSeeAboutWelcome", true);
+pref("app.normandy.first_run", false);
+pref("app.normandy.migrationsApplied", 10);
+pref("app.normandy.startupRolloutPrefs.doh-rollout.enabled", false, locked);
+pref("app.shield.optoutstudies.enabled", false, locked);
+pref("app.update.enabled", false, locked);
+pref("app.update.auto", false, locked);
+pref("app.update.mode", 0, locked);
+pref("app.update.service.enabled", false, locked);
+pref("browser.bookmarks.restore_default_bookmarks", false, locked);
+pref("browser.discovery.enabled", false, locked);
+pref("browser.laterrun.enabled", true, locked);
+pref("browser.newtabpage.activity-stream.asrouter.userprefs.cfr.addons", false, locked);
+pref("browser.newtabpage.activity-stream.asrouter.userprefs.cfr.features", false, locked);
+pref("browser.newtabpage.activity-stream.feeds.section.highlights", false, locked);
+pref("browser.newtabpage.activity-stream.feeds.section.topstories", false, locked);
+pref("browser.newtabpage.activity-stream.feeds.snippets", false, locked);
+pref("browser.newtabpage.activity-stream.feeds.topsites", false, locked);
+pref("browser.newtabpage.activity-stream.showSearch", false, locked);
+pref("browser.newtabpage.enabled", false, locked);
+pref("browser.rights.3.shown", true);
+pref("browser.search.hiddenOneOffs", "Amazon.com,Bing,DuckDuckGo,eBay,Wikipedia (en)");
+pref("browser.search.region", "US", locked);
+pref("browser.search.suggest.enabled", false, locked);
+pref("browser.shell.checkDefaultBrowser", false, locked);
+pref("browser.startup.homepage_override.mstone","ignore", locked);
+pref("browser.startup.homepage", "about:blank", locked);
+pref("browser.startup.page", 3, locked);
+pref("browser.urlbar.placeholderName", "Google", locked);
+pref("browser.urlbar.suggest.topsites", false, locked);
+pref("datareporting.healthreport.service.enabled", false, locked);
+pref("datareporting.healthreport.uploadEnabled", false, locked);
+pref("datareporting.policy.dataSubmissionEnabled", false, locked);
+pref("doh-rollout.balrog-migration-done", true, locked);
+pref("doh-rollout.disable-heuristics", true, locked);
+pref("doh-rollout.doneFirstRun", true, locked);
+pref("doh-rollout.skipHeuristicsCheck", true, locked);
+pref("extensions.lastAppVersion","");
+pref("extensions.pendingOperations", false, locked);
+pref("extensions.ui.dictionary.hidden", true, locked);
+pref("extensions.ui.locale.hidden", true, locked);
+pref("extensions.update.autoUpdateDefault", false, locked);
+pref("extensions.webcompat.perform_injections", true, locked);
+pref("extensions.webcompat.perform_ua_overrides", true, locked);
+pref("media.eme.enabled", true, locked);
+pref("media.gmp-gmpopenh264.abi", "x86-gcc3", locked);
+pref("media.gmp-widevinecdm.abi", "x86-gcc3", locked);
+pref("network.proxy.backup.ftp", "127.127.127.127", locked);
+pref("network.proxy.backup.ftp_port", 127, locked);
+pref("network.proxy.backup.ssl", "127.127.127.127", locked);
+pref("network.proxy.backup.ssl_port", 127, locked);
+pref("network.proxy.ftp", "127.127.127.127", locked);
+pref("network.proxy.ftp_port", 127, locked);
+pref("network.proxy.http", "127.127.127.127", locked);
+pref("network.proxy.http_port", 127, locked);
+pref("network.proxy.no_proxies_on", "<local>, 10.0.0.0/8, 192.168.0.0/16, 172.16.0.0/12, ${DOMAIN}, *.${DOMAIN}", locked);
+pref("network.proxy.share_proxy_settings", true, locked);
+pref("network.proxy.ssl", "127.127.127.127", locked);
+pref("network.proxy.ssl_port", 127, locked);
+pref("network.proxy.type", 1, locked);
+pref("network.trr.mode", 5, locked);
+pref("plugins.notifyMissingFlash", false, locked);
+pref("plugins.hide_infobar_for_outdated_plugin", true, locked);
+pref("plugins.update.url","");
+pref("plugin.flash.blockliststate", 0, locked);
+pref("services.sync.clients.lastSync", "0", locked);
+pref("signon.autofillForms", false, locked);
+pref("signon.generation.enabled", false, locked);
+pref("signon.management.page.breach-alerts.enabled", false, locked);
+pref("signon.rememberSignons", false, locked);
+pref("toolkit.telemetry.reportingpolicy.firstRun", false, locked);
+pref("toolkit.crashreporter.enabled", false, locked);
+pref("trailhead.firstrun.didSeeAboutWelcome", true, locked);
 EOF
 
 ln -s /etc/firefox/prefs.js /usr/lib/firefox/defaults/profile/user.js
@@ -220,7 +220,7 @@ cat > /etc/firefox/policies/policies.json <<EOF
 	"Proxy": {
 		"Mode": "manual",
 		"Locked": true,
-		"HTTPProxy": "https://203.0.113.254",
+		"HTTPProxy": "https://127.127.127.127:127",
 		"Passthrough": "<local>, 10.0.0.0/8, 192.168.0.0/16, 172.16.0.0/12, *.${DOMAIN}, ${DOMAIN}"
 		"UseHTTPProxyForAllProtocols": true,
 		"UseProxyForDNS": false
