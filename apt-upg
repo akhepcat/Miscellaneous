@@ -1,5 +1,10 @@
 #!/bin/bash
 
+echo "setting reboot canary for +1 hour"
+at now + 1 hour <<EOF
+shutdown -R now "apt-upg canary reboot"
+EOF
+
 # fix broken packages
 dpkg --configure -a
 if [ $? -ne 0 ]
@@ -35,3 +40,5 @@ then
 fi
 
 # All done!
+
+echo "use atq and  atrm  to remove the reboot canary, or else your system will reboot soon."
