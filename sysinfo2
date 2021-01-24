@@ -1,0 +1,10 @@
+#!/bin/bash
+HOST=$(hostname)
+CPU=$(grep vendor_id /proc/cpuinfo  | cut -f2 -d: | sort -u | sed 's/.*\(Genuine\|Authentic\)//g;' | tr '[A-Z]' '[a-z]')
+for i in scsi cpu usb pci
+do
+	test -n "$(which ls$i)" && ls$i > ${HOST}.${CPU}.$i || echo "can't find tool: ls$i"
+done
+for i in $(grep ATA ${HOST}.${CPU}.scsi | sed 's/.*\/dev\///g;'); do smartctl -a /dev/$i; done > ${HOST}.${CPU}.smartctl
+cat /proc/cpuinfo > ${HOST}.${CPU}.proccpu
+dmidecode > ${HOST}.${CPU}.dmi
