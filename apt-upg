@@ -9,7 +9,7 @@ EOF
 else
 	cat >/tmp/reboot_canary.sh <<EOF
 #!/bin/bash
-sleep 36
+sleep 3600
 if [ -e /reboot_canary.txt ]
 then
 	rm -f /reboot_canary.txt
