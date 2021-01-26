@@ -12,12 +12,14 @@ else
 sleep 36
 if [ -e /reboot_canary.txt ]
 then
-	rm /reboot_canary.txt
-	wall 'shutdown -R now "apt-upg canary reboot"'
+	rm -f /reboot_canary.txt
+	shutdown -R +5s "apt-upg canary reboot" &
 else
 	wall "shutdown aborted."
 fi
+rm -f /tmp/reboot_canary.sh
 EOF
+	touch /reboot_canary.txt
 	nohup bash /tmp/reboot_canary.sh >/dev/null 2>&1  &
 	echo "reboot canary set for +1 hour"
 fi
