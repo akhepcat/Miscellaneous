@@ -116,6 +116,7 @@ echo -e "\nHere we go!\n"
 
 # okay, we're good to go, let's make all the changes
 
+echo "11) Configuring repositories"
 cat >/etc/apt/sources.list.d/flashy.list <<EOF
 deb http://us.archive.ubuntu.com/ubuntu bionic multiverse
 deb http://us.archive.ubuntu.com/ubuntu bionic-updates multiverse
@@ -127,27 +128,36 @@ EOF
 apt update
 
 # flash dependencies
-apt -y install flashplugin-downloader browser-plugin-freshplayer-pepperflash
+echo "10) Installing flash dependencies, and holding specific packages back from upgrade"
+apt-get -qq -y install flashplugin-downloader browser-plugin-freshplayer-pepperflash 
 apt-mark hold firefox firefox-locale-en flashplugin-downloader xul-ext-ubufox browser-plugin-freshplayer-pepperflash
 
 # make firefox use system certificates
-apt -y install libnss3-tools p11-kit-modules p11-kit libnss3
+apt-get -qq -y install libnss3-tools p11-kit-modules p11-kit libnss3
 for nss in $(find / -mount -type f -name "libnssckbi.so")
 do
 	mv ${nss} ${nss}.dist
 	ln -s /usr/lib/x86_64-linux-gnu/pkcs11/p11-kit-trust.so ${nss}
 done
 
-# virtualization dependencies
-apt -y install virtualbox-guest-dkms virtualbox-guest-utils open-vm-tools-desktop squashfs-tools genisoimage mkisofs zip
+# Virtualization dependencies
+echo "9) Installing virtualization support"
+apt-get -qq -y install virtualbox-guest-dkms virtualbox-guest-utils open-vm-tools-desktop squashfs-tools genisoimage mkisofs zip
+
+# MS Hyper-V
+for i in hv_vmbus hv_storvsc hv_blkvsc hv_netvsc
+do
+	echo $i >> /etc/modules
+done
 
 # Get the system ready for being live
-apt -y upgrade
-apt-get autoclean
-apt-get autoremove
-
+echo "8) Upgrading the live system"
+apt-get -qq -y upgrade
+apt-get -qq -y autoclean
+apt-get -qq -y autoremove
 
 # Don't download if it's already cached
+echo "7) Installing and patching Adobe Flash player"
 FLASHURL=${FLASHURL:-https://fpdownload.adobe.com/get/flashplayer/pdc/32.0.0.465}
 wget --quiet --no-clobber ${FLASHURL}/${flash}
 if [ -r "${flash}" ]
@@ -159,11 +169,12 @@ then
 	sed -i.EOL 's/\x00\x00\x40\x46\x3E\x6F\x77\x42/\x00\x00\x00\x00\x00\x00\xF8\x7F/' /usr/lib/mozilla/plugins/libflashplayer.so
 else
 	echo "Flash was unable to be downloaded, and is not locally cached."
-	echo "Aborting so you can manually download a copy of ${flash} into this directory and restart"
+	echo "Aborting so you can manually download a copy of ${flash} (32.0.0.465 only) into this directory and restart"
 	exit 1
 fi
 
 ## If you have custom certificates, they'll be added here:
+echo "6) Updating CA certificates"
 if [ -r "certificates.tar" ]
 then
 	tar -C /usr/local/share/ca-certificates -xvf certificates.tar
@@ -172,6 +183,7 @@ fi
 
 
 ##  this configures Firefox policies for your needs:
+echo "5) Configuring Firefox policies"
 mkdir -p /etc/firefox/policies/ \
 	/usr/lib/firefox/defaults/pref/ \
 	/usr/lib/firefox/defaults/profile/ \
@@ -328,6 +340,8 @@ EOF
 
 ln -s /etc/firefox/policies/policies.json /usr/lib/firefox/distribution/
 
+# Perform any custom configuration, package adding, etc...
+echo "4) Checking for custom.sh"
 if [ -r "./custom.sh" ]
 then
 	echo "custom.sh found, executing..."
@@ -335,17 +349,22 @@ then
 	rm -f ./custom.sh
 fi
 
+# Remove the liveCD installer option
+echo "3) Removing the live installer"
 apt-get -y purge ubiquity ubiquity-frontend-kde ubiquity-casper ubiquity-slideshow-kubuntu ubiquity-ubuntu-artwork
 
+# Remove optional packages
+opks=$(wc -l "./remove.pkgs" >/dev/null 2>&1)
+echo "2) Removing ${opks:-0} optional packages"
 if [ -r "./remove.pkgs" ]
 then
 	dpkg -r --force-depends $(cat ./remove.pkgs)
 fi
 
-echo "The last step is to remove temp files, history, compilers, external filesystem drivers, and ALL PACKAGE MANAGERS"
+echo "1) The last step is to remove temp files, history, compilers, external filesystem drivers, and ALL PACKAGE MANAGERS"
 pause 10
 echo -e "\nCleaning up..."
 rm -f /usr/bin/dpkg* /usr/bin/apt* /usr/bin/x86_64-linux-gnu-{as,cpp*,g++*,gcc*,ld*,obj*} /usr/bin/gdb  /etc/alternatives/apt*
 
-echo "Complete!  continue building your iso"
+echo "0) Complete!  continue building your iso"
 rm -f /root/*
