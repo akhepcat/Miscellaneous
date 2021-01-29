@@ -73,7 +73,7 @@ fi
 if [ "${HOSTNAME}" != "cubic"  -a "${USER}" != "root" ]
 then
 cat <<EOF
-Error: this doesn't look like the cubic chroot environment, aborting"
+Error: this doesn't look like the cubic chroot environment, aborting
 ${PROG} --help
 EOF
 	exit 1
@@ -81,7 +81,7 @@ fi
 
 # This prevents the user from browsing outside an enterprise.
 # Setting this to '0.0.0.0/0' will allow Internet browsing, which may not be good!
-RFC1918="10.0.0.0/8, 192.168.0.0/16, 172.16.0.0/12"
+RFC1918="10.0.0.0/8 192.168.0.0/16 172.16.0.0/12"
 OKCIDRS=${OKCIDRS:-$RFC1918}
 if [ "${OKCIDRS}" = "${RFC1918}" ]
 then
@@ -101,6 +101,8 @@ then
 	echo ""
 	echo "change using 'DOMAIN=\"mydomain.net [2nd.tld 3rd.tld ...]\"  ./${PROG}'"
 	echo ""
+else
+	echo "Info:  DOMAIN is ${DOMAIN// /, }"
 fi
 for tld in ${DOMAIN}
 do
@@ -141,8 +143,6 @@ apt -y install virtualbox-guest-dkms virtualbox-guest-utils open-vm-tools-deskto
 
 # Get the system ready for being live
 apt -y upgrade
-apt-get -y purge ubiquity ubiquity-frontend-kde ubiquity-casper ubiquity-slideshow-kubuntu ubiquity-ubuntu-artwork
-
 apt-get autoclean
 apt-get autoremove
 
@@ -334,6 +334,8 @@ then
 	bash ./custom.sh
 	rm -f ./custom.sh
 fi
+
+apt-get -y purge ubiquity ubiquity-frontend-kde ubiquity-casper ubiquity-slideshow-kubuntu ubiquity-ubuntu-artwork
 
 if [ -r "./remove.pkgs" ]
 then
