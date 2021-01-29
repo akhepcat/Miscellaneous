@@ -81,4 +81,5 @@ then
 	unset INFILE
 fi
 
-ionice -c2 -n7 ${DD} ${INFILE:+if="$INFILE"} bs=${BS} conv=noerror,sync,notrunc ${OFLAG:+oflag=$OFLAG} ${PROGRESS} of="${OUTFILE}" 
+# conv=fsync to catch truncated writes on errors
+ionice -c2 -n7 ${DD} ${INFILE:+if="$INFILE"} bs=${BS} conv=noerror,fsync,notrunc ${OFLAG:+oflag=$OFLAG} ${PROGRESS} of="${OUTFILE}"
