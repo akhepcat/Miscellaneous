@@ -1,10 +1,47 @@
 #!/bin/bash
 HOST=$(hostname)
-CPU=$(grep vendor_id /proc/cpuinfo  | cut -f2 -d: | sort -u | sed 's/.*\(Genuine\|Authentic\)//g;' | tr '[A-Z]' '[a-z]')
-for i in scsi cpu usb pci
+
+CPU=$(egrep '^(vendor_id|Hardware)' /proc/cpuinfo  | cut -f2 -d: | sort -u | sed 's/.*\(Genuine\|Authentic\)//g; s/[[:space:]]\+//g;' | tr '[A-Z]' '[a-z]')
+CPU=${CPU:-unknown}
+
+[[ -d "/proc/bus/pci" ]] && PCI="pci"
+[[ -d "/proc/scsi" ]] && SCSI="scsi"
+for i in cpu usb ${PCI} ${SCSI}
 do
-	test -n "$(which ls$i)" && ls$i > ${HOST}.${CPU}.$i || echo "can't find tool: ls$i"
+	if [ -n "$(which ls${i})" ]
+	then
+		file="${HOST}.${CPU}.${i}"
+		eval "ls${i}" > "${file}"
+	else
+		echo "can't find tool: ls${i}"
+	fi
 done
-for i in $(grep ATA ${HOST}.${CPU}.scsi | sed 's/.*\/dev\///g;'); do smartctl -a /dev/$i; done > ${HOST}.${CPU}.smartctl
-cat /proc/cpuinfo > ${HOST}.${CPU}.proccpu
-dmidecode > ${HOST}.${CPU}.dmi
+if [ -n "$(which smartctl)" -a -r "${HOST}.${CPU}.scsi" ]
+then
+	for i in $(grep ATA "${HOST}.${CPU}.scsi" | sed 's/.*\/dev\///g;')
+	do
+		smartctl -a /dev/$i
+	done > "${HOST}.${CPU}.smartctl"
+fi
+
+cat /proc/cpuinfo > "${HOST}.${CPU}.proccpu"
+
+[[ -n "$(which dmidecode)" ]] && dmidecode > "${HOST}.${CPU}.dmi"
+
+
+#egrep '^(vendor_id|model name|Hardware|Model)' /proc/cpuinfo | sort -fiu
+
+#Hardware        : BCM2835
+#model name      : ARMv6-compatible processor rev 7 (v6l)
+#Model           : Raspberry Pi Model B Rev 1
+#vendor_id	 : 
+
+#Hardware        :
+#model name      : Intel(R) Xeon(R) CPU           X5690  @ 3.47GHz
+#Model           :
+#vendor_id       : GenuineIntel
+
+#Hardware        :
+#model name      : AMD Ryzen 5 2600 Six-Core Processor
+#Model           :
+#vendor_id       : AuthenticAMD
