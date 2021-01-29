@@ -28,42 +28,80 @@ pause() {
 	done
 }
 
+usage() {
+	cat <<EOF
+Usage:
+  v) create an optional 'custom.sh' script to install localized packages, or make configuration changes in the system
+ iv) create an optional 'certificates.tar' archive of CA certs to inject as trusted by the system/browser
+iii) create an optional 'remove.pkgs' text list of packages to remove from the system
+ ii) define alternate env vars for DOMAIN or OKCIDRS variables as needed (default: ${DOMAIN:-example.com},  RFC1918)
+  i) specify an alternate env var for FLASHURL to download ${flash} from
 
-## This is meant to be run *inside* of the Cubic chroot
-# Check to make sure we're inside the right environment
+  1) Start cubic
+  2) choose the project directory
+  3) choose the Ubuntu iso  (this script assumes 64-bit bionic )
+  4) customize the names
+  5) enter into the chroot
+  6) from an alternate terminal, copy this script (and optional files) into the chroot directory
+  7) from the chroot, run this script
+  8) select 'next' until you can 'generate' the ISO
+  9) copy the ISO to your testing host and boot it.
+ 10) if it works, huzzah!  Otherwise, you can restart cubic and try additional changes
+ 11) eventually you'll get something you like!
+ 12) profit
+EOF
 
-if [ "${HOSTNAME}" != "cubic"  -a "${USER}" != "root" ]
+}
+
+# This may need to be cached
+if [ "$(uname -m)" = "x86_64" ];
 then
-	echo "this doesn't look like the cubic chroot environment, aborting"
-	echo "Usage:"
-	echo " 0) edit this script to change the IPRANGE, DOMAIN, or DOMAINLIST variables as needed (default: RFC1918, ${DOMAIN:-example.com})"
-	echo " 1) Start cubic"
-	echo " 2) choose the project directory"
-	echo " 3) choose the Ubuntu iso  ( this script assume 32-bit bionic )"
-	echo " 4) customize the names"
-	echo " 5) enter into the chroot"
-	echo " 6) from an alternate terminal, copy this script into the chroot directory"
-	echo " 7) from the chroot, run this script"
-	echo " 8) select 'next' until you can 'generate' the ISO"
-	echo " 9) copy the ISO to your testing host and boot it."
-	echo "10) if it works, huzzah!  Otherwise, you can restart cubic and try additional changes"
-	echo "11) eventually you'll get something you like!"
-	echo "12) profit"
+	flash="flash_player_npapi_linux.x86_64.tar.gz"
+else
+	flash="flash_player_npapi_linux.i386.tar.gz"
+fi
+
+# we don't use args, so any args are 'help'
+if [ -n "$1" ]
+then
+	usage
 	exit 1
 fi
 
-# you should override this
-if [ "${DOMAIN:-example.com}" = "example.com" ]
+## This is meant to be run *inside* of the Cubic chroot
+# Check to make sure we're inside the right environment
+if [ "${HOSTNAME}" != "cubic"  -a "${USER}" != "root" ]
 then
-	echo "Warning:  DOMAIN variable not overridden (using '${DOMAIN}' will probably not do what you want)"
-	echo ""
-	echo "either edit the script, or call it using 'DOMAIN=\"mydomain.net [2nd.tld 3rd.tld ...]\"  ./${PROG}'"
-	echo ""
+cat <<EOF
+Error: this doesn't look like the cubic chroot environment, aborting"
+${PROG} --help
+EOF
+	exit 1
 fi
 
 # This prevents the user from browsing outside an enterprise.
-# Setting all these "empty" will allow Internet browsing, which may not be good!
-IPRANGE="10.0.0.0/8, 192.168.0.0/16, 172.16.0.0/12"
+# Setting this to '0.0.0.0/0' will allow Internet browsing, which may not be good!
+RFC1918="10.0.0.0/8, 192.168.0.0/16, 172.16.0.0/12"
+OKCIDRS=${OKCIDRS:-$RFC1918}
+if [ "${OKCIDRS}" = "${RFC1918}" ]
+then
+	echo "Info:  OKCIDRS is ${OKCIDRS// /, }"
+	echo ""
+	echo "change using 'OKCIDRS=\"C.I.D.R/1 [c.i.d.r/2 c.i.d.r/3 ...]\"  ./${PROG}'"
+	echo ""
+fi
+for net in ${OKCIDRS}
+do
+	IPRANGE="${IPRANGE:+$IPRANGE, $net}"
+done
+
+if [ "${DOMAIN:-example.com}" = "example.com" ]
+then
+	echo "WARN:  DOMAIN variable not overridden (using '${DOMAIN}' will probably not do what you want)"
+	echo ""
+	echo "change using 'DOMAIN=\"mydomain.net [2nd.tld 3rd.tld ...]\"  ./${PROG}'"
+	echo ""
+fi
 for tld in ${DOMAIN}
 do
 	DOMAINLIST="${DOMAINLIST:+$DOMAINLIST, *.$tld, $tld}"
@@ -108,15 +146,10 @@ apt-get -y purge ubiquity ubiquity-frontend-kde ubiquity-casper ubiquity-slidesh
 apt-get autoclean
 apt-get autoremove
 
-# This may need to be cached
-if [ "$(uname -m)" = "x86_64" ];
-then
-	flash="flash_player_npapi_linux.x86_64.tar.gz"
-else
-	flash="flash_player_npapi_linux.i386.tar.gz"
-fi
+
 # Don't download if it's already cached
-wget --quiet --no-clobber https://fpdownload.adobe.com/get/flashplayer/pdc/32.0.0.465/${flash}
+FLASHURL=${FLASHURL:-https://fpdownload.adobe.com/get/flashplayer/pdc/32.0.0.465}
+wget --quiet --no-clobber ${FLASHURL}/${flash}
 if [ -r "${flash}" ]
 then
 	tar -C / -xpvf ${flash}
@@ -226,6 +259,7 @@ ln -s /etc/firefox/prefs.js /usr/lib/firefox/defaults/pref/all-flashy.js
 ln -s /etc/firefox/prefs.js /usr/lib/firefox/browser/defaults/preferences/autoconfig.js
 mkdir -p /etc/skel/Desktop/ && ln -s /usr/share/applications/firefox.desktop /etc/skel/Desktop/
 
+# tell firefox to install the certs via policy
 for crt in $(ls /usr/local/share/ca-certificates/*.crt)
 do
 	CERT="${CERT:+$CERT, }\"$crt\""
@@ -299,6 +333,11 @@ then
 	echo "custom.sh found, executing..."
 	bash ./custom.sh
 	rm -f ./custom.sh
+fi
+
+if [ -r "./remove.pkgs" ]
+then
+	dpkg -r --force-depends $(cat ./remove.pkgs)
 fi
 
 echo "The last step is to remove temp files, history, compilers, external filesystem drivers, and ALL PACKAGE MANAGERS"
