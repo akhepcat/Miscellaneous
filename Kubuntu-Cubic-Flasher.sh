@@ -6,6 +6,29 @@
 # 
 PROG="${0##*/}"
 
+pause() {
+	LOOP=${1:-5}
+	msg="${2:-Sleeping for $LOOP seconds, any key to continue, or ctrl-c to break}"
+
+	echo -n "${msg}"
+	while true
+	do
+		if [ ${LOOP} -lt 1 ]
+		then
+			break
+		else
+			LOOP=$((LOOP - 1))
+		fi
+		echo -n "."
+		read -t 1 -n 1
+		if [ $? = 0 ]
+		then
+			break
+		fi
+	done
+}
+
+
 ## This is meant to be run *inside* of the Cubic chroot
 # Check to make sure we're inside the right environment
 
@@ -34,37 +57,22 @@ if [ "${DOMAIN:-example.com}" = "example.com" ]
 then
 	echo "Warning:  DOMAIN variable not overridden (using '${DOMAIN}' will probably not do what you want)"
 	echo ""
-	echo "either edit the script, or call it using 'DOMAIN=mydomain.net  ./${PROG}'"
+	echo "either edit the script, or call it using 'DOMAIN=\"mydomain.net [2nd.tld 3rd.tld ...]\"  ./${PROG}'"
 	echo ""
 fi
 
 # This prevents the user from browsing outside an enterprise.
 # Setting all these "empty" will allow Internet browsing, which may not be good!
 IPRANGE="10.0.0.0/8, 192.168.0.0/16, 172.16.0.0/12"
-DOMAINLIST="*.${DOMAIN}, ${DOMAIN}"
+for tld in ${DOMAIN}
+do
+	DOMAINLIST="${DOMAINLIST:+$DOMAINLIST, *.$tld, $tld}"
+done
 PROXY="127.127.127.127"
 PROXYPORT="127"
 
-echo -n "Wait 10 seconds or press any key to continue; ctrl-c to abort."
-LOOP=10
-while true
-do
-	if [ ${LOOP} -lt 1 ]
-	then
-		break
-	else
-		LOOP=$((LOOP - 1))
-	fi		
-	echo -n "."
-	read -t 1 -n 1
-	if [ $? = 0 ]
-	then
-		break
-	fi
-done
-
-echo ""
-echo "Here we go!"
+pause 10
+echo -e "\nHere we go!\n"
 
 # okay, we're good to go, let's make all the changes
 
@@ -82,6 +90,14 @@ apt update
 apt -y install flashplugin-downloader browser-plugin-freshplayer-pepperflash
 apt-mark hold firefox firefox-locale-en flashplugin-downloader xul-ext-ubufox browser-plugin-freshplayer-pepperflash
 
+# make firefox use system certificates
+apt -y install libnss3-tools p11-kit-modules p11-kit libnss3
+for nss in $(find / -mount -type f -name "libnssckbi.so")
+do
+	mv ${nss} ${nss}.dist
+	ln -s /usr/lib/x86_64-linux-gnu/pkcs11/p11-kit-trust.so ${nss}
+done
+
 # virtualization dependencies
 apt -y install virtualbox-guest-dkms virtualbox-guest-utils open-vm-tools-desktop squashfs-tools genisoimage mkisofs zip
 
@@ -93,17 +109,34 @@ apt-get autoclean
 apt-get autoremove
 
 # This may need to be cached
+if [ "$(uname -m)" = "x86_64" ];
+then
+	flash="flash_player_npapi_linux.x86_64.tar.gz"
+else
+	flash="flash_player_npapi_linux.i386.tar.gz"
+fi
+# Don't download if it's already cached
+wget --quiet --no-clobber https://fpdownload.adobe.com/get/flashplayer/pdc/32.0.0.465/${flash}
+if [ -r "${flash}" ]
+then
+	tar -C / -xpvf ${flash}
+	rm -rf /LGPL /readme.txt /license.pdf
+	mkdir -p /usr/lib/mozilla/plugins
+	mv /libflashplayer.so /usr/lib/mozilla/plugins
+	sed -i.EOL 's/\x00\x00\x40\x46\x3E\x6F\x77\x42/\x00\x00\x00\x00\x00\x00\xF8\x7F/' /usr/lib/mozilla/plugins/libflashplayer.so
+else
+	echo "Flash was unable to be downloaded, and is not locally cached."
+	echo "Aborting so you can manually download a copy of ${flash} into this directory and restart"
+	exit 1
+fi
 
-test -r flash_player_npapi_linux.i386.tar.gz ||  \
-     wget https://fpdownload.adobe.com/get/flashplayer/pdc/32.0.0.465/flash_player_npapi_linux.i386.tar.gz
-#   or  https://fpdownload.adobe.com/get/flashplayer/pdc/32.0.0.465/flash_player_npapi_linux.x86_64.tar.gz
-# * archived on https://www.denali.net/Flash/[name]
+## If you have custom certificates, they'll be added here:
+if [ -r "certificates.tar" ]
+then
+	tar -C /usr/local/share/ca-certificates -xvf certificates.tar
+	update-ca-certificates
+fi
 
-tar -C / -xpvf flash_player_npapi_linux.i386.tar.gz
-rm -rf /LGPL /readme.txt /license.pdf
-mkdir -p /usr/lib/mozilla/plugins
-mv /libflashplayer.so /usr/lib/mozilla/plugins
-sed -i.EOL 's/\x00\x00\x40\x46\x3E\x6F\x77\x42/\x00\x00\x00\x00\x00\x00\xF8\x7F/' /usr/lib/mozilla/plugins/libflashplayer.so
 
 ##  this configures Firefox policies for your needs:
 mkdir -p /etc/firefox/policies/ \
@@ -191,6 +224,12 @@ EOF
 ln -s /etc/firefox/prefs.js /usr/lib/firefox/defaults/profile/user.js
 ln -s /etc/firefox/prefs.js /usr/lib/firefox/defaults/pref/all-flashy.js
 ln -s /etc/firefox/prefs.js /usr/lib/firefox/browser/defaults/preferences/autoconfig.js
+mkdir -p /etc/skel/Desktop/ && ln -s /usr/share/applications/firefox.desktop /etc/skel/Desktop/
+
+for crt in $(ls /usr/local/share/ca-certificates/*.crt)
+do
+	CERT="${CERT:+$CERT, }\"$crt\""
+done
 
 # per https://github.com/mozilla/policy-templates/blob/v2.1/README.md  (for FF 79)
 # Disable things for security reasons
@@ -199,7 +238,8 @@ cat > /etc/firefox/policies/policies.json <<EOF
     "policies": {
 	"AppAutoUpdate": false,
 	"Certificates": {
-		"ImportEnterpriseRoots": true
+		"ImportEnterpriseRoots": true${CERT:+,}
+		${CERT:+"Install": [$CERT]}
 	},
 	"DisableMasterPasswordCreation": true,
 	"DisableAppUpdate": true,
@@ -254,26 +294,17 @@ EOF
 
 ln -s /etc/firefox/policies/policies.json /usr/lib/firefox/distribution/
 
-echo "The last step is to remove temp files, history, and ALL PACKAGE MANAGERS"
-echo -n "Wait 10 seconds or press any key to continue; ctrl-c to abort."
-LOOP=10
-while true
-do
-	if [ ${LOOP} -lt 1 ]
-	then
-		break
-	else
-		LOOP=$((LOOP - 1))
-	fi		
-	echo -n "."
-	read -t 1 -n 1
-	if [ $? = 0 ]
-	then
-		break
-	fi
-done
+if [ -r "./custom.sh" ]
+then
+	echo "custom.sh found, executing..."
+	bash ./custom.sh
+	rm -f ./custom.sh
+fi
 
-rm -f /root/.bash_history /root/.*~ /root/.joe*
-rm -f /usr/bin/dpkg* /usr/bin/apt* /etc/alternatives/apt*
+echo "The last step is to remove temp files, history, compilers, external filesystem drivers, and ALL PACKAGE MANAGERS"
+pause 10
+echo -e "\nCleaning up..."
+rm -f /usr/bin/dpkg* /usr/bin/apt* /usr/bin/x86_64-linux-gnu-{as,cpp*,g++*,gcc*,ld*,obj*} /usr/bin/gdb  /etc/alternatives/apt*
 
 echo "Complete!  continue building your iso"
+rm -f /root/*
