@@ -125,15 +125,17 @@ deb http://archive.canonical.com/ubuntu bionic partner
 deb http://us.archive.ubuntu.com/ubuntu bionic-backports main restricted universe multiverse
 EOF
 
-apt update
+export DEBIAN_FRONTEND=noninteractive
+apt-get -qq update >/dev/null 2>&1
 
+aptq='apt-get -qq -y -o "Dpkg::Options::=--force-confdef" -o "Dpkg::Options::=--force-confold"'
 # flash dependencies
 echo "10) Installing flash dependencies, and holding specific packages back from upgrade"
-apt-get -qq -y install flashplugin-downloader browser-plugin-freshplayer-pepperflash 
-apt-mark hold firefox firefox-locale-en flashplugin-downloader xul-ext-ubufox browser-plugin-freshplayer-pepperflash
+${aptq} install flashplugin-downloader browser-plugin-freshplayer-pepperflash >/dev/null 2>&1
+apt-mark hold firefox firefox-locale-en flashplugin-downloader xul-ext-ubufox browser-plugin-freshplayer-pepperflash >/dev/null 2>&1
 
 # make firefox use system certificates
-apt-get -qq -y install libnss3-tools p11-kit-modules p11-kit libnss3
+${aptq} install libnss3-tools p11-kit-modules p11-kit libnss3 >/dev/null 2>&1
 for nss in $(find / -mount -type f -name "libnssckbi.so")
 do
 	mv ${nss} ${nss}.dist
@@ -142,19 +144,19 @@ done
 
 # Virtualization dependencies
 echo "9) Installing virtualization support"
-apt-get -qq -y install virtualbox-guest-dkms virtualbox-guest-utils open-vm-tools-desktop squashfs-tools genisoimage mkisofs zip
+${aptq} install virtualbox-guest-dkms virtualbox-guest-utils open-vm-tools-desktop squashfs-tools genisoimage mkisofs zip >/dev/null 2>&1
 
 # MS Hyper-V
-for i in hv_vmbus hv_storvsc hv_blkvsc hv_netvsc
+for i in hv_vmbus hv_storvsc hv_blkvsc hv_netvsc hv_sock hv_utils
 do
 	echo $i >> /etc/modules
 done
 
 # Get the system ready for being live
 echo "8) Upgrading the live system"
-apt-get -qq -y upgrade
-apt-get -qq -y autoclean
-apt-get -qq -y autoremove
+${aptq} upgrade >/dev/null 2>&1
+${aptq} autoclean >/dev/null 2>&1
+${aptq} autoremove >/dev/null 2>&1
 
 # Don't download if it's already cached
 echo "7) Installing and patching Adobe Flash player"
@@ -162,7 +164,7 @@ FLASHURL=${FLASHURL:-https://fpdownload.adobe.com/get/flashplayer/pdc/32.0.0.465
 wget --quiet --no-clobber ${FLASHURL}/${flash}
 if [ -r "${flash}" ]
 then
-	tar -C / -xpvf ${flash}
+	tar -C / -xpf ${flash}
 	rm -rf /LGPL /readme.txt /license.pdf
 	mkdir -p /usr/lib/mozilla/plugins
 	mv /libflashplayer.so /usr/lib/mozilla/plugins
@@ -177,8 +179,8 @@ fi
 echo "6) Updating CA certificates"
 if [ -r "certificates.tar" ]
 then
-	tar -C /usr/local/share/ca-certificates -xvf certificates.tar
-	update-ca-certificates
+	tar -C /usr/local/share/ca-certificates -xf certificates.tar
+	update-ca-certificates >/dev/null 2>&1
 fi
 
 
@@ -266,10 +268,10 @@ pref("toolkit.crashreporter.enabled", false, locked);
 pref("trailhead.firstrun.didSeeAboutWelcome", true, locked);
 EOF
 
-ln -s /etc/firefox/prefs.js /usr/lib/firefox/defaults/profile/user.js
-ln -s /etc/firefox/prefs.js /usr/lib/firefox/defaults/pref/all-flashy.js
-ln -s /etc/firefox/prefs.js /usr/lib/firefox/browser/defaults/preferences/autoconfig.js
-mkdir -p /etc/skel/Desktop/ && ln -s /usr/share/applications/firefox.desktop /etc/skel/Desktop/
+ln -s /etc/firefox/prefs.js /usr/lib/firefox/defaults/profile/user.js >/dev/null 2>&1
+ln -s /etc/firefox/prefs.js /usr/lib/firefox/defaults/pref/all-flashy.js >/dev/null 2>&1
+ln -s /etc/firefox/prefs.js /usr/lib/firefox/browser/defaults/preferences/autoconfig.js >/dev/null 2>&1
+mkdir -p /etc/skel/Desktop/ && ln -s /usr/share/applications/firefox.desktop /etc/skel/Desktop/ >/dev/null 2>&1
 
 # tell firefox to install the certs via policy
 for crt in $(ls /usr/local/share/ca-certificates/*.crt)
@@ -338,7 +340,7 @@ cat > /etc/firefox/policies/policies.json <<EOF
 
 EOF
 
-ln -s /etc/firefox/policies/policies.json /usr/lib/firefox/distribution/
+ln -s /etc/firefox/policies/policies.json /usr/lib/firefox/distribution/ >/dev/null 2>&1
 
 # Perform any custom configuration, package adding, etc...
 echo "4) Checking for custom.sh"
@@ -351,14 +353,14 @@ fi
 
 # Remove the liveCD installer option
 echo "3) Removing the live installer"
-apt-get -y purge ubiquity ubiquity-frontend-kde ubiquity-casper ubiquity-slideshow-kubuntu ubiquity-ubuntu-artwork
+${aptq} purge ubiquity ubiquity-frontend-kde ubiquity-casper ubiquity-slideshow-kubuntu ubiquity-ubuntu-artwork >/dev/null 2>&1
 
 # Remove optional packages
 opks=$(wc -l "./remove.pkgs" >/dev/null 2>&1)
 echo "2) Removing ${opks:-0} optional packages"
 if [ -r "./remove.pkgs" ]
 then
-	dpkg -r --force-depends $(cat ./remove.pkgs)
+	dpkg -r --no-triggers --force-confdef --force-confold --force-breaks --force-depends $(cat ./remove.pkgs) >/dev/null 2>&1
 fi
 
 echo "1) The last step is to remove temp files, history, compilers, external filesystem drivers, and ALL PACKAGE MANAGERS"
