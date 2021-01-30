@@ -70,7 +70,7 @@ do
 				test $? -eq 1 && echo "git repo ${SUBDIR} has pending changes"
 			else
 				echo -n "checking git repo ${SUBDIR}: "
-				git pull
+				git pull --recurse
 			fi
 		fi
 		cd ${CWD}
