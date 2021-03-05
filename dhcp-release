@@ -1,0 +1,78 @@
+#!/usr/bin/perl
+use strict;
+
+# Written by Leif Sawyer <leif@gci.net> Dec 14, 1999
+# A simple utility to remove a host leases from the dhcp
+# lease file, by IP or ethernet.  Removes ALL entries for
+# either the IP given, or the ethernet host.
+#
+
+my($PathLeases) = "/var/dhcpd/dhcpd.leases";
+my($mode) = "ip";
+
+my($etherhost) = "00:90:27:3f:6f:32";
+my($iphost) = "24.237.1.102";
+
+my($date)=`/bin/date +'%Y%m%d%H%M%S'`; chop $date;
+print "Freeing lease for host $iphost ($etherhost)\n";
+
+`mv $PathLeases $PathLeases.$date` && die "Can't mv $PathLeases to $PathLeases.$date: $!\n";
+open(LEASES, ">$PathLeases") || die "Cannot open $PathLeases for writing: $!\n";
+open(OLD,"<$PathLeases.$date") || die "Cannot open $PathLeases.$date for reading $!\n";
+
+$SIG{'QUIT'} = \&exit_handler;
+$SIG{'INT'} = \&exit_handler;
+$SIG{'ABORT'} = \&exit_handler;
+$SIG{'HUP'}  = \&exit_handler;
+
+my($in_entry) = 0;
+my($i) = 0;
+my($line) = 0;
+my($found) = 0;
+my(%entry);
+my($ip) = "";
+
+while(<OLD>) {
+    chop;
+    if ($in_entry) {
+	if ( /^\}/ ) { 
+		$in_entry = 0;
+		if ($found) {
+			print "Found entry for host $ip, freeing.\n";
+			$line = 0; $found = 0; next;
+		}
+		for ($i=0; $i ne $line; $i++) {
+			print LEASES $entry{$i} . "\n";
+		}
+		print LEASES "}\n"; $line = 0;	next; # reset and loop again
+	}
+# We're somewhere in the lease entry, so start storing the info
+	if (/^\thardware ethernet (\S+:\S+:\S+:\S+:\S+:\S+);$/) {
+		$found = 1 if ( ( $1 eq $etherhost) && ($mode eq "ethernet") );
+	}
+	$entry{$line++} = $_;
+    } else {	# We're not in a lease entry
+	if (/^lease (\d+\.\d+\.\d+\.\d+) \{$/) {
+		$ip = $1;
+		$found = 1 if ( ( $ip eq $iphost ) && ( $mode eq "ip" ) );
+		$in_entry = 1; $entry{$line++} = $_ ; next;
+	} else {
+		print LEASES $_ . "\n";
+	}
+    }
+}
+
+exit(1);
+
+# ---------------------------------------------------------------------------
+# Handle an interrupt in processing
+# ---------------------------------------------------------------------------
+
+sub exit_handler { 
+   print "caught QUIT signal, restoring old config...\n";
+   close(OLD);
+   close(LEASES);
+   unlink "$PathLeases" if "$PathLeases.$date";
+   `mv $PathLeases.$date $PathLeases` && die "Warning: Can't restore $PathLeases from $PathLeases.$date: $!\n";
+   exit(0);
+}
