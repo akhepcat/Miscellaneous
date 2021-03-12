@@ -1,0 +1,29 @@
+#!/bin/bash
+# (c) 2021 Leif Sawyer
+# License: GPL 3.0 (see https://github.com/akhepcat/)
+# Permanent home:  https://github.com/akhepcat/Miscellaneous/
+# Direct download: https://raw.githubusercontent.com/akhepcat/Miscellaneous/master/x11vnc-app
+# 
+# simple, dumb wrapper to detect the active window and x11vnc share only that window. 
+#
+PROG="${0##*/}"
+
+if [ -z "$1" ] 
+then
+	echo "${PROG} [app]"
+	exit 1
+fi
+app=$1
+
+appid=""
+
+# the default tree output gives the 'active' main window last... at least often enough.
+# if there's multiple windows, it'll be the most recent active one.
+appid=$(xwininfo -root -all | grep -i "${app}" | awk '{print $1}' | tail -1 )
+
+[[ -n "${appid}" ]] && echo "detected root window for ${app}: ${appid}"
+
+#ungrabboth means we can actually use mouse/keyboard for app share
+#noxdamage helps with performance
+
+x11vnc -id ${appid} -ungrabboth -noxdamage
