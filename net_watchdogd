@@ -53,7 +53,7 @@ do
 
                         if [ -n "${MyIntIPv4}" ]
                         then
-                                GW=$(awk 'BEGIN { IGNORECASE=1 } /^[a-z0-9]+[ \t]+00000000/ { print $3 }' /proc/net/route)
+                                GW=$(awk 'BEGIN { IGNORECASE=1 } /^[a-z0-9:.-]+[ \t]+00000000/ { print $3 }' /proc/net/route)
                                 GW1=${GW##??????}
                                 GW2=${GW//$GW1/}
                                 GW2=${GW2##????}
