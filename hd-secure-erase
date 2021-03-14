@@ -52,16 +52,18 @@ then
 fi
 
 frozen=$(hdparm -I ${DISK} 2>&1 | grep -Ei 'not.*frozen|failed')
-
-if [ -n "${frozen}" -a -z "${frozen##*failed*}" ]
+if [ -z "${FORCE}" ]
 then
+  if [ -n "${frozen}" -a -z "${frozen##*failed*}" ]
+  then
 	echo "invalid device type for ${DISK}"
 	exit 1
-elif [ -n "${frozen}" -a -z "${frozen##*frozen*}" ]
-then
+  elif [ -n "${frozen}" -a -z "${frozen##*frozen*}" ]
+  then
 	echo "You must suspend/resume to memory and try again:"
 	echo 'echo -n mem > /sys/power/state'
 	exit 1
+  fi
 fi
 
 echo "THIS IS DESTRUCTIVE. YOU MAY BRICK YOUR DRIVE. YOU HAVE BEEN WARNED"
