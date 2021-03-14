@@ -10,7 +10,7 @@ PREFERCHROME=1
 DEBUG=${DEBUG:-1}
 FORCEPREFER=0
 USE_PROXY=0
-PROX="$(cat ~/.proxy.cnf)"	# one proxy per line, in uri format; socks/http supported
+[[ -e "~/.proxy.cnf" ]] && PROX="$(cat ~/.proxy.cnf)"	# one proxy per line, in uri format; socks/http supported
 
 DBGLOG=/tmp/urls
 
