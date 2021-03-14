@@ -86,27 +86,27 @@ OKCIDRS=${OKCIDRS:-$RFC1918}
 if [ "${OKCIDRS}" = "${RFC1918}" ]
 then
 	echo "Info:  OKCIDRS is ${OKCIDRS// /, }"
+	echo """    change using 'OKCIDRS="C.I.D.R/1 [c.i.d.r/2 c.i.d.r/3 ...]"  ./${PROG}'"""
 	echo ""
-	echo "change using 'OKCIDRS=\"C.I.D.R/1 [c.i.d.r/2 c.i.d.r/3 ...]\"  ./${PROG}'"
-	echo ""
+else
+	echo "Info:  OKCIDRS is ${OKCIDRS// /, }"
 fi
 for net in ${OKCIDRS}
 do
-	IPRANGE="${IPRANGE:+$IPRANGE, $net}"
+	[[ -n "${IPRANGE}" ]] && IPRANGE="${IPRANGE:+$IPRANGE, $net}" || IPRANGE=$net
 done
 
 if [ "${DOMAIN:-example.com}" = "example.com" ]
 then
 	echo "WARN:  DOMAIN variable not overridden (using '${DOMAIN}' will probably not do what you want)"
-	echo ""
-	echo "change using 'DOMAIN=\"mydomain.net [2nd.tld 3rd.tld ...]\"  ./${PROG}'"
+	echo """    change using 'DOMAIN="mydomain.net [2nd.tld 3rd.tld ...]"  ./${PROG}'"""
 	echo ""
 else
 	echo "Info:  DOMAIN is ${DOMAIN// /, }"
 fi
 for tld in ${DOMAIN}
 do
-	DOMAINLIST="${DOMAINLIST:+$DOMAINLIST, *.$tld, $tld}"
+	[[ -n "${DOMAINLIST}" ]] && DOMAINLIST="${DOMAINLIST:+$DOMAINLIST, *.$tld, $tld}" || DOMAINLIST="*.$tld, $tld"
 done
 PROXY="127.127.127.127"
 PROXYPORT="127"
@@ -348,7 +348,6 @@ if [ -r "./custom.sh" ]
 then
 	echo "custom.sh found, executing..."
 	bash ./custom.sh
-	rm -f ./custom.sh
 fi
 
 # Remove the liveCD installer option
@@ -360,7 +359,12 @@ opks=$(wc -l "./remove.pkgs" >/dev/null 2>&1)
 echo "2) Removing ${opks:-0} optional packages"
 if [ -r "./remove.pkgs" ]
 then
-	dpkg -r --no-triggers --force-confdef --force-confold --force-breaks --force-depends $(cat ./remove.pkgs) >/dev/null 2>&1
+	grep -q -w sudo ./remove.pkgs
+	if [ $? -eq 0 ]
+	then
+		export SUDO_FORCE_REMOVE=yes 
+	fi
+	dpkg -r --no-triggers --force-all $(cat ./remove.pkgs) >/dev/null 2>&1
 fi
 
 echo "1) The last step is to remove temp files, history, compilers, external filesystem drivers, and ALL PACKAGE MANAGERS"
@@ -369,4 +373,4 @@ echo -e "\nCleaning up..."
 rm -f /usr/bin/dpkg* /usr/bin/apt* /usr/bin/x86_64-linux-gnu-{as,cpp*,g++*,gcc*,ld*,obj*} /usr/bin/gdb  /etc/alternatives/apt*
 
 echo "0) Complete!  continue building your iso"
-rm -f /root/*
+rm -rf /root/*
