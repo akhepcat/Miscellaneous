@@ -40,7 +40,7 @@ do
         if [ 1 -eq ${LINK:-0} ]
         then
 
-                MyV4Int=$(awk 'BEGIN { IGNORECASE=1 } /^[a-z0-9]+[ \t]+00000000/ { print $1 }' /proc/net/route 2>/dev/null | head -1)
+                MyV4Int=$(awk 'BEGIN { IGNORECASE=1 } /^[a-z0-9:.-]+[ \t]+00000000/ { print $1 }' /proc/net/route 2>/dev/null | head -1)
                 if [ "${IFACE:-lo1}" = "${MyV4Int:-lo0}" ]
                 then
                         MyV4Int=${MyV4Int##*default*dev }
