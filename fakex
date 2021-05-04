@@ -59,7 +59,7 @@ start() {
         sleep 2
         xterm -ls  -sl 1000 -sb -T ${USER}@${HOST} -fg white -bg black -C -fn 9x15 -display ${DISPLAY} 2>/dev/null &
         sleep 1
-        DISPLAY=${DISPLAY} xfwm4 --daemon 2>/dev/null
+        DISPLAY=${DISPLAY} xfwm4 --daemon 2>/dev/null &
         sleep 1
         DISPLAY=${DISPLAY} xfce4-panel 2>/dev/null &
         sleep 1
