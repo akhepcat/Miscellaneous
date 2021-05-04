@@ -42,6 +42,8 @@ status() {
         [[ $? -eq 1 ]] && echo "fakex is not running (no Xvfb processes found)"
 }
 
+XYRES=${XYRES:-1440x900}
+
 start() {
         USER=$(/usr/bin/whoami)
         HOST=$(/bin/hostname | cut -f 1 -d.)
@@ -53,7 +55,7 @@ start() {
         RFBPORT=$((DISPLAY + 4901))
         DISPLAY=":$((DISPLAY + 1))"
 
-        Xvfb ${DISPLAY} -dpms -shmem -br -nolisten tcp -noreset -v -xinerama -ac -screen 0 1440x900x16 -fbdir ${FBDIR} 2>/dev/null &
+        Xvfb ${DISPLAY} -dpms -shmem -br -nolisten tcp -noreset -v -xinerama -ac -screen 0 ${XYRES}x16 -fbdir ${FBDIR} 2>/dev/null &
         sleep 2
         xterm -ls  -sl 1000 -sb -T ${USER}@${HOST} -fg white -bg black -C -fn 9x15 -display ${DISPLAY} 2>/dev/null &
         sleep 1
