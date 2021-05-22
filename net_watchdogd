@@ -33,6 +33,7 @@ do_shutdown() {
 }
 
 # Main loop
+logger -s -t "${PROG}" "starting watchdog on interface ${IFACE}"
 while true
 do
         LINK=$(cat /sys/class/net/${IFACE}/carrier)
@@ -112,3 +113,4 @@ do
 
         sleep ${SLEEP}
 done
+logger -s -t "${PROG}" "FATAL: reached EOF"
