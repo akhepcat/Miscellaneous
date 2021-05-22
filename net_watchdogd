@@ -27,7 +27,7 @@ RT_CNT=0
 do_shutdown() {
         REASON=$1
 
-        logger "watchdog: ${REASON:-%ERR:} no network, rebooting"
+        logger -s -t "${PROG}" "watchdog: ${REASON:-%ERR:} no network, rebooting"
         shutdown -r +3  "watchdog:  ${REASON:-%ERR:} No Network, rebooting"
         exit 1
 }
@@ -73,7 +73,7 @@ do
                                         RT_CNT=$(( $RT_CNT + 1 ))
                                         if [ ${RT_CNT:-0} -gt ${COUNTER:-15} ]
                                         then
-                                                echo "${COUNTER:-15} cycles without IP link to gw, rebooting"
+                                                logger -s -t "${PROG}" "${COUNTER:-15} cycles without IP link to gw, rebooting"
                                                 do_shutdown "%ENOGW:"
                                         fi
                                 else
@@ -88,7 +88,7 @@ do
                                 IP_CNT=$(( $IP_CNT + 1 ))
                                 if [ ${IP_CNT:-0} -gt ${COUNTER:-15} ]
                                 then
-                                        echo "${COUNTER:-15} cycles without local IP, rebooting"
+                                        logger -s -t "${PROG}" "${COUNTER:-15} cycles without local IP, rebooting"
                                         do_shutdown "%ENOIP:"
                                 fi
                         fi
@@ -96,7 +96,7 @@ do
                         GW_CNT=$(( $GW_CNT + 1 ))
                         if [ ${GW_CNT:-0} -gt ${COUNTER:-15} ]
                         then
-                                echo "${COUNTER:-15} cycles without a default route, rebooting"
+                                logger -s -t "${PROG}" "${COUNTER:-15} cycles without a default route, rebooting"
                                 do_shutdown "%ENOROUTE:"
                         fi
                 fi
@@ -105,7 +105,7 @@ do
                 LINK_CNT=$(( $LINK_CNT + 1 ))
                 if [ ${LINK_CNT:-0} -gt ${COUNTER:-15} ]
                 then
-                        echo "${COUNTER:-15} cycles without link, rebooting"
+                        logger -s -t "${PROG}" "${COUNTER:-15} cycles without link, rebooting"
                         do_shutdown "%ENOLINK:"
                 fi
         fi
