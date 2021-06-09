@@ -29,7 +29,7 @@ fi
 # handle version strings of '5.4.3 (54779.1115)'
 # or '5.4 (54779.1115)'
 # or '5.4.54779.1115'
-rzv=$(${FETCH} ${UA} "Mozilla/5.0 (X11; Linux x86_64)" ${OUT} - https://zoom.us/download |  head -1 | grep -E 'linux-ver-text.*Version' | \
+rzv=$(${FETCH} ${UA} "Mozilla/5.0 (X11; Linux x86_64)" ${OUT} - https://zoom.us/download | grep -E 'linux-ver-text.*Version' | head -1 | \
 sed 's/.*Version //; s|</span>.*||; s/\([0-9]\+\)\.\([0-9]\+\)\.\([0-9]\+\) (\([0-9]\+\.[0-9]\+\))/\1.\2.\4/; s/\([0-9]\+\)\.\([0-9]\+\) (\([0-9]\+\.[0-9]\+\))/\1.\2.\3/;' )
 
 # expand the detection for different OS's as needed
