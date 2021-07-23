@@ -36,7 +36,8 @@ do_shutdown() {
 logger -s -t "${PROG}" "starting watchdog on interface ${IFACE}"
 while true
 do
-        LINK=$(cat /sys/class/net/${IFACE}/carrier)
+	# treat missing interfaces (lookin' at you, USB-connected i/f's) as down
+        LINK=$(test -r /sys/class/net/${IFACE}/carrier && cat /sys/class/net/${IFACE}/carrier || echo 0)
 
         if [ 1 -eq ${LINK:-0} ]
         then
