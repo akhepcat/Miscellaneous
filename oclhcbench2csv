@@ -112,8 +112,17 @@ while read line
 do
   if [ -n "${line}" ]
   then
-    debug "line is not empty"
+    debug "good, line is not empty"
     
+    # This parse has to happen before generic device name parsing
+    if [ -z "${line##*Skipping*}" ]
+    then
+	# support "Device #1: Skipping hash-mode 7701)"
+	debug "Hashmode being skipped"
+
+	skip=1
+    fi
+
     if [ ${inhm:-0} -eq 0 -a ${insp:-0} -eq 0 ]
     then
       if [ -z "${line%\* Device #*}" ]
@@ -150,12 +159,20 @@ do
         	insp=0
         elif [ $inhm -eq 1 -a $sidx -lt 1 ]
         then
-        	debug "found a new Hashmode line without a corresponding speed line"
+        	if [ $skip -eq 1 ]
+        	then
+        	    debug "reporting that this mode was skipped"
+        	    err="skipping reported by hashcat"
+        	else
+        	    debug "found a new Hashmode line without a corresponding speed line"
+        	    err="unknown error"
+        	fi
         	hmprint "$hashmode"
-                slprint "Speed.#1.........:  0 H/s unknown error"
+                slprint "Speed.#1.........:  0 H/s $err"
 		debug "setting a new hashmode"
         	hashmode=${line}
         	inhm=1
+		skip=0
         else
 	        debug "set a Hashmode"
 		hashmode=${line}
