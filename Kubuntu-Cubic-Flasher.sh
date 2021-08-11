@@ -161,7 +161,7 @@ ${aptq} autoremove >/dev/null 2>&1
 # Don't download if it's already cached
 echo "7) Installing and patching Adobe Flash player"
 FLASHURL=${FLASHURL:-https://fpdownload.adobe.com/get/flashplayer/pdc/32.0.0.465}
-wget --quiet --no-clobber ${FLASHURL}/${flash}
+wget --timeout=60 --quiet --no-clobber ${FLASHURL}/${flash}
 if [ -r "${flash}" ]
 then
 	tar -C / -xpf ${flash}
