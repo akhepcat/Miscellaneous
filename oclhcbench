@@ -12,20 +12,37 @@ MODES=(0 100 500 1000 1400 1500 1700 1800 2500 3000 3200 5500 5600 6211 6800 710
 #  $ oclhcbench | oclhcbench2csv > oclhcbench.csv
 #
 
+GROUP=0
+ONEHIT=0
+FORCE=""
 
-if [ -n "$1" -a "${1}" = "single" ]
+ARG="${*}"
+if [ -n "$ARG" ]
 then
+    if [ -z "${ARG##*single*}" ]
+    then
 	ONEHIT=1
-elif [ -n "$1" -a "${1}" = "group" ]
-then
+    fi
+
+    if [ -z "${ARG##*group*}" ]
+    then
 	GROUP=1
-else
-	GROUP=0
-	ONEHIT=0
+    fi
+
+    if [ -z "${ARG##*force*}" ]
+    then
+	FORCE="--force"
+    fi
+fi
+
+if [ $ONEHIT -eq 1 -a $GROUP -eq 1 ]
+then
+	echo "only one of 'single' or 'group' may be selected"
+	exit 1
 fi
 
 tmpfile=$(mktemp)
-hashcat --force -I 2>&1 > ${tmpfile}
+hashcat ${FORCE} -I 2>&1 > ${tmpfile}
 
 declare -A devices
 plid=0
@@ -74,11 +91,11 @@ then
       PLAT="-D 1,2"
       if [ ${ONEHIT} -eq 0 ];
       then
-        hashcat --workload-profile=4 --force ${PLAT} -d ${didx} --benchmark 2>&1
+        hashcat --workload-profile=4 ${FORCE} ${PLAT} -d ${didx} --benchmark 2>&1
       else
         for idx in "${!MODES[@]}"
         do
-          hashcat --workload-profile=4 --force ${PLAT} -d ${didx} --benchmark -m ${MODES[$idx]} 2>&1
+          hashcat --workload-profile=4 ${FORCE} ${PLAT} -d ${didx} --benchmark -m ${MODES[$idx]} 2>&1
         done
       fi
     fi
@@ -86,6 +103,6 @@ then
 else
   for idx in "${!MODES[@]}"
   do
-    hashcat --workload-profile=4 --force --opencl-device-types=1,2,3 --benchmark -m ${MODES[$idx]} 2>&1
+    hashcat --workload-profile=4 ${FORCE} --opencl-device-types=1,2,3 --benchmark -m ${MODES[$idx]} 2>&1
   done
 fi
