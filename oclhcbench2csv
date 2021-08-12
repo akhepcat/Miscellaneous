@@ -64,7 +64,7 @@ hmprint() {
 }
 
 slprint() {
-#  "Speed.#1.........:   172.2 MH/s (389.83ms) @ Accel:1024 Loops:512 Thr:32 Vec:1" ->
+#  "Speed.#*.........:   172.2 MH/s (389.83ms) @ Accel:1024 Loops:512 Thr:32 Vec:1" ->
 #  "1,172.2 MH/s,(389.83ms) @ Accel:1024 Loops:512 Thr:32 Vec:1"
  sl="$*"
  sl1=${sl%%:*}
@@ -159,7 +159,7 @@ do
         	insp=0
         elif [ $inhm -eq 1 -a $sidx -lt 1 ]
         then
-        	if [ $skip -eq 1 ]
+        	if [ ${skip:-0} -eq 1 ]
         	then
         	    debug "reporting that this mode was skipped"
         	    err="skipping reported by hashcat"
@@ -168,7 +168,7 @@ do
         	    err="unknown error"
         	fi
         	hmprint "$hashmode"
-                slprint "Speed.#1.........:  0 H/s $err"
+                slprint "Speed.#*.........:  0 H/s $err"
 		debug "setting a new hashmode"
         	hashmode=${line}
         	inhm=1
@@ -211,7 +211,7 @@ do
         then
           debug "stopped on a hash without speed"
           hmprint "$hashmode"
-          slprint "Speed.#1.........:  0 H/s unknown error"
+          slprint "Speed.#*.........:  0 H/s unknown error"
         else
           debug "ended cleanly"
           exit 0
@@ -237,7 +237,7 @@ elif [ $inhm -eq 1 -a $sidx -eq 0 ]
 then
   debug "stopped on a hash without speed"
   hmprint "$hashmode"
-  slprint "Speed.#1.........:  0 H/s unknown error"
+  slprint "Speed.#*.........:  0 H/s unknown error"
 else
   debug "ended cleanly"
 fi
