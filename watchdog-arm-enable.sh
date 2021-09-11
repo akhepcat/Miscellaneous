@@ -28,7 +28,7 @@ systemctl stop watchdog
 
 MyV4Int=$(awk 'BEGIN { IGNORECASE=1 } /^[a-z0-9:.-]+[ \t]+00000000/ { print $1 }' /proc/net/route 2>/dev/null | head -1)
 
-cat >> /etc/watchdog.conf <EOF
+cat >> /etc/watchdog.conf <<EOF
 watchdog-device = /dev/watchdog
 watchdog-timeout = 15
 max-load-1 = 24
