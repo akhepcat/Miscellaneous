@@ -22,7 +22,8 @@ echo "validating/preparing repository"
 if [ ! -r "${BASE}/${REPO}/.git/config" ]
 then
 
-	git clone git://git.kali.org/${REPO}.git
+#	git clone git://git.kali.org/${REPO}.git
+	git clone https://gitlab.com/kalilinux/build-scripts/${REPO}.git
 
 	cd ${BASE}/${REPO}/
 
@@ -31,11 +32,11 @@ then
 	apt update
 	apt upgrade
 
-	FILE=$(curl --silent http://http.kali.org/pool/main/k/kali-archive-keyring/ | grep all\.deb | sed 's/.*href=//g;' | cut -f2 -d\")
-	wget http://http.kali.org/pool/main/k/kali-archive-keyring/${FILE} && dpkg -i ${FILE}
+	FILE=$(curl --silent https://http.kali.org/pool/main/k/kali-archive-keyring/ | grep all\.deb | sed 's/.*href=//g;' | cut -f2 -d\")
+	wget https://http.kali.org/pool/main/k/kali-archive-keyring/${FILE} && dpkg -i ${FILE}
 
-	FILE=$(curl --silent https://archive.kali.org/kali/pool/main/l/live-build/ | grep kali1_all\.deb | sed 's/.*href=//g;' | cut -f2 -d\")
-	wget https://archive.kali.org/kali/pool/main/l/live-build/${FILE} && dpkg -i ${FILE}
+	FILE=$(curl --silent https://http.kali.org/kali/pool/main/l/live-build/ | grep kali1_all\.deb | sed 's/.*href=//g;' | cut -f2 -d\")
+	wget https://http.kali.org/kali/pool/main/l/live-build/${FILE} && dpkg -i ${FILE}
 
 	apt install -y git live-build cdebootstrap debootstrap curl alien
 
