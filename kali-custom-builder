@@ -1,6 +1,6 @@
 #!/bin/bash
 
-BASE=/usr/local/src
+BASE=/usr/local/src/kali-builder
 # Replace this with a direct URL after registration at https://software.intel.com/en-us/articles/opencl-drivers#cpu-section  to install intel-ocl-icd (and accept license)
 INTEL_OPENCL_URL=""
 # Replace this with the appropriate download url from https://www.veracrypt.fr/   to install veracrypt (and accept the license)
@@ -32,10 +32,10 @@ then
 	apt update
 	apt upgrade
 
-	FILE=$(curl --silent https://http.kali.org/pool/main/k/kali-archive-keyring/ | grep all\.deb | sed 's/.*href=//g;' | cut -f2 -d\")
+	FILE=$(curl --silent https://http.kali.org/pool/main/k/kali-archive-keyring/ | grep all\.deb | sed 's/.*href=//g;' | cut -f2 -d\" | tail -1)
 	wget https://http.kali.org/pool/main/k/kali-archive-keyring/${FILE} && dpkg -i ${FILE}
 
-	FILE=$(curl --silent https://http.kali.org/kali/pool/main/l/live-build/ | grep kali1_all\.deb | sed 's/.*href=//g;' | cut -f2 -d\")
+	FILE=$(curl --silent https://http.kali.org/kali/pool/main/l/live-build/ | grep kali1_all\.deb | sed 's/.*href=//g;' | cut -f2 -d\" | tail -1)
 	wget https://http.kali.org/kali/pool/main/l/live-build/${FILE} && dpkg -i ${FILE}
 
 	apt install -y git live-build cdebootstrap debootstrap curl alien
@@ -63,16 +63,17 @@ fi
 echo "checking custom packages"
 if [ -z "$(grep alien ${BASE}/${REPO}/kali-config/variant-lxde/package-lists/kali.list.chroot)" ]
 then
-	for pkg in alien aptitude joe kali-desktop-lxde kali-linux-forensic kali-linux-gpu kali-linux-pwtools princeprocessor nvidia-cuda-toolkit nvidia-driver nvidia-kernel-dkms nvidia-opencl-common nvidia-opencl-icd ocl-icd-libopencl1 beignet-opencl-icd dislocker libdislocker0.7
+	for pkg in kali-desktop-lxde kali-tools-forensics kali-tools-gpu kali-tools-passwords alien aptitude joe princeprocessor nvidia-cuda-toolkit nvidia-driver nvidia-kernel-dkms nvidia-opencl-common nvidia-opencl-icd ocl-icd-libopencl1 beignet-opencl-icd dislocker libdislocker0.7
 	do
 		echo $pkg >> ${BASE}/${REPO}/kali-config/variant-lxde/package-lists/kali.list.chroot
 	done
 fi
 
+cbootscr="${BASE}/${REPO}/kali-config/common/hooks/live/zzz-default-boot.binary"
 echo "adjusting default boot option"
-if [ ! -r ${BASE}/${REPO}/config/hooks/live/zzz-default-boot.binary ]
+if [ ! -r "${cbootscr}" ]
 then
-	cat > ${BASE}/${REPO}/config/hooks/live/zzz-default-boot.binary <<EOF
+	cat > "${cbootscr}" <<EOF
 #!/bin/sh
 
 if [ ! -d isolinux ]; then
@@ -95,11 +96,11 @@ sed -i.bak 's/\x07//' isolinux/menu.cfg
 #done!
 EOF
 
-	chmod +x ${BASE}/${REPO}/config/hooks/live/zzz-default-boot.binary
+	chmod +x "${cbootscr}"
 fi
 
 [[ -n "${VERACRYPT_URL}" ]] && echo "checking for veracrypt"
-if [ ! -r ${BASE}/${REPO}/config/includes.chroot/usr/bin/veracrypt -a -n "${VERACRYPT_URL}" ]
+if [ ! -r ${BASE}/${REPO}/kali-config/common/includes.chroot/usr/bin/veracrypt -a -n "${VERACRYPT_URL}" ]
 then
 	###
 	# Fetch and manually install the veracrypt tools:
@@ -120,14 +121,14 @@ then
 	fi
 
 	# Place the veracrypt files into the chroot filesystem for later inclusion
-	tar -xvf veracrypt.tar.gz -C ${BASE}/${REPO}/config/includes.chroot
+	tar -xvf veracrypt.tar.gz -C ${BASE}/${REPO}/kali-config/common/includes.chroot
 
-	rm -f veracrypt.tar.gz veracrypt_install_console_x64.sh veracrypt-1.23-setup-console-x64
+	rm -f veracrypt.tar.gz veracrypt_install_console_x64.sh veracrypt-*-setup-console-x64
 	###
 fi
 
 [[ -n "${INTEL_OPENCL_URL}" ]] && echo "checking for intel ocl cpu drivers"
-if [ ! -r ${BASE}/${REPO}/config/includes.chroot/etc/OpenCL/vendors/intel64.icd -a -n "${INTEL_OPENCL_URL}" ]
+if [ ! -r ${BASE}/${REPO}/kali-config/common/includes.chroot/etc/OpenCL/vendors/intel64.icd -a -n "${INTEL_OPENCL_URL}" ]
 then
 	# Download intel ocl-cpu drivers from its respective page:
 	# If this URL expires, a new one requires registration, we can't manually do it
@@ -146,7 +147,7 @@ then
 	   rm -f "${file}"
 	   tfile="${file%-*}.tgz"
 
-	   tar -xvf "${tfile}" -C kali-live-build-config/config/includes.chroot
+	   tar -xvf "${tfile}" -C kali-live-build-config/kali-config/common/includes.chroot
 	   rm -f "${tfile}"
 	done
 	rm -f ${TAR}
