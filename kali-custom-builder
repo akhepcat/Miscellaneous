@@ -167,7 +167,7 @@ if [ ! -r "${ISO}" ]
 then
 	echo "Compile it with the following command:"
 	echo ""
-	echo "sudo ./build.sh --variant lxde --verbose"
+	echo "cd ${REPO}; sudo ./build.sh --variant lxde --verbose"
 else
 	# mayhap remaining from a prior build (remind about purge)
 	echo "ISO found (remove with purge command)"
