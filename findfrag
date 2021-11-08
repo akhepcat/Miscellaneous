@@ -1,0 +1,31 @@
+#!/bin/bash
+# (c) 2020 Leif Sawyer
+# License: GPL 3.0 (see https://github.com/akhepcat/)
+# Permanent home:  https://github.com/akhepcat/Miscellaneous/
+# Direct download: https://raw.githubusercontent.com/akhepcat/Miscellaneous/master/findfrag
+
+
+HOST=${1:-8.8.8.8}
+
+### we start with x
+MTU=${2:-1544}
+
+if [ -z "$1" ]
+then
+	echo "No options specified, defaulting to ${HOST} and ${MTU}"
+	echo ""
+	echo "usage:   ${PROG} [host] [starting-mtu]"
+	echo ""
+fi
+
+#because we instantly remove 1, for logic tracking...  
+MTU=$((MTU + 1))
+
+while [ 0 != ${RET:-1} ]
+do
+        MTU=$((MTU - 1))
+        ping -q  -W 1 -w 1 -c 1 -M do -s ${MTU} ${HOST} >/dev/null 2>&1
+        RET=$?
+done
+
+echo $((MTU + 28))
