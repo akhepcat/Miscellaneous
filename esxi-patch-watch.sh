@@ -19,7 +19,17 @@ fi
 
 if [ -r "${CFILE}" ]
 then
-	LDATE=$(cat "${CFILE}")
+	if [ -n "$(grep LAST ${CFILE})" ]
+	then
+		LDATE=$(grep LAST ${CFILE} | cut -f 2 -d=)
+	else
+		LDATE=$(cat "${CFILE}")
+	fi
+
+	if [ -n "$(grep URL ${CFILE})" ]
+	then
+		URL=$(grep URL ${CFILE} | cut -f 2 -d=)
+	fi
 fi
 
 CDATE=$(curl --SILENT ${URL} | sed 's|</|\n</|g; s|/>|/>\n|g;' | head | grep '<updated>')
@@ -32,7 +42,12 @@ fi
 
 if [ ${CDATE:-0} -gt ${LDATE:-0} ]
 then
-	echo $CDATE > ${CFILE}
+	if [ -r "${CFILE}" ]
+	then
+		sed -i "s/LAST=.*/LAST=$CDATE/;" ${CFILE}
+	else
+		echo "LAST=$CDATE" > ${CFILE}
+	fi
 
 	echo "New ESXi patches available on ${URL}"
 fi
