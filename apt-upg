@@ -32,8 +32,8 @@ then
 	exit 1
 fi
 
-# update the local repo info
-apt-get update
+# update the local repo info, allowing for minor release changes
+apt-get update --allow-releaseinfo-change
 if [ $? -ne 0 ]
 then
 	echo "check network connectivity and apt repo sources"
