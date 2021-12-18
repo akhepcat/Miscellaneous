@@ -163,7 +163,7 @@ status() {
 }
 
 case ${1} in
-	start) start
+	start) prereqs; start
 		;;
 	stop) stop
 		;;
