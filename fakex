@@ -69,10 +69,8 @@ start() {
         x11vnc -q ${LISTEN} -rfbport ${RFBPORT} -forever -noxrecord -alwaysshared -bg -nopw -display ${DISPLAY}
 }
 
-prereqs
-
 case "$1" in
-        start) start
+        start) prereqs; start
                 ;;
         startg) ADDR=$(ip -4 addr show scope global  dev $(awk 'BEGIN { IGNORECASE=1 } /^[a-z0-9]+[ \t]+00000000/ { print $1 }' /proc/net/route
 ) | awk '/inet/ { split($2, arr, "/"); print arr[1];}')
@@ -81,7 +79,7 @@ case "$1" in
         	;;
         stop) stop
                 ;;
-        status) status
+        status) prereqs; status
                 ;;
         *) echo "${PROG} [start|startg|stop|status]"
                 ;;
