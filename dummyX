@@ -169,7 +169,7 @@ case ${1} in
 		;;
 	prep) create_xconf
 		;;
-	status) status
+	status) prereqs; status
 		;;
 	*) echo "$0 [start|stop|status]"
 		;;
