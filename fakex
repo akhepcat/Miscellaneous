@@ -44,6 +44,25 @@ status() {
 
 XYRES=${XYRES:-1440x900}
 
+do_xfwm4() {
+	# different versions need different calling
+	xfwm4 --display=${XDISP} 2>/dev/null & 
+	if [ $? -ne 0 ]
+	then
+		DISPLAY=${XDISP} xfwm4 2>/dev/null &
+	fi
+}
+
+do_xfce4() {
+	# different versions need different calling
+	xfce4-panel --display=${XDISP} 2>/dev/null &
+	if [ $? -ne 0 ]
+	then
+		DISPLAY=${XDISP} xfce4-panel 2>/dev/null &
+
+	fi
+}
+
 start() {
         USER=$(/usr/bin/whoami)
         HOST=$(/bin/hostname | cut -f 1 -d.)
@@ -59,9 +78,9 @@ start() {
         sleep 2
         xterm -ls  -sl 1000 -sb -T ${USER}@${HOST} -fg white -bg black -C -fn 9x15 -display ${DISPLAY} 2>/dev/null &
         sleep 1
-        DISPLAY=${DISPLAY} xfwm4 --daemon 2>/dev/null &
+        do_xfwm4
         sleep 1
-        DISPLAY=${DISPLAY} xfce4-panel 2>/dev/null &
+        do_xfce4
         sleep 1
         DISPLAY=${DISPLAY} xhost +localhost
 
