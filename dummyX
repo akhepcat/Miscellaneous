@@ -27,8 +27,12 @@ prereqs() {
                 fi
         done
 
-        apt-cache show xserver-xorg-video-dummy >/dev/null 2>&1
-        [[ $? -ne 0 ]] && showreqs=1
+        dpkg -l xserver-xorg-video-dummy >/dev/null 2>&1
+        if [ $? -ne 0 ]
+        then
+        	showreqs=1
+        	reqs="${reqs} xserver-xorg-video-dummy"
+        fi
 
         if [ 1 -eq ${showreqs:-0} ]
         then
@@ -117,6 +121,25 @@ fix_perms() {
 	sed -i 's/^\(allowed_users\)=.*/\1=anybody/g' /etc/X11/Xwrapper.config 
 }
 
+do_xfwm4() {
+	# different versions need different calling
+        xfwm4 --display=${XDISP} 2>/dev/null & 
+        if [ $? -ne 0 ]
+        then
+        	DISPLAY=${XDISP} xfwm4 2>/dev/null &
+        fi
+}
+
+do_xfce4() {
+	# different versions need different calling
+        xfce4-panel --display=${XDISP} 2>/dev/null &
+        if [ $? -ne 0 ]
+        then
+		DISPLAY=${XDISP} xfce4-panel 2>/dev/null &
+
+        fi
+}
+
 start_xdummy() {
         USER=$(/usr/bin/whoami)
         HOST=$(/bin/hostname | cut -f 1 -d.)
@@ -132,9 +155,9 @@ start_xdummy() {
 #	sleep 1
         xterm -ls  -sl 1000 -sb -T ${USER}@${HOST} -fg white -bg black -C -fn 9x15 -display ${XDISP} 2>/dev/null &
         sleep 1
-        DISPLAY=${XDISP} xfwm4 --daemon 2>/dev/null
+        do_xfwm4
         sleep 1
-        DISPLAY=${XDISP} xfce4-panel 2>/dev/null &
+        do_xfce4
         sleep 1
         DISPLAY=${XDISP} xhost +localhost
 
@@ -163,13 +186,13 @@ status() {
 }
 
 case ${1} in
-	start) start
+	start) prereqs; start
 		;;
 	stop) stop
 		;;
 	prep) create_xconf
 		;;
-	status) status
+	status) prereqs; status
 		;;
 	*) echo "$0 [start|stop|status]"
 		;;

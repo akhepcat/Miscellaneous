@@ -184,9 +184,32 @@ then
   fi
 fi
 
-PCROM=$(pgrep -x 'chrom[ei]' | tail -1)
-[[ -n "${PCROM}" ]] && MYCHROME=$(ps -o args= -q ${PCROM} | grep -iv chromium | tail -1 | awk '{print $1}')
-[[ -z "${MYCHROME}" ]] && MYCHROME=chromium-browser
+PCROM=$(pgrep -x 'chrom[ei].*' | tail -1)
+[[ -n "${PCROM}" ]] && MYCHROME=$(ps -o args= -q ${PCROM} | tail -1 | awk '{print $1}' | sed 's|.*/||;')
+if [ -z "${MYCHROME}" ]
+then
+	which chromium-browser >/dev/null 2>&1
+	if [ $? -eq 1 ]
+	then
+
+		which chromium >/dev/null 2>&1
+		if [ $? -eq 1 ]
+		then
+			which chrome >/dev/null 2>&1
+			if [ $? -eq 1 ]
+			then
+				MYCHROME="echo"
+			else
+				MYCHROME=chrome
+			fi
+		else
+			MYCHROME=chromium
+		fi
+
+	else
+		MYCHROME=chromium-browser
+	fi
+fi
 
 test ${DEBUG} -gt 1 && echo "DBG: decided on ${MYCHROME} for chrome browser" >> $DBGLOG
 

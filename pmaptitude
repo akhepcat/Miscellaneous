@@ -17,26 +17,47 @@ ARGS="${*}"
 # some very basic, not at all effective, sanitizing
 ARGS="${ARGS//[\'\`\$\(\)]/}"
 
+if [ -n "${ARGS}" ]
+then
+	if [ -z "${ARGS##*--no-install-recommends*}" ]
+	then
+		ARGS=${ARGS//--no-install-recommends/}
+		OPTS="${OPTS} --asexplicit"
+	fi
+	if [ -z "${ARGS##*--dry-run*}" ]
+	then
+		ARGS=${ARGS//--dry-run/}
+		OPTS="${OPTS} --print"
+	fi
+	if [ -z "${ARGS##*-y*}" ]
+	then
+		ARGS=${ARGS//-y/}
+		OPTS="${OPTS} --noconfirm"
+	fi
+fi
+
 case "$CMD" in
-	search) pacman -Ss ${ARGS// /|}
+	find) pacman -F ${OPTS} ${ARGS}
 		;;
-	install) pacman -S ${ARGS}
+	search) pacman -Ss ${OPTS} ${ARGS// /|}
+		;;
+	install) pacman -S ${OPTS} ${ARGS}
 		;;
 	update) pacman -Syy
 		;;
-	upgrade|dist-upgrade) pacman -Syu ${ARGS}
+	upgrade|dist-upgrade) pacman -Syu ${OPTS} ${ARGS}
 		;;
-	remove|purge) pacman -Rs ${ARGS}
+	remove|purge) pacman -Rs ${OPTS} ${ARGS}
 		;;
 	clean|autoclean) pacman -Sc
 		;;
 	autoremove) pacman -Qdtq | pacman -Rs -
 		;;
-	show) pacman -Si ${ARGS}
+	show) pacman -Si ${OPTS} ${ARGS}
 		;;
-	*) echo "ERR: null or unsupported apt command for pacman"
+	*) echo "ERR: null or unsupported apt command for pacman: ${CMD}"
 	   echo "USAGE:"
-	   echo "    $PROG [search|install|remove|purge|show] {pkgspec}"
+	   echo "    $PROG [find|search|install|remove|purge|show] {pkgspec}"
 	   echo "             [update|upgrade|dist-upgrade|clean|autoclean|autoremove]"	
 		;;
 esac
