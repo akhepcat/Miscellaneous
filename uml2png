@@ -1,5 +1,9 @@
 #!/bin/bash
-
+# (c) 2021 Leif Sawyer
+# License: GPL 3.0 (see https://github.com/akhepcat/)
+# Permanent home:  https://github.com/akhepcat/Miscellaneous/
+# Direct download: https://raw.githubusercontent.com/akhepcat/Miscellaneous/master/uml2png
+# 
 PUML="https://example.com/plantuml"	#base URL for your plantuml instance
 POSTURL="${PUML}/form"
 #TLS="--insecure"        # this can be commented out if you trust the certs
