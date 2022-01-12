@@ -46,6 +46,16 @@ then
 	SVG=${URL//\/uml\//\/svg\/}
 	curl --location --silent --output ${UMLNAME}.svg ${SVG}
 
+elif [ -z "${PROG##*eps*}" ]
+then
+	EPS=${URL//\/uml\//\/eps\/}
+	curl --location --silent --output ${UMLNAME}.eps ${SVG}
+
+elif [ -z "${PROG##*epstext*}" ]
+then
+	EPS=${URL//\/uml\//\/epstext\/}
+	curl --location --silent --output ${UMLNAME}.eps ${SVG}
+
 elif [ -z "${PROG##*txt*}" ]
 then
 	TXT=${URL//\/uml\//\/txt\/}
