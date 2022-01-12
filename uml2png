@@ -9,8 +9,9 @@ POSTURL="${PUML}/form"
 #TLS="--insecure"        # this can be commented out if you trust the certs
 
 ############################
-
+PROG="${0##*/}"
 UMLFILE="$1"
+UMLNAME="${UMLFILE%.*}"		# strip off the extension....
 
 if [ -z "${UMLFILE}" ]
 then
@@ -33,6 +34,17 @@ URL=$(curl \
         --data "submit=submit" \
         $POSTURL 2>&1 | grep "Location:" | awk '{print $2}')
 
-PNG=${URL//\/uml\//\/png\/}
+URL=${URL//[^[:print:]]/}
 
-echo "${PNG}"
+if [ -z "${PROG##*png*}" ]
+then
+	PNG=${URL//\/uml\//\/png\/}
+	curl --location --silent --output ${UMLNAME}.png ${PNG}
+
+elif [ -z "${PROG##*txt*}" ]
+then
+	TXT=${URL//\/uml\//\/txt\/}
+	curl --location --silent ${TXT}
+else
+	echo "unknown/unsupported extension ${PROG//uml2/}"
+fi
