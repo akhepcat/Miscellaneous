@@ -54,7 +54,7 @@ then
 elif [ -z "${PROG##*epstext*}" ]
 then
 	EPS=${URL//\/uml\//\/epstext\/}
-	curl --location --silent --output ${UMLNAME}.eps ${EPS}
+	curl --location --silent --output ${UMLNAME}.epst ${EPS}
 
 elif [ -z "${PROG##*txt*}" ]
 then
