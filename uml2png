@@ -41,6 +41,11 @@ then
 	PNG=${URL//\/uml\//\/png\/}
 	curl --location --silent --output ${UMLNAME}.png ${PNG}
 
+elif [ -z "${PROG##*svg*}" ]
+then
+	SVG=${URL//\/uml\//\/svg\/}
+	curl --location --silent --output ${UMLNAME}.svg ${SVG}
+
 elif [ -z "${PROG##*txt*}" ]
 then
 	TXT=${URL//\/uml\//\/txt\/}
