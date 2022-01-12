@@ -49,12 +49,12 @@ then
 elif [ -z "${PROG##*eps*}" ]
 then
 	EPS=${URL//\/uml\//\/eps\/}
-	curl --location --silent --output ${UMLNAME}.eps ${SVG}
+	curl --location --silent --output ${UMLNAME}.eps ${EPS}
 
 elif [ -z "${PROG##*epstext*}" ]
 then
 	EPS=${URL//\/uml\//\/epstext\/}
-	curl --location --silent --output ${UMLNAME}.eps ${SVG}
+	curl --location --silent --output ${UMLNAME}.eps ${EPS}
 
 elif [ -z "${PROG##*txt*}" ]
 then
