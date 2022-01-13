@@ -19,8 +19,9 @@ cleanup() {
 usage() {
 	echo "${PROG} [-l #] [-w #] [-D path] [-d file] -f"
 	echo ""
-	echo "generates a random word list with optional minimum-character-length words (default: ${MIN})"
-	echo "of up to -w #  words (default: ${WORDS})"
+	echo "generates a random word list with optional minimum-character-length words:"
+	echo "  -w #       # display '#' (default: ${WORDS}) words in the selector"
+	echo "  -l #       # use a minimum word length (default: ${MIN})"
 	echo "  -D path    # use path for dictionary location (all files sourced)"
 	echo "  -d file    # use file  as the single-source dictionary"
 	echo "  -f         # force usage of filespec, even if less than optimal wordcount"
