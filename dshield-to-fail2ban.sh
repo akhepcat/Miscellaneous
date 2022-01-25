@@ -10,7 +10,7 @@ if [ -e "${blocks}" ]
 then
 	curl -silent https://www.dshield.org/block.txt > ${blocks}
 
-	cidrs=$(grep -E '^[0-9]+' ${blocks} | awk '{print $1}' | tr '\n' ' ' | sed 's| |/24 |g;')
+	cidrs=$(grep -E '^[0-9]+' ${blocks} | awk '{print $1 "/" $3}' | tr '\n' ' ' )
 	for jail in $(fail2ban-client status | grep 'Jail list' | sed 's/.*://; s/[[:space:]]//g; s/,/ /g;')
 	do
 		fail2ban-client set ${jail} banip ${cidrs} >/dev/null 2>&1
