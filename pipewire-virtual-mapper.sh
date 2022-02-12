@@ -1,3 +1,4 @@
+#!/bin/bash
 # (c) 2021 Leif Sawyer
 # License: GPL 3.0 (see https://github.com/akhepcat/)
 # Permanent home:  https://github.com/akhepcat/Miscellaneous/
@@ -12,14 +13,22 @@
 
 declare -A vchans
 
+# We may have to reset everything, so if you do, run:
+#    systemctl --user restart pipewire.service
 
 # cleanup and make sure no mappings exist
 pactl unload-module module-null-sink
 
 ### VIRTUAL SPEAKER
 
-# First define the virtual speaker channel
-pactl load-module module-null-sink media.class=Audio/Sink sink_name=All_Speakers channel_map=front-left,front-right
+# Test if we need to load the virtual speaker chanel (for multiple runs)
+pactl get-sink-volume All_Speakers >/dev/null 2>&1
+res=$?
+if [ ${res:-1} -ne 0 ]
+then
+	# First define the virtual speaker channel
+	pactl load-module module-null-sink media.class=Audio/Sink sink_name=All_Speakers channel_map=front-left,front-right
+fi
 
 # Map all the stereo outputs to the virtual speaker
 for CHAN in FL FR
@@ -42,16 +51,35 @@ pactl set-default-sink  All_Speakers
 
 ### VIRTUAL MICROPHONE
 
-# create a virtual sink to feed audio into
-pactl load-module module-null-sink  \
-	sink_name=vMic-silence sink_properties=device.description=vMic-silent-sink \
-	object.linger=1 media.class=Audio/Sink channel_map=front-left,front-right
+# Test if we need to load the vMic-silence module (for multiple runs)
+pactl get-sink-mute vMic-silence >/dev/null 2>&1
+res=$?
+if [ ${res:-1} -ne 0 ]
+then
+	# create a virtual sink to feed audio into
+	pactl load-module module-null-sink  \
+		sink_name=vMic-silence sink_properties=device.description=vMic-silent-sink \
+		object.linger=1 media.class=Audio/Sink channel_map=front-left,front-right
+fi
 
-# create a virtual source to provide audio input from
-pactl load-module module-null-sink \
-	sink_name=vMicNoEcho sink_properties=device.description=vMicNoEcho \
-	object.linger=1 media.class=Audio/Source/Virtual channel_map=front-left,front-right
+# Test if we need to load the vMicNoEcho module (for multiple runs)
+pactl get-source-mute vMicNoEcho >/dev/null 2>&1
+res=$?
+if [ ${res:-1} -ne 0 ]
+then
+	# create a virtual source to provide audio input from
+	pactl load-module module-null-sink \
+		sink_name=vMicNoEcho sink_properties=device.description=vMicNoEcho \
+		object.linger=1 media.class=Audio/Source/Virtual channel_map=front-left,front-right
+fi
 
+# sleep while the module finishes initializing in the background
+lu=$(pw-link -i | grep vMicNoEcho | wc -l)
+while [ ${lu:-0} -ne 2 ]
+do
+	lu=$(pw-link -i | grep vMicNoEcho | wc -l)
+	sleep 1
+done
 
 # Link the virtual mic input to the virtual source monitor
 pw-link vMic-silence:monitor_FL vMicNoEcho:input_FL
@@ -76,15 +104,15 @@ for CHAN in FL FR
 do
 	for LINK in $(pw-link -o | grep -i "capture_${CHAN}" | grep -ivE "speakers|silence|midi|vMicNoEcho")
 	do
-		pw-link ${LINK} vMic-silent-sink:playback_${vchans[$CHAN]}
+		pw-link ${LINK} vMic-silence:playback_${vchans[$CHAN]}
 	done
 done
 
 # link all physical mono mics to the virtual sink input
 for LINK in $(pw-link -o | grep -i "capture_MONO" | grep -ivE "speakers|silence|midi|vMicNoEcho")
 do
-	pw-link ${LINK} vMic-silent-sink:playback_${vchans[FL]}
-	pw-link ${LINK} vMic-silent-sink:playback_${vchans[FR]}
+	pw-link ${LINK} vMic-silence:playback_${vchans[FL]}
+	pw-link ${LINK} vMic-silence:playback_${vchans[FR]}
 done
 
 #  Okay, we're done.
