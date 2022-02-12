@@ -15,7 +15,26 @@ import xmltodict
 from pathlib import Path
 from optparse import OptionParser
 
+def fb_sig(data):
+    newdata = data.copy()
+    params = ''.join(['%s=%s' % x for x in sorted(data.items())])
+    newdata['sig'] = hashlib.md5((params + FB_API_SECRET).encode('utf-8')).hexdigest()
+    return newdata
+
+def debug(msg):
+    global DEBUG
+    if DEBUG:
+        print("DEBUG: %s", msg)
+
 DEBUG = False
+
+parser = OptionParser()
+parser.add_option('-d', '--debug', action='store_true', dest='debug', default=False)
+(options, args) = parser.parse_args()
+
+if options.debug:
+    DEBUG = True
+
 
 # We interrupt to include prpl-facebook-config-parse before our regularly scheduled program
 
@@ -48,6 +67,7 @@ passwd=acts[idx]["password"]
 
 settings=acts[idx]["settings"]
 
+### Get did, uid, mid
 found=0
 ox=0
 while 1:
@@ -55,14 +75,18 @@ while 1:
     while 1:
         try:
             if settings[ox]["setting"][ix]["@name"] == "did":
-                MACHINE_ID=settings[ox]["setting"][ix]["#text"]
+                DID=settings[ox]["setting"][ix]["#text"]
                 found = found +1
             
             if settings[ox]["setting"][ix]["@name"] == "uid":
                 UID=settings[ox]["setting"][ix]["#text"]
                 found = found +1
 
-            if found > 1:
+            if settings[ox]["setting"][ix]["@name"] == "mid":
+                MID=settings[ox]["setting"][ix]["#text"]
+                found = found +1
+
+            if found > 2:
                 break
 
         except:
@@ -80,12 +104,19 @@ while 1:
     if ox > 20:
         break
 
-if found == 0:
-    print("Either no machine account (did) or user account (uid) found in prpl-facebook section of ", ACCOUNTS)
-    print("exiting")
-    exit(1)
+if found < 3:
+    print("Warning: Either no machine (mid), device (did) or user account (uid) found in prpl-facebook section of ", ACCOUNTS)
+    print("This may cause unexpected errors in the script")
+    # exit(1)
+
+debug("Account UID: %s" % UID)
+debug("Account DID: %s" % DID)
+debug("Account MID: %s" % MID)
 
 
+#if DEBUG:
+#    print("debug halt")
+#    exit(1)
 
 # ================================
 # pidgin-fb-login-test.py follows
@@ -93,31 +124,13 @@ if found == 0:
 FB_API_KEY = '256002347743983'
 FB_API_SECRET = '374e60f8b9bb6b8cbb30f78030438895'
 
-def fb_sig(data):
-    newdata = data.copy()
-    params = ''.join(['%s=%s' % x for x in sorted(data.items())])
-    newdata['sig'] = hashlib.md5((params + FB_API_SECRET).encode('utf-8')).hexdigest()
-    return newdata
-
-def debug(msg):
-    global DEBUG
-    if DEBUG:
-        print("DEBUG: %s", msg)
-
 if EMAIL == '':
     print("ERROR: set an email address, please")
     sys.exit()
 
-if MACHINE_ID == '':
-    print("ERROR: set a machine id (to any UUID), please")
+if DID == '':
+    print("ERROR: set a device id (to any UUID), please")
     sys.exit()
-
-parser = OptionParser()
-parser.add_option('-d', '--debug', action='store_true', dest='debug', default=False)
-(options, args) = parser.parse_args()
-
-if options.debug:
-    DEBUG = True
 
 data = {
     "fb_api_req_friendly_name": "authenticate",
@@ -129,7 +142,7 @@ data = {
     "generate_machine_id": "1",
     "email": EMAIL,
     "uid": UID,
-    "device_id": MACHINE_ID,
+    "device_id": DID,
 }
 
 print('''Access Token generator for Facebook 2factor login
@@ -176,6 +189,16 @@ data['password'] = data['twofactor_code']
 data['userid'] = error_data['uid']
 data['machine_id'] = error_data['machine_id']
 
+debug("FB Account UID: %s" % error_data['uid'] )
+try:
+    data['device_id'] = error_data['device_id']
+    debug("FB Account DID: %s" % error_data['device_id'])
+except:
+    print("FB Account DID not present in error_data: equal to accounts.xml did")
+
+debug("FB Account MID: %s" % error_data['machine_id'])
+
+
 params = urlencode(fb_sig(data))
 conn.request('POST', '/method/auth.login', params, headers)
 response = conn.getresponse()
@@ -185,3 +208,9 @@ debug("undecoded response: %s" % response_data)
 response = json.loads(response_data)
 
 print("Access token:", response['access_token'])
+
+if ( DID != response['device_id'] ):
+  print("DID conflict! FB supplied:", response['device_id'])
+
+if ( MID != response['machine_id'] ):
+  print("MID conflict! FB supplied:", response['machine_id'])
