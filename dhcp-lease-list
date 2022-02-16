@@ -20,6 +20,8 @@ use warnings;
 use POSIX qw(strftime);
 
 my $LEASES = '/var/lib/dhcp/dhcpd.leases';
+my $KEA_LF = '/var/lib/kea/kea-leases4.csv'; # we don't currently read from /var/lib/kea/kea-leases6.csv
+
 my @all_leases;
 my @leases;
 
@@ -53,7 +55,7 @@ sub check_oui_file() {
 
     for my $oui_cand (@OUIS) {
         if ( -r $oui_cand) {
-        $oui = $oui_cand;
+	        $oui = $oui_cand;
         last;
         }
     }
@@ -67,16 +69,43 @@ sub check_oui_file() {
 ## Read current leases file into array.
 sub read_dhcpd_leases() {
 
-    open(F, $LEASES) or die("Cannot open $LEASES: $!");
-    my $content = join('', <F>);
-    close(F);
-    @all_leases = split(/lease/, $content);
+    if ( -r $LEASES) {
+    	# ISC DHCPd compatible leases file
+    	
+    	open(F, $LEASES) or die("Cannot open $LEASES: $!");
+    	my $content = join('', <F>);
+    	close(F);
+    	@all_leases = split(/lease/, $content);
 
-    foreach my $lease (@all_leases) {
-    if ($lease =~ /^\s+([\.\d]+)\s+{.*starts \d+ ([\/\d\ \:]+);.*ends \d+ ([\/\d\ \:]+);.*ethernet ([a-f0-9:]+);/s) {
-       ++$total_leases;
-       }
+    	foreach my $lease (@all_leases) {
+    	    if ($lease =~ /^\s+([\.\d]+)\s+{.*starts \d+ ([\/\d\ \:]+);.*ends \d+ ([\/\d\ \:]+);.*ethernet ([a-f0-9:]+);/s) {
+    	    	++$total_leases;
+    	    }
+    	}
+    } elsif ( -r $KEA_LF) {
+    	# convert the KEA dhcpd compatible leases file (aka, csv)  into what looks like an ISC dhcpd line for the parser
+
+	my $gm_past = strftime("%Y/%m/%d %H:%M:%S", gmtime(time()-3600) );
+	my $gm_future = strftime("%Y/%m/%d %H:%M:%S", gmtime(time()+3600) );
+	my $line;
+    	open(F, $KEA_LF) or die("Cannot open $KEA_LF: $!");
+    	while($line = <F>) {
+    		chomp($line);
+		next if ($line =~ m/address,hwaddr/);
+		if ($line =~ m/([0-9\.]{5,12}[0-9]{1,3}),([0-9a-f:]{10,15}[0-9a-f]{1,2}),([0-9a-f:]{13,18}[0-9a-f]{1,2}),(\d+),(\d+),(\w+),(\w+),(\w+),(\w+),(\w+),(\w+)?/) {
+			my($a)=$1; my($h)=$2;  my($d)=$3; my($l)=$4;
+			my($e)=$5; my($s)=$6;  my($f)=$7; my($r)=$8;
+			my($n)=$9; my($t)=$10; my($c)=$11;
+
+			my($ll)=qq| $a { starts 6 $gm_past; ends 6 $gm_future; binding state active; hardware ethernet $h; client-hostname "$n"; }|;
+			
+			push(@all_leases, $ll);
+			++$total_leases;
+		}   		
+    	}
+    	close(F);
     }
+
 }
 
 ## Add manufactor name and sort out obsolet assignements.
