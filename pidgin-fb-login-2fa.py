@@ -162,7 +162,7 @@ response = conn.getresponse()
 debug("status, reason: %s, %s" % (response.status, response.reason))
 response_data = response.read()
 debug("undecoded response: %s" % response_data)
-response = json.loads(response_data)
+response = json.loads(response_data.decode('utf-8'))
 debug(response)
 
 # check to make sure that worked...
@@ -178,7 +178,7 @@ if response['error_code'] != 406:
 code = input('Code: ')
 #code = getpass.getpass('Code: ')
 
-error_data = json.loads(response['error_data'])
+error_data = json.loads(response['error_data'].decode('utf-8'))
 first_fac = error_data['login_first_factor']
 
 data['credentials_type'] = 'two_factor'
@@ -205,7 +205,7 @@ response = conn.getresponse()
 debug("status, reason: %s, %s" % (response.status, response.reason))
 response_data = response.read()
 debug("undecoded response: %s" % response_data)
-response = json.loads(response_data)
+response = json.loads(response_data.decode('utf-8'))
 
 print("Access token:", response['access_token'])
 
