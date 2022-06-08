@@ -140,11 +140,11 @@ data = {
 print('''Access Token generator for Facebook 2factor login
 
 Make sure Pidgin is *not running* before proceeding. Pidgin modifies
-This tool will perform 2-factor login to FB and then print out an
-
-access token needed for the FB plugin for bitlbee and pidgin.
 the accounts.xml on exit as well as while running, so it is important
 to exit pidgin before starting so our changes are not lost.
+
+This tool will perform 2-factor login to FB and then print out an
+access token needed for the FB plugin for bitlbee and pidgin.
 
 Do *NOT* select "yes this was me" if you get a security pop-up from
 your Facebook app. Instead, enter the code in here.
