@@ -15,6 +15,13 @@ import xmltodict
 from pathlib import Path
 from optparse import OptionParser
 
+
+FB_API_KEY = '256002347743983'
+FB_API_SECRET = '374e60f8b9bb6b8cbb30f78030438895'
+DEBUG = False
+
+
+# Somehelper methods
 def fb_sig(data):
     newdata = data.copy()
     params = ''.join(['%s=%s' % x for x in sorted(data.items())])
@@ -26,7 +33,6 @@ def debug(msg):
     if DEBUG:
         print("DEBUG: %s", msg)
 
-DEBUG = False
 
 parser = OptionParser()
 parser.add_option('-d', '--debug', action='store_true', dest='debug', default=False)
@@ -35,18 +41,15 @@ parser.add_option('-d', '--debug', action='store_true', dest='debug', default=Fa
 if options.debug:
     DEBUG = True
 
-
-# We interrupt to include prpl-facebook-config-parse before our regularly scheduled program
-
 home = str(Path.home())
-ACCOUNTS=home + "/.purple/accounts.xml"
+ACCOUNTS = home + "/.purple/accounts.xml"
 
-print("accounts.xml is: ", ACCOUNTS)
+debug("accounts.xml is: %s" % ACCOUNTS)
 
 with open(ACCOUNTS, 'r') as myfile:
     obj = xmltodict.parse(myfile.read())
 
-acts=obj["account"]["account"]
+acts = obj["account"]["account"]
 
 found=0
 idx=0
@@ -61,11 +64,9 @@ if found == 0:
     print("exiting")
     exit(1)
 
-EMAIL=acts[idx]["name"]
-passwd=acts[idx]["password"]
-
-
-settings=acts[idx]["settings"]
+EMAIL = acts[idx]["name"]
+passwd = acts[idx]["password"]
+settings = acts[idx]["settings"]
 
 ### Get did, uid, mid
 found=0
@@ -73,17 +74,18 @@ ox=0
 while 1:
     ix=0
     while 1:
+        debug("Checking ox %s ix %s, it is %s" % (ox, ix, settings[ox]["setting"][ix]["@name"]))
         try:
             if settings[ox]["setting"][ix]["@name"] == "did":
-                DID=settings[ox]["setting"][ix]["#text"]
+                DID = settings[ox]["setting"][ix]["#text"]
                 found = found +1
             
             if settings[ox]["setting"][ix]["@name"] == "uid":
-                UID=settings[ox]["setting"][ix]["#text"]
+                UID = settings[ox]["setting"][ix]["#text"]
                 found = found +1
 
             if settings[ox]["setting"][ix]["@name"] == "mid":
-                MID=settings[ox]["setting"][ix]["#text"]
+                MID = settings[ox]["setting"][ix]["#text"]
                 found = found +1
 
             if found > 2:
@@ -114,16 +116,6 @@ debug("Account DID: %s" % DID)
 debug("Account MID: %s" % MID)
 
 
-#if DEBUG:
-#    print("debug halt")
-#    exit(1)
-
-# ================================
-# pidgin-fb-login-test.py follows
-
-FB_API_KEY = '256002347743983'
-FB_API_SECRET = '374e60f8b9bb6b8cbb30f78030438895'
-
 if EMAIL == '':
     print("ERROR: set an email address, please")
     sys.exit()
@@ -147,9 +139,19 @@ data = {
 
 print('''Access Token generator for Facebook 2factor login
 
+Make sure Pidgin is *not running* before proceeding. Pidgin modifies
 This tool will perform 2-factor login to FB and then print out an
-access token needed for the FB plugin for bitlbee and pidgin. Take
-the resulting code and put it in the "token" tag in accounts.xml
+
+access token needed for the FB plugin for bitlbee and pidgin.
+the accounts.xml on exit as well as while running, so it is important
+to exit pidgin before starting so our changes are not lost.
+
+Do *NOT* select "yes this was me" if you get a security pop-up from
+your Facebook app. Instead, enter the code in here.
+
+Take the resulting code and put it in the "token" tag in accounts.xml like so:
+
+      <token type='string'>THE_CODE_HERE</token>
 ''')
 
 data['password'] = passwd
@@ -176,9 +178,8 @@ if response['error_code'] != 406:
     sys.exit(1)
 
 code = input('Code: ')
-#code = getpass.getpass('Code: ')
 
-error_data = json.loads(response['error_data'].decode('utf-8'))
+error_data = json.loads(response['error_data'])
 first_fac = error_data['login_first_factor']
 
 data['credentials_type'] = 'two_factor'
@@ -207,10 +208,18 @@ response_data = response.read()
 debug("undecoded response: %s" % response_data)
 response = json.loads(response_data.decode('utf-8'))
 
-print("Access token:", response['access_token'])
+print("Update or add the following settings in %s under the Facebook account:", ACCOUNTS)
 
-if ( DID != response['device_id'] ):
-  print("DID conflict! FB supplied:", response['device_id'])
+print("<setting name='token' type='string'>%s</setting>", response['access_token'])
+
+# Pidgin initializes UID to 0...
+if UID == 0:
+    print("<setting name='uid' type='string'>%s</setting>", response['uid'])
+
+# We don't always get back a "device_id", but if we do, make sure it's correct
+remote_did = response.get('device_id')
+if ( remote_did is not None and DID != response.get('device_id') ):
+    print("<setting name='did' type='string'>%s</setting>", response['device_id'])
 
 if ( MID != response['machine_id'] ):
-  print("MID conflict! FB supplied:", response['machine_id'])
+    print("<setting name='mid' type='string'>%s</setting>", response['machine_id'])
