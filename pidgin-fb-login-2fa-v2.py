@@ -76,7 +76,7 @@ while found == 0:
         idx = idx + 1
 
 if found == 0:
-    print("No prpl-facebook account found in ", ACCOUNTS)
+    print("No prpl-facebook account found in %s" % ACCOUNTS)
     print("exiting")
     exit(1)
 
@@ -123,7 +123,7 @@ while 1:
         break
 
 if found < 3:
-    print("Warning: Either no machine (mid), device (did) or user account (uid) found in prpl-facebook section of ", ACCOUNTS)
+    print("Warning: Either no machine (mid), device (did) or user account (uid) found in prpl-facebook section of %s" % ACCOUNTS)
     print("This may cause unexpected errors in the script")
     # exit(1)
 
@@ -229,20 +229,20 @@ response_data = response.read()
 debug("undecoded response: %s" % response_data)
 response = json.loads(response_data.decode('utf-8'))
 
-print("Update or add the following settings in %s under the Facebook account:", ACCOUNTS)
+print("Update or add the following settings in %s under the Facebook account:" % ACCOUNTS)
 
-print("<setting name='token' type='string'>%s</setting>", response['access_token'])
+print("<setting name='token' type='string'>%s</setting>" % response['access_token'])
 
 # Pidgin initializes UID to 0...
 if UID == 0:
-    print("<setting name='uid' type='string'>%s</setting>", response['uid'])
+    print("<setting name='uid' type='string'>%s</setting>" % response['uid'])
 
 # We don't always get back a "device_id", but if we do, make sure it's correct
 remote_did = response.get('device_id')
 if ( remote_did is not None and DID != response.get('device_id') ):
-    print("<setting name='did' type='string'>%s</setting>", response['device_id'])
+    print("<setting name='did' type='string'>%s</setting>" % response['device_id'])
 
 if ( MID != response['machine_id'] ):
-    print("<setting name='mid' type='string'>%s</setting>", response['machine_id'])
+    print("<setting name='mid' type='string'>%s</setting>" % response['machine_id'])
 
 print("After updating, pidgin should be ready to run")
