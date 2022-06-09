@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # Portions of this script directly from https://gist.github.com/jaymzh/3ed8817cf8c20222ca09ce33a544b695
 # Permanent home:  https://github.com/akhepcat/Miscellaneous/
-# Direct download: https://raw.githubusercontent.com/akhepcat/Miscellaneous/master/pidgin-fb-login-2fa.py
+# Direct download: https://raw.githubusercontent.com/akhepcat/Miscellaneous/master/pidgin-fb-login-2fa-v2.py
 
 import sys
 import cgi
