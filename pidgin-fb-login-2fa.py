@@ -195,7 +195,7 @@ try:
     data['device_id'] = error_data['device_id']
     debug("FB Account DID: %s" % error_data['device_id'])
 except:
-    print("FB Account DID not present in error_data: equal to accounts.xml did")
+    debug("FB Account DID not present in error_data: equal to accounts.xml did")
 
 debug("FB Account MID: %s" % error_data['machine_id'])
 
@@ -221,5 +221,8 @@ remote_did = response.get('device_id')
 if ( remote_did is not None and DID != response.get('device_id') ):
     print("<setting name='did' type='string'>%s</setting>" % response['device_id'])
 
+# Machine ID seems to change every time, but we're not supposed to update it.
+# If we do, pidgin will want to re-sync the history and FB will say it's too
+# much data.
 if ( MID != response['machine_id'] ):
-    print("<setting name='mid' type='string'>%s</setting>" % response['machine_id'])
+    debug("<setting name='mid' type='string'>%s</setting>" % response['machine_id'])
