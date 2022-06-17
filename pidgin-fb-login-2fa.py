@@ -208,7 +208,7 @@ response_data = response.read()
 debug("undecoded response: %s" % response_data)
 response = json.loads(response_data.decode('utf-8'))
 
-print("Update or add the following settings in %s under the Facebook account:", ACCOUNTS)
+print("Update or add the following settings in %s under the Facebook account:" % ACCOUNTS)
 
 print("<setting name='token' type='string'>%s</setting>" % response['access_token'])
 
