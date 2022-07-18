@@ -160,9 +160,9 @@ if (prpl is not None):
     print('''Making sure Pidgin is *not running* before proceeding. Pidgin modifies
 the accounts.xml on exit as well as while running, so we will tell pidgin
 to exit in 5 seconds before continuing so our changes are not lost. \n''')
-    sleep 5
+    sleep(5)
     purple.PurpleCoreQuit()
-    sleep 1
+    sleep(1)
 
 print('''This tool will perform 2-factor login to FB and then print out an
 access token needed for the FB plugin for bitlbee and pidgin.
