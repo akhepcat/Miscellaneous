@@ -1,0 +1,56 @@
+#!/bin/bash
+
+function check_pi_version() {
+  local -r REVCODE=0x$(awk '/Revision/ {print $3}' /proc/cpuinfo)
+  local -rA REVISIONS=(
+    [0x]="not detected"
+    [0x0002]="Model B Rev 1, 256 MB RAM"
+    [0x0003]="Model B Rev 1 ECN0001, 256 MB RAM"
+    [0x0004]="Model B Rev 2, 256 MB RAM"
+    [0x0005]="Model B Rev 2, 256 MB RAM"
+    [0x0006]="Model B Rev 2, 256 MB RAM"
+    [0x0007]="Model A, 256 MB RAM"
+    [0x0008]="Model A, 256 MB RAM"
+    [0x0009]="Model A, 256 MB RAM"
+    [0x000d]="Model B Rev 2, 512 MB RAM"
+    [0x000e]="Model B Rev 2, 512 MB RAM"
+    [0x000f]="Model B Rev 2, 512 MB RAM"
+    [0x0010]="Model B+, 512 MB RAM"
+    [0x0013]="Model B+, 512 MB RAM"
+    [0x900032]="Model B+, 512 MB RAM"
+    [0x0011]="Compute Module, 512 MB RAM"
+    [0x0014]="Compute Module, 512 MB RAM (China)"
+    [0x0012]="Model A+, 256 MB RAM"
+    [0x0015]="Model A+, 256 MB or 512 MB RAM"
+    [0xa01041]="2 Model B v1.1, 1 GB RAM (UK)"
+    [0xa21041]="2 Model B v1.1, 1 GB RAM (China)"
+    [0xa22042]="2 Model B v1.2, 1 GB RAM"
+    [0x90092]="Zero v1.2, 512 MB RAM"
+    [0x90093]="Zero v1.3, 512 MB RAM"
+    [0x9000C1]="Zero W, 512 MB RAM"
+    [0xa02082]="3 Model B, 1 GB RAM"
+    [0xa22082]="3 Model B, 1 GB RAM"
+    [0xa020d3]="3 Model B+, 1 GB RAM"
+    [0xa03111]="4 v1.1, 1 GB RAM"
+    [0xb03111]="4 v1.1, 2 GB RAM"
+    [0xb03112]="4 v1.2, 2 GB RAM"
+    [0xb03114]="4 v1.4, 2 GB RAM"
+    [0xc03111]="4 v1.1, 4 GB RAM"
+    [0xc03112]="4 v1.2, 4 GB RAM"
+    [0xc03114]="4 v1.4, 4 GB RAM"
+    [0xd03114]="4 v1.4, 8 GB RAM"
+    [0xc03130]="400 v1.0, 4 GB RAM"
+    [0x902120]="Zero 2 W 1GB RAM"
+    
+  )
+
+  echo "Raspberry Pi ${REVISIONS[${REVCODE}]} (${REVCODE})"
+}
+
+if [ -r /proc/device-tree/model ]
+then
+        cat /proc/device-tree/model
+        echo ""
+else
+        check_pi_version
+fi
