@@ -54,7 +54,7 @@ else
 	EXT=tar.xz
 fi
 
-if [ ${DEBUG} -gt 0 ]
+if [ ${DEBUG:-0} -gt 0 ]
 then
 	echo "won't download or install"
 	
