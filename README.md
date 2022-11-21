@@ -31,6 +31,7 @@ Random one-offs that need a temporary home
   * listeners.sh - show only listening services (uses lsof)  
   * lsof-n.sh - don't have lsof? this will approximate it for network connections on linux
   * lxc-pid     - show the full process including virtual hostname for a PID or PNAME  
+  * MDviewer   - Generates a single page markdown-to-html viewer for all markdown pages in a directory
   * md5dups     - scan for duplicate files using md5 hashes  
   * mqueuerm	- purge the stuck deferred mail queue singly or in masse
   * NoPrinterShutdown	- Because shutting down your Pi when the printer goes away is fun
