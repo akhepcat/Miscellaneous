@@ -30,69 +30,83 @@ fi
 # or '5.4 (54779.1115)'
 # or '5.4.54779.1115'
 # or '5.8.0 (16)'
-rzv=$(${FETCH} ${UA} "Mozilla/5.0 (X11; Linux x86_64)" ${OUT} - https://zoom.us/download | grep -E 'linux-ver-text.*Version' | head -1 | \
-sed 's/.*Version //; s|</span>.*||; s/\([0-9]\+\)\.\([0-9]\+\)\.\([0-9]\+\) (\([0-9]\+\.[0-9]\+\))/\1.\2.\4/; s/\([0-9]\+\)\.\([0-9]\+\) (\([0-9]\+\.[0-9]\+\))/\1.\2.\3/; s/ (\(.*\))/.\1/g;' )
+### REST URL Update:  curl 'https://zoom.us/rest/download?os=linux'
+### {"status":true,"errorCode":0,"errorMessage":null,"result":{"isPageJoinOnly":false,"isCN":false,"fromGov":false,"downloadVO":{"zoom":{"version":"5.12.2.4816","displayVersion":"5.12.2 (4816)","packageName":null},"zoomX86":{"version":"5.4.53391.1108","displayVersion":"5.4.2 (53391.1108)","packageName":null},"updateDate":"1667347200000","newestGPGKeyVer":null,"historyGPGKeyVer":null},"os":"linux"}}
+
+rzv=$(${FETCH} ${UA} "Mozilla/5.0 (X11; Linux x86_64)" ${OUT} - 'https://zoom.us/rest/download?os=linux' | grep -Eo '"zoom":{"version":"[0-9.]+"' | cut -f6 -d\" )
+# sed 's/.*Version //; s|</span>.*||; s/\([0-9]\+\)\.\([0-9]\+\)\.\([0-9]\+\) (\([0-9]\+\.[0-9]\+\))/\1.\2.\4/; s/\([0-9]\+\)\.\([0-9]\+\) (\([0-9]\+\.[0-9]\+\))/\1.\2.\3/; s/ (\(.*\))/.\1/g;' )
 
 # expand the detection for different OS's as needed
 if [ -n "$(which apt 2>/dev/null)" ]
 then
 	ubuntu=1
+	EXT=deb
 elif [ -n "$(which rpm 2>/dev/null)" ]
 then
 	redhat=1
+	EXT=rpm
 elif [ -n "$(which pacman 2>/dev/null)" ]
 then
 	arch=1
+	EXT=pkg.tar.xz
 else
 	unk=1
+	EXT=tar.xz
 fi
 
-
-# expand the individual OS sections as needed
-if [ 1 -eq ${ubuntu:-0} ]
+if [ ${DEBUG:-0} -gt 0 ]
 then
-
-
-	lzv=$(dpkg -l zoom 2>&1 | grep ^ii | awk '{print $3}')
-	dpkg --compare-versions ${lzv:-0} lt ${rzv:-0}
-	if [ $? -eq 0 ]
-	then
-		echo "Upgrade needed"
-		${FETCH} ${UA} "Mozilla/5.0 (X11; Linux x86_64)" ${OUT}  /tmp/zoom-${rzv:-0}-amd64.deb https://zoom.us/client/latest/zoom_amd64.deb
-		sudo dpkg -i /tmp/zoom-${rzv:-0}-amd64.deb
-		rm -i /tmp/zoom-${rzv:-0}-amd64.deb
-	else
-		echo "no newer version available"
-	fi
-elif [ 1 -eq ${redhat:-0} ]
-then
-	lzv=$(rpm -q zoom --info 2>&1 | grep Version | cut -f2 -d:)
-	# need to compare current version vs remote version
+	echo "won't download or install"
 	
-	${FETCH} ${UA} "Mozilla/5.0 (X11; Linux x86_64)" ${OUT}  /tmp/zoom-${rzv:-0}-x86_64.rpm https://zoom.us/client/latest/zoom_x86_64.rpm
+	echo """${FETCH} ${UA} \"Mozilla/5.0 (X11; Linux x86_64)\" ${OUT}  /tmp/zoom-${rzv:-0}-amd64.$EXT https://zoom.us/client/latest/zoom_amd64.$EXT"""
 
-	# because we might need dependencies
-	sudo yum install /tmp/zoom-${rzv:-0}-x86_64.rpm
-
-	rm -i /tmp/zoom-${rzv:-0}-x86_64.rpm
-elif [ 1 -eq ${arch:-0} ]
-then
-	# Need to detect the current version
-	# need to compare current version vs remote version
-	
-	${FETCH} ${UA} "Mozilla/5.0 (X11; Linux x86_64)" ${OUT}  /tmp/zoom-${rzv:-0}-x86_64.pkg.tar.xz https://zoom.us/client/latest/zoom_x86_64.pkg.tar.xz
-
-	# This grabs dependencies
-	pacman -U /tmp/zoom-${rzv:-0}-x86_64.pkg.tar.xz
-
-	rm -i /tmp/zoom-${rzv:-0}-x86_64.pkg.tar.xz
-elif [ 1 -eq ${unk:-0} ]
-then
-	# Need to detect the current version
-	# need to compare current version vs remote version
-	
-	${FETCH} ${UA} "Mozilla/5.0 (X11; Linux x86_64)" ${OUT}  /tmp/zoom-${rzv:-0}-x86_64.tar.xz https://zoom.us/client/latest/zoom_x86_64.tar.xz
-	echo "You'll need to manually install from the package"
 else
-	echo "Can't determine version for automatic upgrade"
+	# expand the individual OS sections as needed
+	if [ 1 -eq ${ubuntu:-0} ]
+	then
+
+
+		lzv=$(dpkg -l zoom 2>&1 | grep ^ii | awk '{print $3}')
+		dpkg --compare-versions ${lzv:-0} lt ${rzv:-0}
+		if [ $? -eq 0 ]
+		then
+			echo "Upgrade needed"
+			${FETCH} ${UA} "Mozilla/5.0 (X11; Linux x86_64)" ${OUT}  /tmp/zoom-${rzv:-0}-amd64.deb https://zoom.us/client/latest/zoom_amd64.deb
+			sudo dpkg -i /tmp/zoom-${rzv:-0}-amd64.deb
+			rm -i /tmp/zoom-${rzv:-0}-amd64.deb
+		else
+			echo "no newer version available"
+		fi
+	elif [ 1 -eq ${redhat:-0} ]
+	then
+		lzv=$(rpm -q zoom --info 2>&1 | grep Version | cut -f2 -d:)
+		# need to compare current version vs remote version
+
+		${FETCH} ${UA} "Mozilla/5.0 (X11; Linux x86_64)" ${OUT}  /tmp/zoom-${rzv:-0}-x86_64.rpm https://zoom.us/client/latest/zoom_x86_64.rpm
+
+		# because we might need dependencies
+		sudo yum install /tmp/zoom-${rzv:-0}-x86_64.rpm
+
+		rm -i /tmp/zoom-${rzv:-0}-x86_64.rpm
+	elif [ 1 -eq ${arch:-0} ]
+	then
+		# Need to detect the current version
+		# need to compare current version vs remote version
+	
+		${FETCH} ${UA} "Mozilla/5.0 (X11; Linux x86_64)" ${OUT}  /tmp/zoom-${rzv:-0}-x86_64.pkg.tar.xz https://zoom.us/client/latest/zoom_x86_64.pkg.tar.xz
+
+		# This grabs dependencies
+		pacman -U /tmp/zoom-${rzv:-0}-x86_64.pkg.tar.xz
+
+		rm -i /tmp/zoom-${rzv:-0}-x86_64.pkg.tar.xz
+	elif [ 1 -eq ${unk:-0} ]
+	then
+		# Need to detect the current version
+		# need to compare current version vs remote version
+	
+		${FETCH} ${UA} "Mozilla/5.0 (X11; Linux x86_64)" ${OUT}  /tmp/zoom-${rzv:-0}-x86_64.tar.xz https://zoom.us/client/latest/zoom_x86_64.tar.xz
+		echo "You'll need to manually install from the package"
+	else
+		echo "Can't determine version for automatic upgrade"
+	fi
 fi
