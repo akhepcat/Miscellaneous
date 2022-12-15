@@ -8,8 +8,8 @@
 use Net::Netmask;
 use JSON::Parse 'parse_json';
 
-# This is the one you always want to customize
-my @never_block=("192.168.0.0/22", "172.16.130.0/23", "192.168.13.0/24" );
+# This is the one you always want to customize;  some RFC-1918 examples, AWS and Google also... 
+my @never_block=("192.168.0.0/22", "172.16.130.0/23", "192.168.13.0/24", "54.240.0.0/18", "209.85.128.0/17" );
 
 # This should *probably* be customized, but this gets most of the bogons from encroaching through your external interface; Classic RFC-1918 is .. not blocked by default!
 my @always_block=("0.0.0.0/8", "100.64.0.0/10", "127.0.0.0/8", "169.254.0.0/16", "192.0.0.0/24", "192.0.2.0/24", "198.18.0.0/15", "198.51.100.0/24", "203.0.113.0/24", "224.0.0.0/3" );
