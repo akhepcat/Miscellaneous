@@ -2,7 +2,6 @@
 Random one-offs that need a temporary home
 
   * 4to6proxy.sh - proxy a localhost IPv4 port to a localhost IPv6 port
-  * alaskanets  - hamlib/rigctl based utility to quickly select from a list of local "nets" for controllable amateur radios
   * apkpull	- list and pull APK's from an android device using ADB
   * apt-add-key	- simple GPG key add for apt with just the fingerprint
   * apt-upg	- all-in-one full upgrade and cleanup with minimal error checking
@@ -18,6 +17,7 @@ Random one-offs that need a temporary home
   * gh          - "[g]rep [h]osts" is dumb.  But I have a specific use for it
   * git-updates - stupid recursive git repo updater, useful if you have lots of repos  
   * grouper-M-build.sh - hacked up copy of the build script for Nexus 7 wifi, aka grouper  
+  * hamnets     - hamlib/rigctl based utility to quickly select from a list of local "nets" for controllable amateur radios
   * ipcapuniq   - awk example to capture and display unique IPv4/IPv6 addresses
   * ipsort-bench.pl - benchmark different IPv4 sorting algorithms  
   * ipsort.pl   - sort a list of IPv4 addresses, correctly  
