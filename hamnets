@@ -39,10 +39,10 @@ my $verbose, $help, $usage, $arg;
 		 "desc" => "Alaska Pacific Emergency Preparedness Net (ERC)",  # The description of the 'Net
 		 );
 
-%{$nets{"oldtime"}} = ( "rig" => "FTdx10", "freq" => 3920000, "mode" => "LSB", "pbf" => 0,
+%{$nets{"noon"}} = ( "rig" => "FTdx10", "freq" => 3920000, "mode" => "LSB", "pbf" => 0,
 		    "nb" => 0, "nr" => 0.1, "rfil" => 2, "preamp" => 10,
 		    "starts" => "1200", "days" => "MTWRF",
-		    "desc" => "Old Timers ragchew net" );
+		    "desc" => "Old Timers Noontime net" );
 
 %{$nets{"snipers"}} = ( "rig" => "FTdx10", "freq" => 3920000, "mode" => "LSB", "pbf" => 0,
 		    "nb" => 0, "nr" => 0.1, "rfil" => 2, "preamp" => 10,
@@ -84,11 +84,6 @@ my $verbose, $help, $usage, $arg;
 		    "preamp" => 10, shift => "0", "tone" => 0,
 		    "starts" => "1000", "days" => "UMTWRFS",
 		    "desc" => "Alaska Morning Net" );
-
-%{$nets{"noon"}} = ( "rig" => "FT-817", "freq" => 145500000, "mode" => "FM", "pbf" => 0,
-		    "preamp" => 10, shift => "0", "tone" => 0,
-		    "starts" => "1200", "days" => "UMTWRFS",
-		    "desc" => "Noontime Net" );
 
 %{$nets{"erc-vhf"}} = ( "rig" => "FT-817", "freq" => 147330000, "mode" => "FM", "pbf" => 0,
 		    "preamp" => 10, shift => "+", "tone" => 103.5,
