@@ -2,6 +2,7 @@
 Random one-offs that need a temporary home
 
   * 4to6proxy.sh - proxy a localhost IPv4 port to a localhost IPv6 port
+  * alaskanets  - hamlib/rigctl based utility to quickly select from a list of local "nets" for controllable amateur radios
   * apkpull	- list and pull APK's from an android device using ADB
   * apt-add-key	- simple GPG key add for apt with just the fingerprint
   * apt-upg	- all-in-one full upgrade and cleanup with minimal error checking
