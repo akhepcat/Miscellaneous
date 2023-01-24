@@ -7,7 +7,6 @@
 use POSIX qw(strftime);
 use Getopt::Long;
 
-
 # Just comment these out to use the system versions instead of the code-testing
 my $HAMLIB="/usr/local/src/HamRadio/Hamlib";
 my $RIGCTLp="$HAMLIB/tests/.libs/rigctl";
@@ -18,7 +17,7 @@ my $PROG=$0;
 
 my %nets;
 my %rigs;
-my $verbose, $help, $usage, $arg;
+my $verbose, $help, $usage, $arg, $color;
 
 ##  The rigs we can use => hamlib rig number, device to use, optional args for rigctl
 %{$rigs{"FTdx10"}} = ( "model" => 1042, "dev" => "/dev/ftdx10" );
@@ -139,6 +138,45 @@ my $verbose, $help, $usage, $arg;
 		    "desc" => "Swap Net" );
 
 ##########################################################################
+
+sub perror {
+	my @args =shift;
+	
+	if ($color) {
+		print "\e[1m\e[38;5;160m", @args, "\e[0m";
+	} else {
+		print @args;
+	}
+}
+
+sub pwarn {
+	my @args =shift;
+	
+	if ($color) {
+		print "\e[1m\e[38;5;226m", @args, "\e[0m";
+	} else {
+		print @args;
+	}
+}
+
+sub cprint {
+	my ($c, $text) = @_;
+	
+	if ($color) {
+		pcolor($c); print $text; pcolor(-1);
+	} else {
+		print $text;
+	}
+}
+
+sub pcolor {
+	my $c = shift;
+	if ($c >=0) {
+		print "\e[38;5;${c}m";
+	} else {
+		print "\e[0m";
+	}
+}
 
 sub set_net {
 	my $n=shift;
@@ -289,17 +327,24 @@ sub istoday {
 }
 
 sub usage {
-	printf("usage: ${PROG} [-v] [-h] [net]\n");
-	print "\t -v  verbosely show all nets, instead of just for today\n";
-	print "\t -h  this help\n";
+	perror "usage: ${PROG} [-v] [-h] [net]\n";
+	pwarn "\t -v  verbosely show all nets, instead of just for today\n";
+	pwarn "\t -c  enable Color\n";
+	pwarn "\t -h  this help\n";
 }
 
 sub displaynets {
 	if ($verbose) {
-		printf("  net can be:\n");
+		cprint(51, "  net can be:\n");
 	} else {
-	        printf("  net for today can be:\n");
+	        cprint(51, "  net for today can be:\n");
 	}
+	if ($color) {
+		cprint(34,  "     * starting within 15m\n");
+		cprint(136, "     * starting within 90m\n");
+		cprint(99,  "     * starting much later\n");
+	}
+
 	foreach my $rig (sort keys %rigs) {
 		if ( -e $rigs{$rig}{"dev"} && -R _ ) {
 			printf("\n\t%s:\n", $rig );
@@ -310,15 +355,48 @@ sub displaynets {
 			    dsum($nets{$a}{"days"}) + (2400 - $nets{$a}{"starts"}) 
 			  ) 
 			} keys %nets) {
+
+				if ( $color && istoday($nets{$net}{"days"}) ) {
+					my $s = soon($nets{$net}{"starts"});
+					if ( $s eq 1) {
+						pcolor(34);
+					} elsif ( $s eq 2) {
+                                                pcolor(136);
+					} elsif ( $s eq 3) {
+                                                pcolor(99);
+					}
+				}
+
 				printf("\t%10s (%8.04f MHz %3.3s) - %0.04d (%s) - %s\n", $net, $nets{$net}{"freq"} / 1000000, $nets{$net}{"mode"}, 
 					$nets{$net}{"starts"}, pweek($nets{$net}{"days"}), $nets{$net}{"desc"} ) 
 					if ( $nets{$net}{"rig"} eq $rig && ($verbose || istoday($nets{$net}{"days"}))) ;
+
+				if ($color) {
+					pcolor(-1);
+				}
 			}
 		}
 	}
 	printf("\n");
 }
 
+sub soon {
+	my $s = shift;
+	my $t = ((localtime)[2] * 100 ) + (localtime)[1];
+	my $d = $s - $t;
+		
+	if ($s > $t) {
+		# upcoming events
+		if ( $d <= 55 ) {
+			return 1;
+		} elsif ($d <= 130 ) {
+			return 2;
+		} else {
+			return 3;
+		}
+	}
+	return 0;
+}
 
 ############################################################
 
@@ -327,6 +405,7 @@ sub displaynets {
 GetOptions(
   "v!"  => \$verbose,
   "h!"  => \$help,
+  "c!"  => \$color,
 );
 
 $arg = $ARGV[0];
@@ -346,7 +425,7 @@ if ( ! $arg ) {
 if (defined($nets{$arg})) {
 	set_net($arg);
 } else {
-	print "ERROR: no such net\n";
+	perror "ERROR: no such net\n";
 }
 
 printf("\n");
