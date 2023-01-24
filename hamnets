@@ -340,6 +340,7 @@ sub displaynets {
 	        cprint(51, "  net for today can be:\n");
 	}
 	if ($color) {
+		cprint(82,  "     * Currently in progress\n");
 		cprint(34,  "     * starting within 15m\n");
 		cprint(136, "     * starting within 90m\n");
 		cprint(99,  "     * starting much later\n");
@@ -364,6 +365,8 @@ sub displaynets {
                                                 pcolor(136);
 					} elsif ( $s eq 3) {
                                                 pcolor(99);
+					} elsif ( $s eq 4) {
+                                                pcolor(82);
 					}
 				}
 
@@ -393,6 +396,10 @@ sub soon {
 			return 2;
 		} else {
 			return 3;
+		}
+	} else {
+		if ( $d > -100 ) {
+			return 4;
 		}
 	}
 	return 0;
