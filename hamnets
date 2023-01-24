@@ -138,12 +138,22 @@ my $verbose, $help, $usage, $arg, $color;
 		    "desc" => "Swap Net" );
 
 ##########################################################################
+## Color definitions, from https://raw.githubusercontent.com/fidian/ansi/master/images/color-codes.png
 
+my $red=160;	#d70000		# pepsi red
+my $yellow=226;	#ffff00		# yellow
+my $brgreen=82;	#5fff00 	# bright green
+my $green=34;	#00af00		# islam green
+my $orange=136;	#af8700		# dark goldenrod
+my $brown=99;	#875f5f		# pastel brown
+my $grey=248;	#a8a8a8		# dark grey
+
+##########################################################################
 sub perror {
 	my @args =shift;
 	
 	if ($color) {
-		print "\e[1m\e[38;5;160m", @args, "\e[0m";
+		print "\e[1m\e[38;5;${red}m", @args, "\e[0m";
 	} else {
 		print @args;
 	}
@@ -153,7 +163,7 @@ sub pwarn {
 	my @args =shift;
 	
 	if ($color) {
-		print "\e[1m\e[38;5;226m", @args, "\e[0m";
+		print "\e[1m\e[38;5;${yellow}m", @args, "\e[0m";
 	} else {
 		print @args;
 	}
@@ -340,12 +350,12 @@ sub displaynets {
 	        cprint(51, "  net for today can be:\n");
 	}
 	if ($color) {
-		cprint(82,  "     * Currently in progress\n");
-		cprint(34,  "     * starting within 15m\n");
-		cprint(136, "     * starting within 90m\n");
-		cprint(99,  "     * starting much later\n");
+		cprint($grey,  "     * time passed\n");
+		cprint($brgreen,  "     * Currently in progress\n");
+		cprint($green,  "     * starting within 15m\n");
+		cprint($orange, "     * starting within 90m\n");
+		cprint($brown,  "     * starting much later\n");
 	}
-
 	foreach my $rig (sort keys %rigs) {
 		if ( -e $rigs{$rig}{"dev"} && -R _ ) {
 			printf("\n\t%s:\n", $rig );
@@ -360,13 +370,15 @@ sub displaynets {
 				if ( $color && istoday($nets{$net}{"days"}) ) {
 					my $s = soon($nets{$net}{"starts"});
 					if ( $s eq 1) {
-						pcolor(34);
+						pcolor($green);
 					} elsif ( $s eq 2) {
-                                                pcolor(136);
+                                                pcolor($orange);
 					} elsif ( $s eq 3) {
-                                                pcolor(99);
+                                                pcolor($brown);
 					} elsif ( $s eq 4) {
-                                                pcolor(82);
+                                                pcolor($brgreen);
+					} else {
+						pcolor($grey);
 					}
 				}
 
