@@ -19,6 +19,9 @@ my %nets;
 my %rigs;
 my $verbose, $help, $usage, $arg, $color;
 
+
+########################################################
+
 ##  The rigs we can use => hamlib rig number, device to use, optional args for rigctl
 %{$rigs{"FTdx10"}} = ( "model" => 1042, "dev" => "/dev/ftdx10" );
 %{$rigs{"FT-817"}} = ( "model" => 1020, "dev" => "/dev/digirig", "opts" => "-P RTS" );
@@ -429,6 +432,10 @@ GetOptions(
 
 $arg = $ARGV[0];
 
+if ( (m/c$/, $PROG) || (m/color$/, $PROG)) {
+	$color=1;
+}
+
 if ( $help ) {
 	usage;
 	exit 1;
@@ -439,7 +446,6 @@ if ( ! $arg ) {
 	exit 0;
 }
 
-# print STDERR (join("|",@ARGV),"\n");
 
 if (defined($nets{$arg})) {
 	set_net($arg);
