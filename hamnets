@@ -346,6 +346,25 @@ sub usage {
 	pwarn "\t -h  this help\n";
 }
 
+sub dsum {
+    my $n = shift;
+    my $s=0; my $r=0;
+    my $t = $nets{$n}{"starts"};
+
+    $_ = $nets{$n}{"days"};
+
+    if (m/U/) { $s += 7**7; }
+    if (m/M/) { $s += 7**6; }
+    if (m/T/) { $s += 7**5; }
+    if (m/W/) { $s += 7**4; }
+    if (m/R/) { $s += 7**3; }
+    if (m/F/) { $s += 7**2; }
+    if (m/S/) { $s += 7**1; }
+
+    $r = ($s * 10000) + (2400 - $t);
+    return ($r);
+}
+
 sub displaynets {
 	if ($verbose) {
 		cprint(51, "  net can be:\n");
@@ -359,17 +378,11 @@ sub displaynets {
 		cprint($orange, "     * starting within 90m\n");
 		cprint($brown,  "     * starting much later\n");
 	}
+
 	foreach my $rig (sort keys %rigs) {
 		if ( -e $rigs{$rig}{"dev"} && -R _ ) {
 			printf("\n\t%s:\n", $rig );
-			foreach my $net (sort { 
-			  ( 
-			    dsum($nets{$b}{"days"}) + (2400 - $nets{$b}{"starts"}) 
-			  <=> 
-			    dsum($nets{$a}{"days"}) + (2400 - $nets{$a}{"starts"}) 
-			  ) 
-			} keys %nets) {
-
+			foreach my $net (sort { ( dsum($b) <=> dsum($a) ) } keys %nets) {
 				if ( $color && istoday($nets{$net}{"days"}) ) {
 					my $s = soon($nets{$net}{"starts"});
 					if ( $s eq 1) {
