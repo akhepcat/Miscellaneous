@@ -6,6 +6,7 @@
 # 
 use POSIX qw(strftime);
 use Getopt::Long;
+use Env qw(HOME);
 
 # Just comment these out to use the system versions instead of the code-testing
 my $HAMLIB="/usr/local/src/HamRadio/Hamlib";
@@ -19,6 +20,7 @@ my %nets;
 my %rigs;
 my $verbose, $help, $usage, $arg, $color;
 
+my $config=$HOME . ".config/hamnets.cfg";
 
 ########################################################
 
@@ -28,116 +30,117 @@ my $verbose, $help, $usage, $arg, $color;
 
 
 ##  The 'Nets we can access
-%{$nets{"akerc"}} = ( "rig" => "FTdx10",		# The name of the rig that can use this 'Net
-		 "freq" => 14292000,		# The Frequency of the 'Net
-		 "mode" => "USB",		# Which modulation mode to use
-		   "pbf" => 0,			# the passband filter width for the mode, 0 uses mode default
-		   "nb" => 0,	 		# Noise Blanker depth (0=off, range dependent on rig)
-		   "nr" => 0.1,			# (Digital) Noise Reduction depth (0=off, range dependent on rig)
-		 "rfil" => 2,			# Roofing filter width to use (values rig dependent)
-	       "preamp" => 10,			# What preamp level to use (values rig dependent)
-	       "starts" => "0830",		# 24h clock, aka military time
-	       "days" => "MTWRF",		# s'U'nday, M, T, W, thu'R'sday, F, S
-		 "desc" => "Alaska Pacific Emergency Preparedness Net (ERC)",  # The description of the 'Net
+%{$nets{"akerc"}} = ( "rig" => "FTdx10",	# Req: The name of the rig that can use this 'Net
+		 "freq" => 14292000,		# Req: The Frequency of the 'Net
+		 "mode" => "USB",		# Req: Which modulation mode to use
+		   "pbf" => 0,			# Opt: the passband filter width for the mode, 0 uses mode default
+		   "nb" => 0,	 		# Opt: Noise Blanker depth (0=off, range dependent on rig)
+		   "nr" => 0.1,			# Opt: (Digital) Noise Reduction depth (0=off, range dependent on rig)
+		 "rfil" => 2,			# Opt: Roofing filter width to use (values rig dependent)
+	       "preamp" => 10,			# Opt: What preamp level to use (values rig dependent)
+	       "starts" => "08:30",		# Req: 24h clock, aka military time
+	       "duration" => "30",		# Opt: duration in minutes, default is 60m
+	       "days" => "MTWRF",		# Req: s'U'nday, M, T, W, thu'R'sday, F, S
+	 "desc" => "Alaska Pacific Emergency Preparedness Net",  # Req: The description of the 'Net
 		 );
 
 %{$nets{"noon"}} = ( "rig" => "FTdx10", "freq" => 3920000, "mode" => "LSB", "pbf" => 0,
 		    "nb" => 0, "nr" => 0.1, "rfil" => 2, "preamp" => 10,
-		    "starts" => "1200", "days" => "MTWRF",
+		    "starts" => "12:00", "days" => "MTWRF",
 		    "desc" => "Old Timers Noontime net" );
 
 %{$nets{"snipers"}} = ( "rig" => "FTdx10", "freq" => 3920000, "mode" => "LSB", "pbf" => 0,
 		    "nb" => 0, "nr" => 0.1, "rfil" => 2, "preamp" => 10,
-		    "starts" => "1800", "days" => "UMTWRFS",
+		    "starts" => "18:00", "days" => "UMTWRFS",
 		    "desc" => "Alaska Snipers Net" );
 
 %{$nets{"pacsea"}} = ( "rig" => "FTdx10", "freq" => 14300000, "mode" => "USB", "pbf" => 0,
 		    "nb" => 0, "nr" => 0.1, "rfil" => 2, "preamp" => 10,
-		    "starts" => "1800", "days" => "UMTWRFS",
+		    "starts" => "18:00", "days" => "UMTWRFS",
 		    "desc" => "Pacific Seafarers Net" );
 
 %{$nets{"bush"}} = ( "rig" => "FTdx10", "freq" => 7093000, "mode" => "LSB", "pbf" => 0,
 		    "nb" => 0, "nr" => 0.1, "rfil" => 2, "preamp" => 10,
-		    "starts" => "2000", "days" => "UMTWRFS",
+		    "starts" => "20:00", "days" => "UMTWRFS",
 		    "desc" => "Alaska Bush Net" );
 
 %{$nets{"motley"}} = ( "rig" => "FTdx10", "freq" => 3933000, "mode" => "LSB", "pbf" => 0,
 		    "nb" => 0, "nr" => 0.1, "rfil" => 2, "preamp" => 10,
-		    "starts" => "2100", "days" => "UMTWRFS",
+		    "starts" => "21:00", "days" => "UMTWRFS",
 		    "desc" => "Alaska Motley Net, by KL7G" );
 
 %{$nets{"swap"}} = ( "rig" => "FTdx10", "freq" => 3920000, "mode" => "LSB", "pbf" => 0,
 		    "nb" => 0, "nr" => 0.1, "rfil" => 2, "preamp" => 10,
-		    "starts" => "1000", "days" => "S",
+		    "starts" => "10:00", "days" => "S",
 		    "desc" => "Alaska Swap Net- WL7PM" );
 
 %{$nets{"erc-hf"}} = ( "rig" => "FTdx10", "freq" => 3880000, "mode" => "LSB", "pbf" => 0,
 		    "nb" => 0, "nr" => 0.1, "rfil" => 2, "preamp" => 10,
-		    "starts" => "2030", "days" => "U",
+		    "starts" => "20:30", "days" => "U",
 		    "desc" => "ERC on 80m" );
 
 %{$nets{"emergency"}} = ( "rig" => "FTdx10", "freq" => 5167500, "mode" => "USB", "pbf" => 0,
 		    "nb" => 0, "nr" => 0.1, "rfil" => 2, "preamp" => 10,
-		    "starts" => "1000", "days" => "S",
+		    "starts" => "10:00", "days" => "S",
 		    "desc" => "AK emergency band - testing net on last saturday of month" );
 
 ## FT-817
 %{$nets{"morning"}} = ( "rig" => "FT-817", "freq" => 145500000, "mode" => "FM", "pbf" => 0,
 		    "preamp" => 10, shift => "0", "tone" => 0,
-		    "starts" => "1000", "days" => "UMTWRFS",
+		    "starts" => "10:00", "days" => "UMTWRFS",
 		    "desc" => "Alaska Morning Net" );
 
 %{$nets{"erc-vhf"}} = ( "rig" => "FT-817", "freq" => 147330000, "mode" => "FM", "pbf" => 0,
 		    "preamp" => 10, shift => "+", "tone" => 103.5,
-		    "starts" => "1930", "days" => "U",
+		    "starts" => "19:30", "days" => "U",
 		    "desc" => "ERC Net" );
 
 %{$nets{"noname"}} = ( "rig" => "FT-817", "freq" => 146430000, "mode" => "FM", "pbf" => 0,
 		    "preamp" => 10, shift => "simplex", "tone" => 0,
-		    "starts" => "2000", "days" => "U",
+		    "starts" => "20:00", "days" => "U",
 		    "desc" => "NoName Net, also MatSu Elmers" );
 
 %{$nets{"vnnet1"}} = ( "rig" => "FT-817", "freq" => 146580000, "mode" => "FM", "pbf" => 0,
 		    "preamp" => 10, shift => "simplex", "tone" => 0,
-		    "starts" => "2000", "days" => "M",
+		    "starts" => "20:00", "days" => "M",
 		    "desc" => "Valley North Net (simplex)" );
 
 %{$nets{"vnnet2"}} = ( "rig" => "FT-817", "freq" => 147120000, "mode" => "FM", "pbf" => 0,
 		    "preamp" => 10, shift => "+", "tone" => 0,
-		    "starts" => "2000", "days" => "M",
+		    "starts" => "20:00", "days" => "M",
 		    "desc" => "Valley North Net (repeater)" );
 
 %{$nets{"grand"}} = ( "rig" => "FT-817", "freq" => 144200000, "mode" => "USB", "pbf" => 0,
-		    "starts" => "0800", "days" => "M",
+		    "starts" => "08:00", "days" => "M",
 		    "preamp" => 10, "desc" => "Grandson of Sideband Net (NL7SK)" );
 
 %{$nets{"south"}} = ( "rig" => "FT-817", "freq" => 146520000, "mode" => "FM", "pbf" => 0,
 		    "preamp" => 10, shift => "simplex", "tone" => 0,
-		    "starts" => "1900", "days" => "W",
+		    "starts" => "19:00", "days" => "W",
 		    "desc" => "SouthCentral simplex" );
 
 %{$nets{"parka"}} = ( "rig" => "FT-817", "freq" => 147300000, "mode" => "FM", "pbf" => 0,
 		    "preamp" => 10, shift => "+", "tone" => 141.3,
-		    "starts" => "1900", "days" => "R",
+		    "starts" => "19:00", "days" => "R",
 		    "desc" => "Parka Net (repeater)" );
 
 %{$nets{"ares"}} = ( "rig" => "FT-817", "freq" => 147340000, "mode" => "FM", "pbf" => 0,
 		    "preamp" => 10, shift => "+", "tone" => 103.5,
-		    "starts" => "1900", "days" => "R",
+		    "starts" => "19:00", "days" => "R",
 		    "desc" => "Ares Net (repeater)" );
 
 %{$nets{"vhfup"}} = ( "rig" => "FT-817", "freq" => 144200000, "mode" => "USB", "pbf" => 0,
-		    "starts" => "0930", "days" => "R",
+		    "starts" => "09:30", "days" => "R",
 		    "preamp" => 10, "desc" => "VHF Up Net (net control KL7H)" );
 
 %{$nets{"tech"}} = ( "rig" => "FT-817", "freq" => 146790000, "mode" => "FM", "pbf" => 0,
 		    "preamp" => 10, shift => "-", "tone" => 100.0,
-		    "starts" => "1730", "days" => "F",
+		    "starts" => "17:30", "days" => "F", "duration" => "120",
 		    "desc" => "Tech Net (ends 1930)" );
 
 %{$nets{"swap-vhf"}} = ( "rig" => "FT-817", "freq" => 146790000, "mode" => "FM", "pbf" => 0,
 		    "preamp" => 10, shift => "-", "tone" => 100.0,
-		    "starts" => "1930", "days" => "F",
+		    "starts" => "19:30", "days" => "F",
 		    "desc" => "Swap Net" );
 
 ##########################################################################
@@ -307,21 +310,24 @@ sub pweek {
 }
 
 sub dsum {
-    $_ = shift;
-    my $s=0;
+    my $n = shift;
+    my $s=0; my $r=0;
+    my $t = $nets{$n}{"starts"};
+
+    $_ = $nets{$n}{"days"};
 
     if (m/U/) { $s += 7**7; }
-    if (m/M/) { $s .= 7**6; }
-    if (m/T/) { $s .= 7**5; }
-    if (m/W/) { $s .= 7**4; }
-    if (m/R/) { $s .= 7**3; }
-    if (m/F/) { $s .= 7**2; }
-    if (m/S/) { $s .= 7**1; }
+    if (m/M/) { $s += 7**6; }
+    if (m/T/) { $s += 7**5; }
+    if (m/W/) { $s += 7**4; }
+    if (m/R/) { $s += 7**3; }
+    if (m/F/) { $s += 7**2; }
+    if (m/S/) { $s += 7**1; }
 
-#    print "dbg: $s\n";
-
-    return ($s * 10000);
+    $r = ($s * 10000) + (1440 - timetomins($t));
+    return ($r);
 }
+
 
 sub istoday {
 	$_ = shift;
@@ -346,23 +352,37 @@ sub usage {
 	pwarn "\t -h  this help\n";
 }
 
-sub dsum {
-    my $n = shift;
-    my $s=0; my $r=0;
-    my $t = $nets{$n}{"starts"};
+sub timetomins {
+	$_ = shift;
+	my ($h,$m) = split(/:/);
+	my $t = 0;
+	
+	$t = ($h * 60 ) + $m;
 
-    $_ = $nets{$n}{"days"};
+	return($t);
+}
+	
+sub soon {
+	my ($s,$dur) = @_;
+	my $t = timetomins( (localtime)[2] . ":" . (localtime)[1] );
+	my $d = $s - $t;
 
-    if (m/U/) { $s += 7**7; }
-    if (m/M/) { $s += 7**6; }
-    if (m/T/) { $s += 7**5; }
-    if (m/W/) { $s += 7**4; }
-    if (m/R/) { $s += 7**3; }
-    if (m/F/) { $s += 7**2; }
-    if (m/S/) { $s += 7**1; }
-
-    $r = ($s * 10000) + (2400 - $t);
-    return ($r);
+#	print "\nDBG: s: $s,  t: $t,  d: $d\n";		
+	if ($s > $t) {
+		# upcoming events
+		if ( $d <= 15 ) {
+			return 1;
+		} elsif ($d <= 90 ) {
+			return 2;
+		} else {
+			return 3;
+		}
+	} else {
+		if ( (($dur != 0) && ($d > -($dur))) || ($d > -60) ) {
+			return 4;
+		}
+	}
+	return 0;
 }
 
 sub displaynets {
@@ -384,7 +404,7 @@ sub displaynets {
 			printf("\n\t%s:\n", $rig );
 			foreach my $net (sort { ( dsum($b) <=> dsum($a) ) } keys %nets) {
 				if ( $color && istoday($nets{$net}{"days"}) ) {
-					my $s = soon($nets{$net}{"starts"});
+					my $s = soon(timetomins($nets{$net}{"starts"}));
 					if ( $s eq 1) {
 						pcolor($green);
 					} elsif ( $s eq 2) {
@@ -398,8 +418,13 @@ sub displaynets {
 					}
 				}
 
-				printf("\t%10s (%8.04f MHz %3.3s) - %0.04d (%s) - %s\n", $net, $nets{$net}{"freq"} / 1000000, $nets{$net}{"mode"}, 
-					$nets{$net}{"starts"}, pweek($nets{$net}{"days"}), $nets{$net}{"desc"} ) 
+				printf("\t%10s (%8.04f MHz %3.3s) - %5.5s (%s) - %s\n", 
+					$net, 
+					$nets{$net}{"freq"} / 1000000,
+					$nets{$net}{"mode"}, 
+					$nets{$net}{"starts"}, 
+					pweek($nets{$net}{"days"}), 
+					$nets{$net}{"desc"} ) 
 					if ( $nets{$net}{"rig"} eq $rig && ($verbose || istoday($nets{$net}{"days"}))) ;
 
 				if ($color) {
@@ -411,27 +436,6 @@ sub displaynets {
 	printf("\n");
 }
 
-sub soon {
-	my $s = shift;
-	my $t = ((localtime)[2] * 100 ) + (localtime)[1];
-	my $d = $s - $t;
-		
-	if ($s > $t) {
-		# upcoming events
-		if ( $d <= 55 ) {
-			return 1;
-		} elsif ($d <= 130 ) {
-			return 2;
-		} else {
-			return 3;
-		}
-	} else {
-		if ( $d > -100 ) {
-			return 4;
-		}
-	}
-	return 0;
-}
 
 ############################################################
 
