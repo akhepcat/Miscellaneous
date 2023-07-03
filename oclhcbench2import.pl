@@ -48,10 +48,10 @@ for $d (keys %device) {
 			$unit="GHs";
 		} elsif ($res > 1000000) {
 			$res=($res / 1000000);
-			$unit="MHs";
+			$unit="MH/s";
 		} elsif ($res > 1000) {
 			$res=($res / 1000);
-			$unit="KH/s";
+			$unit="kH/s";
 		} else {
 			$unit="H/s";
 		}
