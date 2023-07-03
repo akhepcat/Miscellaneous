@@ -55,15 +55,19 @@ hmprint() {
 # "Hashmode: 0 - MD5"  ->  (OR)
 # "Hash-Mode 11300 
 # "Hash-Mode 0 (MD5)"  ->
+# "* Hash-Mode 1700 (SHA2-512)"
 # "0,MD5"
  hm="$*"
- hm1=${hm#Hashmode: }
- hm1=${hm1#Hash-Mode }
+ hm1=${hm#*Hashmode: }
+ hm1=${hm1#*Hash-Mode }
+ hm1=${hm1//[)(]/}
  hm2=${hm1#* - }
+ hm1=${hm1%% *}
+ hm2=${hm2/$hm1 }
  hm2=${hm2//,/;}
  hm2=${hm2//+( )/ }
- hm1=${hm1%% *}
- hm1=${hm1//[)(]/}
+ hm2=${hm2//[/(}
+ hm2=${hm2//]/)}
  
  HM2P="${hm1},${hm2}"
 }
