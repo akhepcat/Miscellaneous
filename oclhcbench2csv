@@ -51,31 +51,37 @@ dprint() {
 }
 
 hmprint() {
-# "Hashmode: 0 - MD5"  ->
+# * Hash-Mode 7100 (macOS v10.8+ (PBKDF2-SHA512)) [Iterations: 1023]
+# "Hashmode: 0 - MD5"  ->  (OR)
+# "Hash-Mode 11300 
+# "Hash-Mode 0 (MD5)"  ->
 # "0,MD5"
  hm="$*"
  hm1=${hm#Hashmode: }
+ hm1=${hm1#Hash-Mode }
  hm2=${hm1#* - }
  hm2=${hm2//,/;}
  hm2=${hm2//+( )/ }
  hm1=${hm1%% *}
+ hm1=${hm1//[)(]/}
  
  HM2P="${hm1},${hm2}"
 }
 
 slprint() {
-#  "Speed.#*.........:   172.2 MH/s (389.83ms) @ Accel:1024 Loops:512 Thr:32 Vec:1" ->
+#  "Speed.#*.........:   172.2 MH/s (389.83ms) @ Accel:1024 Loops:512 Thr:32 Vec:1" ->  OR
+#  "Speed.#2.........:   140.6 MH/s (89.29ms) @ Accel:1024 Loops:1024 Thr:1 Vec:8" ->
 #  "1,172.2 MH/s,(389.83ms) @ Accel:1024 Loops:512 Thr:32 Vec:1"
  sl="$*"
+ sl=${sl,,}
  sl1=${sl%%:*}
- sl1=${sl1#Speed.#}
+ sl1=${sl1#speed.#}
  sl1=${sl1//\./}
- sl2=${sl#Speed.*:}
- sl3=${sl2#*H/s }
+ sl2=${sl#speed.*:}
+ sl3=${sl2#*h/s }
  sl3=${sl3//,/;}
- sl2="${sl2%H/s*}H/s"
+ sl2="${sl2%h/s*}h/s"
  sl2=${sl2// /} 
- sl2=${sl2,,}
  sl2=${sl2//gh\/s/ * 1000000000}
  sl2=${sl2//mh\/s/ * 1000000}
  sl2=${sl2//kh\/s/ * 1000}
@@ -139,7 +145,8 @@ do
       fi
     fi
 
-    if [ -z "${line%Hashmode*}" ]
+    debug "checking for hashmode"
+    if [ -z "${line%%*Hashmode*}" -o -z "${line%%*Hash-Mode*}" ]
     then
         debug "line has a Hashmode"
 
