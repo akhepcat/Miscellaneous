@@ -21,7 +21,7 @@ then
 	fi
 fi
 case "${MACH}" in
-	386) BITS=32
+	[23456]86) BITS=32
 		;;
 	arm) BITS=32
 		;;
