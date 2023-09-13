@@ -96,7 +96,7 @@ then
 	echo "*** WARNING ***"
 fi
 
-echo -e "\nRandom words to generate pass-phrases from a combined ${lines} words, of min-length ${MIN}:"
+echo -e "\nSelecting ${WORDS} random words to generate pass-phrases from a combined ${lines} words, of min-length ${MIN}:"
 
 echo ""
 echo $(sort --random-sort "${TFILE}" | head -${WORDS} ) | fold --width=$(( COLUMNS - (COLUMNS * 100 /275) )) -s | column -s" " -t
