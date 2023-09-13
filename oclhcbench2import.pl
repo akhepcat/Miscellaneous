@@ -42,7 +42,21 @@ for $d (keys %device) {
 	for $m (sort { $a <=> $b } keys %{$device{$dev}}) {
 		next if (! looks_like_number($m) );
 		print "DBG: found mode $m\n" if $DEBUG;
+		$res=$device{$d}{$m}{"results"};
+		if ($res > 1000000000) {
+			$res=($res / 1000000000);
+			$unit="GHs";
+		} elsif ($res > 1000000) {
+			$res=($res / 1000000);
+			$unit="MH/s";
+		} elsif ($res > 1000) {
+			$res=($res / 1000);
+			$unit="kH/s";
+		} else {
+			$unit="H/s";
+		}
 		
-		print "$m," . $device{$d}{$m}{"desc"} . ",$host,CPU," . $device{$d}{"cpu"} . ",," . $device{$d}{$m}{"results"} . "," . $device{$d}{$m}{"notes"} . "\n";
+		printf("%d,%s,%s,%s,%s,,%.1f %s,%s\n",
+			$m, $device{$d}{$m}{"desc"}, $host, "CPU", $device{$d}{"cpu"}, $res, $unit, $device{$d}{$m}{"notes"});
 	}
 }
