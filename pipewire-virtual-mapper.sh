@@ -16,18 +16,51 @@ declare -A vchans
 # We may have to reset everything, so if you do, run:
 #    systemctl --user restart pipewire.service
 
+pactl info >/dev/null 2>&1
+res=$?
+if [ ${res:-1} -ne 0 ]
+then
+	echo "pulseaudio support required for pipewire mapping"
+	exit 1
+fi
+
 # cleanup and make sure no mappings exist
 pactl unload-module module-null-sink
 
 ### VIRTUAL SPEAKER
+
+### if pipewire is >= 0.3.67,  we can use the  "module-combine-stream" to do this instead,
+### and it'll handle things better.
+### https://docs.pipewire.org/page_module_combine_stream.html
+
+USENULL=1
+
+PVER=$(pipewire --version | tail -1 | sed 's/^[a-z ]\+//gi; s/\.//g; s/^0//g;')
+#if [ ${PVER:-0} -gt 367 ]
+#then
+#	USENULL=0
+#fi
 
 # Test if we need to load the virtual speaker chanel (for multiple runs)
 pactl get-sink-volume All_Speakers >/dev/null 2>&1
 res=$?
 if [ ${res:-1} -ne 0 ]
 then
-	# First define the virtual speaker channel
-	pactl load-module module-null-sink media.class=Audio/Sink sink_name=All_Speakers channel_map=front-left,front-right
+
+	if [ 1 -eq 1 ]
+	then
+
+		pw-cli create-node adapter '{ factory.name=support.null-audio-sink node.name=All_Speakers media.class=Audio/Sink object.linger=true audio.position=[FL FR] audio.sample_rate=44100 }'
+	else
+
+		# First define the virtual speaker channel
+		if [ ${USENULL:-1} -eq 1 ]
+		then
+			pactl load-module module-null-sink media.class=Audio/Sink sink_name=All_Speakers channel_map=front-left,front-right
+		else
+			pactl load-module module-combine-stream node.name=All_Speakers node.description="All Speakers combined" combine.mode=sink
+		fi
+	fi
 fi
 
 # Map all the stereo outputs to the virtual speaker
@@ -56,10 +89,16 @@ pactl get-sink-mute vMic-silence >/dev/null 2>&1
 res=$?
 if [ ${res:-1} -ne 0 ]
 then
-	# create a virtual sink to feed audio into
-	pactl load-module module-null-sink  \
-		sink_name=vMic-silence sink_properties=device.description=vMic-silent-sink \
-		object.linger=1 media.class=Audio/Sink channel_map=front-left,front-right
+	if [ 1 -eq 1 ]
+	then
+
+		pw-cli create-node adapter '{ factory.name=support.null-audio-sink node.name=vMic-silence media.class=Audio/Sink object.linger=true audio.position=[FL FR] audio.sample_rate=44100 }'
+	else
+		# create a virtual sink to feed audio into
+		pactl load-module module-null-sink  \
+			sink_name=vMic-silence sink_properties=device.description=vMic-silent-sink \
+			object.linger=1 media.class=Audio/Sink channel_map=front-left,front-right
+	fi
 fi
 
 # Test if we need to load the vMicNoEcho module (for multiple runs)
@@ -67,10 +106,22 @@ pactl get-source-mute vMicNoEcho >/dev/null 2>&1
 res=$?
 if [ ${res:-1} -ne 0 ]
 then
-	# create a virtual source to provide audio input from
-	pactl load-module module-null-sink \
-		sink_name=vMicNoEcho sink_properties=device.description=vMicNoEcho \
-		object.linger=1 media.class=Audio/Source/Virtual channel_map=front-left,front-right
+	if [ 1 -eq 1 ]
+	then
+
+		pw-cli create-node adapter '{ factory.name=support.null-audio-sink node.name=vMicNoEcho media.class=Audio/Source/Virtual object.linger=true audio.position=[FL FR] audio.sample_rate=44100 }'
+	else
+		# create a virtual source to provide audio input from
+		if [ ${USENULL:-1} -eq 1 ]
+		then
+			pactl load-module module-null-sink \
+				sink_name=vMicNoEcho sink_properties=device.description=vMicNoEcho \
+				object.linger=1 media.class=Audio/Source/Virtual channel_map=front-left,front-right
+		else
+			pactl load-module module-combine-stream node.name=vMicNoEcho node.description="vMicNoEcho" \
+				object.linger=1 media.class=Audio/Source/Virtual combine.mode=sink
+		fi
+	fi
 fi
 
 # sleep while the module finishes initializing in the background
