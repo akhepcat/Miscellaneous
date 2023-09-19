@@ -12,8 +12,11 @@ my $DEBUG=0;
 my %HWADDR;
 my %IPADDR;
 my %HOSTS;
+my %LEASE;
 
 sub parse_arp() {
+    print "DBG:  parsing arp tables\n" if $DEBUG;
+
     open(ARPCMD, "arp -an 2>&1 |") || die "Can't run system arp for input";
     while(<ARPCMD>) {
     	chomp;
@@ -34,6 +37,8 @@ sub parse_dhcp() {
     my $hostname;
     my $mac;
     my $ip;
+
+    print "DBG:  parsing dhcp reservations\n" if $DEBUG;
 
     open(DHCPS, "/etc/dhcp/dhcpd.conf") || print "Can't find /etc/dhcp/dhcpd.conf, skipping DHCP resolution\n";
     while(<DHCPS>) {
@@ -66,9 +71,69 @@ sub parse_dhcp() {
     close(DHCPS);
 }
 
+sub parse_leases() {
+    my $inl=0; my $act=0;
+    my $ip; my $mac; my $hn; my $fn;
+    my $lf="/var/lib/dhcp/dhcpd.leases";
+    
+    print "DBG:  parsing dhcp leases\n" if $DEBUG;
+
+    open(LFILE,"$lf") || print "Can't find leasefile db >$lf<, skipping DHCP-leases resolution\n";
+    while(<LFILE>) {
+        chomp;
+
+        if ($inl == 1) {
+            if ($act == 0 && m/binding state active/) {
+                print "DBG::leases - binding state active\n" if $DEBUG;
+                $act=1;
+                next;
+            }
+            
+            if ($act == 1) {
+                if (m/hardware ethernet ([a-f0-9:]{17});/i) {
+                    $mac=$1;
+                    print "DBG::leases - found mac $mac\n" if $DEBUG;
+                } elsif (m/ddns-fwd-name = "(.*)";/) {
+                    $fn=$1;
+                    print "DBG::leases - found ddns-fwd-name $fn\n" if $DEBUG;
+                } elsif (m/client-hostname "(.*)";/) {
+                    $hn=$1;
+                    print "DBG::leases - found client-hostname $fn\n" if $DEBUG;
+                }
+            }
+
+            if ( m/^}/ ) {
+                if ( $act == 1 ) {
+                    print "DBG::leases - commiting data\n" if $DEBUG;
+        	    $HWADDR{$mac}=$ip if ( length($HWADDR{$mac}) < 4 );
+	            $IPADDR{$ip}=$mac if ( length($IPADDR{$ip}) < 4 );
+        	    if ($fn) {  $HOSTS{$ip}=$fn; }
+        	    if ($hn) {  $HOSTS{$ip}=$hn; }
+                }
+                $inl=0;
+                $ip="";
+                $mac="";
+                $hn="";
+                $fn="";
+                $act=0;
+            }
+        } else { # $inl == 0
+            if (m/^lease ([0-9.]{7,15}) \{/ ) {
+                $inl=1; $ip=$1;
+                print "DBG::leases - found lease entry for $ip\n" if $DEBUG;
+            }
+        }
+    }
+
+    # done parsing the file
+    close(LFILE);
+}
+
 sub parse_hosts() {
     my $hostname;
     my $ip;
+
+    print "DBG:  parsing hosts file\n" if $DEBUG;
 
     open(HOSTS, "/etc/hosts") || print "Skipping local resolution, Can't parse /etc/hosts for input\n";
     while(<HOSTS>) {
@@ -93,6 +158,8 @@ sub dns_hosts() {
     my $hostname;
     my $ip;
     
+    print "DBG:  performing DNS lookups\n" if $DEBUG;
+
     foreach $ip (keys %IPADDR) {
         print "DBG: lookup for $ip:\n" if $DEBUG;
     	$hostname = gethostbyaddr(inet_aton($ip), AF_INET);
@@ -106,7 +173,8 @@ sub usage {
 	print "\t   -e|--everything\trun all parsers, but no ping\n";
 	print "\t   -a|--arp_parse\trun the arp parser (default)\n";
 	print "\t   -n|--hostname_parse\tparse /etc/hosts\n";
-	print "\t   -d|--dhcp_parse\tparse the dhcp lease file\n";
+	print "\t   -d|--dhcp_parse\tparse the dhcp config file\n";
+	print "\t   -l|--lease_parse\tparse the dhcp leases file\n";
 	print "\t   -p|--ping\t\tcheck for host responsiveness\n";
 	print "\t-[uh]|--usage|--help\tthis help text\n";
 	print @_, "\n";
@@ -123,6 +191,7 @@ my(%opt) = (
         hostname_parse	=> 0,
         name_lookup	=> 0,
 	dhcp_parse	=> 0,
+	lease_parse	=> 0,
 	ping		=> 0,
         usage		=> 0,
 );
@@ -134,6 +203,7 @@ GetOptions( \%opt,
         "hostname_parse|n",
         "name_lookup|b",
         "dhcp_parse|d",
+        "lease_parse|l",
 	"ping|p",
         "usage|help|u|h",
 ) or usage("Invalid option");
@@ -142,9 +212,10 @@ usage("") if ($opt{usage});
 
 
 if ($opt{everything} || $opt{arp_parse}) { parse_arp; }
-if ($opt{everything} || $opt{dhcp_parse}) { parse_dhcp; }
 if ($opt{everything} || $opt{hostname_parse}) { parse_hosts; }
 if ($opt{everything} || $opt{name_lookup}) { dns_hosts; }
+if ($opt{everything} || $opt{dhcp_parse}) { parse_dhcp; }
+if ($opt{everything} || $opt{lease_parse}) { parse_leases; }
 
 my $host;
 my $ipaddr;
