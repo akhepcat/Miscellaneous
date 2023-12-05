@@ -36,10 +36,10 @@ pactl unload-module module-null-sink
 USENULL=1
 
 PVER=$(pipewire --version | tail -1 | sed 's/^[a-z ]\+//gi; s/\.//g; s/^0//g;')
-#if [ ${PVER:-0} -gt 367 ]
-#then
-#	USENULL=0
-#fi
+if [ ${PVER:-0} -gt 367 ]
+then
+	USENULL=0
+fi
 
 # Test if we need to load the virtual speaker chanel (for multiple runs)
 pactl get-sink-volume All_Speakers >/dev/null 2>&1
