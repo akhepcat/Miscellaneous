@@ -135,18 +135,30 @@ do
 
     if [ ${inhm:-0} -eq 0 -a ${insp:-0} -eq 0 ]
     then
-      if [ -z "${line%\* Device #*}" ]
+      if [ -z "${line%\* Device #*}" -a -n "${line##*skipped*}" -a -n "${line##*WARNING*}" ]
       then
         # kill extra spaces in the device line
         line=${line//\*/}
         set -- $line
         dprint "$*"
-      elif [ -z "${line##*starting in benchmark mode*}" ]
+      fi
+    fi
+
+    if [ -z "${line##*starting in benchmark mode*}" ]
+    then
+      ver=${line#*\(}
+      ver=${ver%\)*}
+      if [ ${kver:-0} -lt 1 ]
       then
-        ver=${line#*\(}
-        ver=${ver%\)*}
+      	kver=1
         echo "*,999999,Hashcat Info,0,${ver}"
       fi
+      
+          sidx=0
+          inhm=0
+          insp=0
+          unset speedline
+          unset hashmode
     fi
 
     debug "checking for hashmode"

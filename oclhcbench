@@ -15,6 +15,7 @@ MODES=(0 100 500 1000 1400 1500 1700 1800 2500 3000 3200 5500 5600 6211 6800 710
 GROUP=0
 ONEHIT=0
 FORCE=""
+WL=3		# we used to use 4, but maybe that was a bad idea; it's crashing my test box at home, oops
 
 ARG="${*}"
 if [ -n "$ARG" ]
@@ -91,11 +92,11 @@ then
       PLAT="-D 1,2"
       if [ ${ONEHIT} -eq 0 ];
       then
-        hashcat --workload-profile=4 ${FORCE} ${PLAT} -d ${didx} --benchmark 2>&1
+        hashcat --workload-profile=${WL} ${FORCE} ${PLAT} -d ${didx} --benchmark 2>&1
       else
         for idx in "${!MODES[@]}"
         do
-          hashcat --workload-profile=4 ${FORCE} ${PLAT} -d ${didx} --benchmark -m ${MODES[$idx]} 2>&1
+          hashcat --workload-profile=${WL} ${FORCE} ${PLAT} -d ${didx} --benchmark -m ${MODES[$idx]} 2>&1
         done
       fi
     fi
@@ -103,6 +104,6 @@ then
 else
   for idx in "${!MODES[@]}"
   do
-    hashcat --workload-profile=4 ${FORCE} --opencl-device-types=1,2,3 --benchmark -m ${MODES[$idx]} 2>&1
+    hashcat --workload-profile=${WL} ${FORCE} --opencl-device-types=1,2,3 --benchmark -m ${MODES[$idx]} 2>&1
   done
 fi
