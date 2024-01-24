@@ -1,0 +1,24 @@
+#!/bin/bash
+# (c) 2024 Leif Sawyer
+# License: GPL 3.0 (see https://github.com/akhepcat/)
+# Permanent home:  https://github.com/akhepcat/Miscellaneous/
+# Direct download: https://raw.githubusercontent.com/akhepcat/Miscellaneous/master/dmiordt
+# 
+
+if [[ -d /sys/firmware/devicetree/base ]]
+then
+        MODEL=$(strings /sys/firmware/devicetree/base/model)
+        COMPAT=$(strings /sys/firmware/devicetree/base/compatible | tr "[\n-\r]" ",")
+        NAME=$(hostname)
+        SERIAL=$(strings /sys/firmware/devicetree/base/serial-number)
+elif [[ -d /sys/class/dmi/id ]]
+then
+        MODEL=$(strings /sys/class/dmi/id/board_name)
+        SERIAL=$([[ -r /sys/class/dmi/id/board_serial ]] && strings /sys/class/dmi/id/board_serial || echo 0)
+        COMPAT=$(grep 'model name' /proc/cpuinfo |sort -u | cut -f2- -d: | strings)
+        NAME=$(hostname)
+else
+        echo "don't know how to decode your board type"
+fi
+
+printf "MODEL=%s\nCOMPAT=%s\nNAME=%s\nSERIAL=%s\n" "${MODEL}" "${COMPAT}" "${NAME}" "${SERIAL}"
