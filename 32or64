@@ -7,7 +7,7 @@
 
 #  Prints either 32 or 64,  or 'error'
 MACH=$(uname -m)
-if [ -z "${MACH}" -o "${MACH}" = "unknown" ]
+if [[ -z ${MACH} || ${MACH} == "unknown" ]]
 then
 	# Try some alternatives
 
