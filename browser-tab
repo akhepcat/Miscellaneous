@@ -184,7 +184,7 @@ then
   fi
 fi
 
-PCROM=$(pgrep -x 'chrom[ei].*' | tail -1)
+PCROM=$(pgrep -x 'chrom[ei][um ]*'| tail -1)
 [[ -n "${PCROM}" ]] && MYCHROME=$(ps -o args= -q ${PCROM} | tail -1 | awk '{print $1}')  # | sed 's|.*/||;')
 if [ -z "${MYCHROME}" ]
 then
