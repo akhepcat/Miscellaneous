@@ -74,8 +74,7 @@ do
                                 GW4=$(( 16#$GW4 ))
 
                                 GW="${GW1}.${GW2}.${GW3}.${GW4}"
-                                ALIVE=$(ping -w 1 -c 1 ${GW} >/dev/null 2>&1)
-
+                                ping -w 1 -c 1 ${GW} >/dev/null 2>&1
                                 if [ $? -eq 1 ]
                                 then
                                         RT_CNT=$(( $RT_CNT + 1 ))
