@@ -29,9 +29,9 @@ PIDFILE=$RUNDIR/$NAME.pid
 # Read configuration variable file if it is present
 [ -r /etc/default/$NAME ] && . /etc/default/$NAME
 
-if [ -z "$DEVICE" ]; then
+if [ -z "$IFACE" ]; then
 	# this should be overridden locally
-	DEVICE=eth0
+	IFACE=eth0
 fi
 
 
@@ -54,7 +54,7 @@ do_start()
 
         start-stop-daemon --start --quiet --pidfile $PIDFILE --exec $DAEMON --test > /dev/null \
                 || return 1
-        start-stop-daemon --start --quiet --pidfile $PIDFILE --exec $DAEMON -- ${DEVICE:-eth0} \
+        start-stop-daemon --start --quiet --pidfile $PIDFILE --exec $DAEMON -- ${IFACE:-eth0} \
                 || return 2
 }
 
