@@ -11,6 +11,12 @@ IFACE=${1:-eth0}
 SLEEP=60                # 60 for prod
 COUNTER=15		# 15 cycles of $SLEEP before "reboot"
 
+###########################################
+# head -14 net_watchdogd | tail -7 > /etc/default/net_watchdog
+#
+# override defaults with local settings
+test -r /etc/default/net_watchdog && . /etc/default/net_watchdog
+
 # internal variables
 PROG="${0##*/}"
 
