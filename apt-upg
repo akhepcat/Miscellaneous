@@ -1,5 +1,7 @@
 #!/bin/bash
+# force only system paths
 
+PATH=/bin:/sbin:/usr/bin:/usr/sbin
 if [ -n "$(which at)" ]
 then
 	echo "setting reboot canary for +1 hour"
@@ -23,9 +25,11 @@ EOF
 	nohup bash /tmp/reboot_canary.sh >/dev/null 2>&1  &
 	echo "reboot canary set for +1 hour"
 fi
+IONICE=$(which ionice)
+NICE=$(which nice)
 	
 # fix broken packages
-dpkg --configure -a
+${IONICE} ${NICE} dpkg --configure -a
 if [ $? -ne 0 ]
 then
 	echo "manually fix broken packages"
@@ -33,7 +37,7 @@ then
 fi
 
 # update the local repo info, allowing for minor release changes
-apt-get update --allow-releaseinfo-change
+${IONICE} ${NICE} apt-get update --allow-releaseinfo-change
 if [ $? -ne 0 ]
 then
 	echo "check network connectivity and apt repo sources"
@@ -42,7 +46,7 @@ fi
 
 
 # install updates
-apt-get -y dist-upgrade
+${IONICE} ${NICE} apt-get -y dist-upgrade
 if [ $? -ne 0 ]
 then
 	echo "manually check upgrade failures"
@@ -51,7 +55,7 @@ then
 fi
 
 # Clean up old packages
-apt-get -y autoclean && apt-get -y autoremove
+${IONICE} ${NICE} apt-get -y autoclean && ${IONICE} ${NICE} apt-get -y autoremove
 if [ $? -ne 0 ]
 then
 	echo "manually check for cleanup issues"
