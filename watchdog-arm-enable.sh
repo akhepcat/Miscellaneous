@@ -12,9 +12,18 @@ then
 	exit 1
 fi
 
-if [ -z "$(egrep -i 'watchdog.*=.*on' /boot/config.txt | grep -v '^#')" ]
+if [ -z "$(egrep -i 'watchdog.*=.*on' /boot/config.txt /boot/firmware/config.txt 2>/dev/null | grep -v '^#')" ]
 then
-	echo 'dtparam=watchdog=on' >> /boot/config.txt
+	if [ -r /boot/firmware/config.txt ]
+	then
+		echo 'dtparam=watchdog=on' >> /boot/firmware/config.txt
+
+	elif [ -r /boot/config.txt ]
+	then
+		echo 'dtparam=watchdog=on' >> /boot/config.txt
+	else
+		echo "add  'dtparam=watchdog=on' to your config file and reboot"
+	fi
 fi
 
 if [ ! -e /etc/watchdog.conf ]
