@@ -97,22 +97,12 @@ then
 	ln -sf /usr/local/src/System-Monitor/* .
 	rm sysmon.conf
 	cp /usr/local/src/System-Monitor/sysmon.conf /etc/default
-	rm -f README.md dnsResponseTimePing.pl dexcom.sh environmental.txt fping.sh influxdb-help.txt ookla.pl \ 
+	rm -f README.md dnsResponseTimePing.pl dexcom.sh environmental.txt fping.sh influxdb-help.txt ookla.pl sda1.sh eth0.sh \ 
 	      page_load_time.pl resolvers.sh response.sh sitestats.sh smtp-response.py speedtest.sh webpage.sh uptime.sh \
 		webspeed.sh wg_status.sh wgstats.pl bmp180-i2c.py bmp180-iio.sh bmp180.sh scd4x-i2c.py scd4x.sh
 
-	MyV4Int=$(awk 'BEGIN { IGNORECASE=1 } /^[a-z0-9:.-]+[ \t]+00000000/ { print $1 }' /proc/net/route 2>/dev/null | head -1)
-	mv -f eth0.sh ${MyV4Int}.sh
-
 	sed -i "s|^DONTRRD=.*|DONTRRD=1|; s|^INFLUXURL=.*$|INFLUXURL=\"${INFLUXURL}\"|;" /etc/default/sysmon.conf
 	sed -i "s|^SERVERNAME=.*|SERVERNAME=\"$(hostname)\"|" /etc/default/sysmon.conf
-
-	for mount in $(grep -iE '^/dev/.*(ext4|fat)' /proc/mounts | awk '{print $1}')
-	do
-		mount=${mount##*/}
-		ln -sf /usr/local/src/System-Monitor/sda1.sh ${mount}.sh
-	done
-	rm sda1.sh
 
 	PROGS=$(/bin/ls *.sh)
 	CMD="sed -i '"'s/^PROGS=.*/PROGS="'${PROGS}'"/'"'"
