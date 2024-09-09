@@ -97,14 +97,14 @@ then
 	ln -sf /usr/local/src/System-Monitor/* .
 	rm sysmon.conf
 	cp /usr/local/src/System-Monitor/sysmon.conf /etc/default
-	rm -f README.md dnsResponseTimePing.pl dexcom.sh environmental.txt fping.sh influxdb-help.txt ookla.pl sda1.sh eth0.sh \ 
-	      page_load_time.pl resolvers.sh response.sh sitestats.sh smtp-response.py speedtest.sh webpage.sh uptime.sh \
+	rm -f README.md dnsResponseTimePing.pl dexcom.sh environmental.txt fping.sh influxdb-help.txt ookla.pl sda1.sh eth0.sh \
+		page_load_time.pl resolvers.sh response.sh sitestats.sh smtp-response.py speedtest.sh webpage.sh uptime.sh \
 		webspeed.sh wg_status.sh wgstats.pl bmp180-i2c.py bmp180-iio.sh bmp180.sh scd4x-i2c.py scd4x.sh
 
 	sed -i "s|^DONTRRD=.*|DONTRRD=1|; s|^INFLUXURL=.*$|INFLUXURL=\"${INFLUXURL}\"|;" /etc/default/sysmon.conf
 	sed -i "s|^SERVERNAME=.*|SERVERNAME=\"$(hostname)\"|" /etc/default/sysmon.conf
 
-	PROGS=$(/bin/ls *.sh)
+	PROGS=$(/bin/ls *.sh 2>/dev/null)
 	CMD="sed -i '"'s/^PROGS=.*/PROGS="'${PROGS}'"/'"'"
 	eval $CMD /etc/default/sysmon.conf
 
@@ -156,7 +156,6 @@ then
 	# print from the beginning, up to and including the keyword "[all]"
         for i in ${!ALLCONF[@]}
         do
-                echo "i is $i, ctext=${ALLCONF[i]}"
                 line=$(grep -F "${ALLCONF[i]}" ${FWD}/config.txt)
                 if [ -n "${line}" ]
                 then
@@ -180,7 +179,7 @@ else
 	echo "can't find cmdline.txt in either /boot or /boot/firmware"
 fi
 
-if [ -d /etc/NetworkManager/system-connections -a -n "${SSID}" -a -z "$(ls /etc/NetworkManager/system-connections/${SSID}*)" ]
+if [ -d /etc/NetworkManager/system-connections -a -n "${SSID}" -a -z "$(ls /etc/NetworkManager/system-connections/${SSID}* 2>/dev/null)" ]
 then
 	# for generic wireless access when not plugged into ethernet
 	nmcli dev wifi connect "${SSID}" password "${WIFIPW}"
