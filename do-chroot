@@ -90,7 +90,7 @@ check_emu() {
 		HOST=""
 	fi
 	# this should only find one, but compatibility libs will show up first, so only use the last found
-	LDLIB=$(find ${ROOT:-undefined_rootfs}/lib ${ROOT:-undefined_rootfs}/lib64 -maxdepth 1 -type f -iname 'ld-uclibc*' -o -iname 'ld-linux*' 2>/dev/null | tail -1)
+	LDLIB=$(find -L ${ROOT:-undefined_rootfs}/lib ${ROOT:-undefined_rootfs}/lib64 -maxdepth 1 -type f -iname 'ld-uclibc*' -o -iname 'ld-linux*' 2>/dev/null | tail -1)
 	TEMU=$(file -L "${LDLIB}" )
 
 	# we can see the library, so we can figure out the emulation
@@ -107,7 +107,7 @@ check_emu() {
 	elif [ -z "${TEMU##*32*ARM*}" ]
 	then
 		EMU=armeb
-	elif [ -z "${TEMU##*64*ARM*}" ]
+	elif [ -z "${TEMU##*64*ARM*}" -o  -z "${TEMU##*aarch64*}" ]
 	then
 		EMU=aarch64
 	fi
