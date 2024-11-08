@@ -137,13 +137,24 @@ else
 fi
 if [ -n "${FWD}" ]
 then
-	# Make sure we can hotplug the HDMI and get output, even without a keyboard to unblank the screen, by disabling consoleblank
-	[[ -z "$(grep vc4.force_hotplug ${FWD}/cmdline.txt)" ]] && sed -i 's/$/ vc4.force_hotplug=1/;' ${FWD}/cmdline.txt
-	if [ -z "$(grep 'consoleblank' ${FWD}/cmdline.txt)" ]
+	# Make sure we can hotplug the HDMI and get output, even without a keyboard to unblank the screen, by disabling consoleblank- unless DSI is enabled
+	# forcing HDMI hotplug breaks DSI screen rotation and touchscreen alignment!  Also, disabling consoleblank means the DSI never sleeps, which could be bad
+	DSI=$(/bin/ls -1 /sys/class/drm/|grep DSI | head -1)
+	if [ -n "${DSI}" ]
 	then
-		sed -i 's/$/ consoleblank=0/;' ${FWD}/cmdline.txt
-	else
-		sed -i 's/\(consoleblank\)\(=[0-9]\+\)/\1=0/;' ${FWD}/cmdline.txt
+		DSI=$(cat /sys/class/drm/${DSI}/enabled)
+	fi
+	
+	if [ "${DSI:-disabled}" = "disabled" -a -z "$(grep vc4.force_hotplug ${FWD}/cmdline.txt)" ]
+	then
+		sed -i 's/$/ vc4.force_hotplug=1/;' ${FWD}/cmdline.txt
+
+		if [ -z "$(grep 'consoleblank' ${FWD}/cmdline.txt)" ]
+		then
+			sed -i 's/$/ consoleblank=0/;' ${FWD}/cmdline.txt
+		else
+			sed -i 's/\(consoleblank\)\(=[0-9]\+\)/\1=0/;' ${FWD}/cmdline.txt
+		fi
 	fi
 
 	# if there's no "[all]" in config.txt, add one to the end
