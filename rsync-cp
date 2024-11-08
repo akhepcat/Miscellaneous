@@ -10,11 +10,13 @@ usage() {
 	echo -e "${PROG} - copy files using rsync\n"
 	echo -e "usage:\n\$ ${PROG} (options) [src] [dst]"
 	echo -e "\t-d, --dryrun\t\t Dry-run test, don't copy any files"
+	echo -e "\t-f, --force\t\t Force transfer all files"
+	echo -e "\t-u, --update\t\t Updates only new/modified files"
 	echo -e "\t-h, --help\t\t this help.\n"
 	exit 1
 }
 
-optspec=":dih-"
+optspec=":dufih-"
 while getopts "$optspec" optchar; do
     case "${optchar}" in
         -)
@@ -24,6 +26,12 @@ while getopts "$optspec" optchar; do
                     ;;
                 dryrun)
                     DRY=1 
+                    ;;
+                update)
+                    UPDATE=1 
+                    ;;
+                force)
+                    FORCE=1 
                     ;;
                 ignore-existing|ignoreexisting)
                     MARGS="--ignore-existing"
@@ -36,6 +44,12 @@ while getopts "$optspec" optchar; do
             esac;;
         d)
             DRY=1
+            ;;
+        f)
+            FORCE=1
+            ;;
+        u)
+            UPDATE=1
             ;;
         h)
             usage
@@ -66,9 +80,19 @@ then
 	echo "ERROR in file specification"
 	usage
 else
-        rsync -avxWAXSH ${MARGS} ${DRY:+--dry-run} --numeric-ids --info=progress2 "${src}" "${dst}"
+
+if [ ${FORCE:-0} -ne 1 -o ${UPDATE:-0} -eq 1 ]
+then
+	OPTS="-trvxPWAXSH"
+else
+	OPTS="-tarvxWAXSH"
+fi
+
+        rsync ${OPTS} ${MARGS} ${DRY:+--dry-run} --numeric-ids --info=progress2 "${src}" "${dst}"
 
 # -a  : all files, with permissions, etc..
+# -t  : preserve modification times
+# -P  : Partial files
 # -v  : verbose, mention files
 # -x  : stay on one file system
 # -W  : whole files (not delta changes)
