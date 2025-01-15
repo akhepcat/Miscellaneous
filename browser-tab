@@ -153,6 +153,11 @@ do
 				grep -i location: | sed 's/.*http/http/; s/\r//;' )"
 		fi
 		URL=${NURL}
+	elif [ -z "${URL##*apple.news*}" ]
+	then
+		NURL=$(curl -s -j "${URL}" | grep 'redirectToUrl("' | cut -f2 -d\")
+		URL=${NURL}
+
 	else
 		test ${DEBUG} -gt 2 && echo "DBG: redirection parsing succeded" >> $DBGLOG
 		break
