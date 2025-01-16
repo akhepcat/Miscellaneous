@@ -17,14 +17,19 @@ else
 	scale=4
 fi
 
-if [ ! -e /sys/class/power_supply/BAT0/charge_now ]
+if [ -e /sys/class/power_supply/BAT0/charge_now ]
 then
+	CHARGE=charge
+elif [ -e /sys/class/power_supply/BAT0/energy_now ]
+then
+	CHARGE=energy
+else
 	echo "No battery found"
 	exit 1
 fi
 
-now=$(cat /sys/class/power_supply/BAT0/charge_now)
-full=$(cat /sys/class/power_supply/BAT0/charge_full)
+now=$(cat /sys/class/power_supply/BAT0/${CHARGE}_now)
+full=$(cat /sys/class/power_supply/BAT0/${CHARGE}_full)
 charging=$(grep -i '^charging' /sys/class/power_supply/BAT0/status)
 spark=$'\xE2\x8C\x81'
 

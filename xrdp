@@ -1,15 +1,21 @@
-#!/bin/sh
+#!/bin/bash
 # (c) 2020 Leif Sawyer
 # License: GPL 3.0 (see https://github.com/akhepcat/)
 # Permanent home:  https://github.com/akhepcat/Miscellaneous/
 # Direct download: https://raw.githubusercontent.com/akhepcat/Miscellaneous/master/xrdp
 # 
 
-DISPLAY=${DISPLAY:-:0}
+# See if there's an xorg running
+TD=$(ps -awwwx | grep -iE 'xorg.*displayfd' | grep -o 'vt[0-9]')
+TD=${TD//vt/}
+TD=${TD:-1}
+TD=$((TD - 1))
+
+DISPLAY=${DISPLAY:-:$TD}
 PATH=${PATH}:/usr/sbin
 
 PORT=$(lsof -i -n | grep x11vnc | cut -f 2 -d: | awk '{print $1}')
-XAUTH=$(ps wwwwaux | grep xauth | sed 's/.*-auth//g' | grep var)
+XAUTH=$(ps wwwwaux | grep -- -auth | sed 's/.*-auth//g' | grep -E 'var|run' | awk '{print $1}')
 if [ -z "${XAUTH}" -a -n "$1" ]
 then
 	XAUTH=$1

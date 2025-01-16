@@ -4,6 +4,32 @@
 # Permanent home:  https://github.com/akhepcat/Miscellaneous/
 # Direct download: https://raw.githubusercontent.com/akhepcat/Miscellaneous/master/findroute
 
+if [ -z "$(command -v seq)" ]
+then
+ seq() {
+  local start=${1:-2}
+  local step=${2:-1}
+  local end=${3:-254}
+
+  if [ "$#" -eq 2 ]; then
+    end=$step
+    step=1
+  fi
+
+  if [ "$step" -gt 0 ]; then
+    while [ "$start" -le "$end" ]; do
+      echo "$start"
+      start=$((start + step))
+    done
+  else
+    while [ "$start" -ge "$end" ]; do
+      echo "$start"
+      start=$((start + step))
+    done
+  fi
+}
+fi
+
 links=$(ip link show | grep '^[0-9]' | grep -vw lo: | wc -l)
 if [ ${links:-999} -lt 2 ]
 then

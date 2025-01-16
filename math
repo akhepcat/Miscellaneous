@@ -1,0 +1,22 @@
+#!/bin/bash
+# (c) 2023 Leif Sawyer
+# License: GPL 3.0 (see https://github.com/akhepcat/)
+# Permanent home:  https://github.com/akhepcat/Miscellaneous/
+# Direct download: https://raw.githubusercontent.com/akhepcat/Miscellaneous/master/math
+# 
+
+formula=${*-0}
+
+# Handle logarithms in two forms
+if [ "${formula//*log*/}" != "${formula}" ]
+then
+	# handle standard logs, i.e. log(X)
+	tform=$(sed 's/\(.*\)log(\([^)].*\))\(.*\)/\1 l(\2) \3/g;' <<<"${formula}")
+
+	# handle multi-base logs, i.e. logY(X)
+	tform=$(sed 's|\(.*\)log\([0-9]\+\)(\([^)].*\))\(.*\)|\1 (l(\3)/l(\2)) \4|g;' <<<"${tform}")
+	
+	formula=${tform}
+fi
+
+echo "scale = 3; print ( $formula ); print \"\n\";" | bc -l

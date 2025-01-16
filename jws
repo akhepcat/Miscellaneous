@@ -48,4 +48,14 @@ then
 else
 	JWX="javaws"	# system
 fi
-${JWX} -J"-Dsun.java2d.d3d=false" -Xnosplash -wait "${JWS}"
+
+# -wait no longer works with OpenWebStart
+OWS=$(DISPLAY=/dev/null javaws -Xnosplash -version 2>&1 | grep -i openwebstart)
+if [ -n "${OWS}" ]
+then
+	JARGS="-Xnosplash"
+else
+	JARGS="-Xnosplash -wait"
+fi
+
+${JWX} -J"-Dsun.java2d.d3d=false" ${JARGS} "${JWS}"

@@ -76,10 +76,12 @@ OFLAG=$(${DD} --help | egrep -wo '(^\s*)direct' | sed 's/[^a-z]//ig')
 
 # We like to be nice to the IO subsystem:
 
+IFLAG=''; # set us up for slow pipes (like decompression pipelines)
 if [ "${INFILE}" = "-" ]
 then
 	unset INFILE
+	IFLAG="iflag=fullblock"
 fi
 
 # conv=fsync to catch truncated writes on errors
-ionice -c2 -n7 ${DD} ${INFILE:+if="$INFILE"} bs=${BS} conv=noerror,fsync,notrunc ${OFLAG:+oflag=$OFLAG} ${PROGRESS} of="${OUTFILE}"
+ionice -c2 -n7 ${DD} ${INFILE:+if="$INFILE"} bs=${BS} ${IFLAG}  conv=noerror,fsync,notrunc ${OFLAG:+oflag=$OFLAG} ${PROGRESS} of="${OUTFILE}"
