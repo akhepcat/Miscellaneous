@@ -15,12 +15,14 @@ else
 	FILTER="local"
 fi
 
-GAWK=$(which gawk)
-AWK=$(which awk)
+GAWK=$(command -v gawk)
+AWK=$(command -v awk)
 
 USE_AWK=${GAWK:-$AWK}
 
-lsof -i -n -P +c15 | ${USE_AWK} -v filter=${FILTER} '
+if [ -n "$(command -v lsof)" ]
+then
+    lsof -i -n -P +c15 | ${USE_AWK} -v filter=${FILTER} '
 # LSOF replaces spaces in the procname with \x20, which we CAN remove, else formatting
 #	$0 ~ /\\x20/ {
 #		gsub("\\\\x20"," ",$0)
@@ -59,3 +61,17 @@ lsof -i -n -P +c15 | ${USE_AWK} -v filter=${FILTER} '
 	};
 '
 # end
+elif [ -n "$(command -v ss)" ]
+then
+	ss -nlp |  awk '/tcp|udp/ { printf "%s  %s  %45s  %15s  %s\n", $1, $2, $5, $6, $7 }' | sed 's/users:((\"\([a-zA-Z0-9_-]\+\)\",.*/\1/g;'
+
+elif [ -n "$(command -v netstat)" ]
+then
+	# last resort
+	netstat -a -n | grep -E '^(tcp|udp|icmp)' | grep -vE 'ESTAB|TIME'
+else
+	# eek!
+	echo "Can't figure out how to look for open ports:"
+	echo "  install one of lsof, ss, or netstat"
+	exit 1
+fi
