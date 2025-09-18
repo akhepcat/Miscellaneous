@@ -12,11 +12,28 @@ then
 	echo " 1 = 90Clockwise"
 	echo " 2 = 90CounterClockwise (default)"
 	echo " 3 = 90Clockwise and Vertical Flip"
+	echo " 4 = Flip vertically"
+	echo " 5 = Flip horizontally"
+	echo " 6 = Flip horiz then vert"
 else
 	FLIP=${2:-2}  # Default to 90-degrees CCW (left)
-	FLIP=${FLIP//[^0-3]/}
+	FLIP=${FLIP//[^0-6]/}
+	if [ ${FLIP} -lt 4 ]
+	then
+		TOPT="transpose=${FLIP}"
+	elif [ ${FLIP} -eq 4 ]
+	then
+		TOPT="vflip"
+	elif [ ${FLIP} -eq 5 ]
+	then
+		TOPT="hflip"
+	else
+		TOPT="hflip,vflip"
+	fi
 
 	TIMEBASE="-r 65535/2733"        # work around timebase errors
 
-	ffmpeg -noautorotate -i "${1}" -acodec copy -q:v 10 -vf "transpose=${FLIP}" "rot-${1}"
+	QUALITY="-crf 17"	# "-q:v 10"
+
+	ffmpeg -noautorotate -i "${1}" -acodec copy -c:v libx264 ${QUALITY} -vf "${TOPT}" "rot-${1}"
 fi

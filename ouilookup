@@ -1,0 +1,51 @@
+#!/bin/sh
+#!/usr/bin/perl
+# (c) 2024 Leif Sawyer
+# License: GPL 3.0 (see https://github.com/akhepcat/)
+# Permanent home:  https://github.com/akhepcat/Miscellaneous/
+# Direct download: https://raw.githubusercontent.com/akhepcat/Miscellaneous/master/ouilookup
+#
+# Very basic wrapper to download, install, and search the IEEE oui.txt registry
+#
+
+OUIfile=$(find /usr/share/misc/ /etc/ /usr/local/etc/ -maxdepth 1 -iname oui.txt | head -1)
+REFRESH=0
+DAYSOLD=90	# How many days before we force refresh the oui file
+
+if [ ! -e "${OUIfile}" ]
+then
+        REFRESH=1
+else
+        # it exists, so check the age
+        AGE=$(stat  --format="%Y" "${OUIfile}" 2>/dev/null)
+        NOW=$(date "+%s")
+
+        if [ $(( NOW - AGE )) -gt $(( 86400 * DAYSOLD )) ]
+        then
+                REFRESH=1
+        fi
+fi
+
+if [ ${REFRESH:-0} -eq 1 ]
+then
+        echo "updating OUI file"
+        OUIfile=/usr/share/misc/oui.txt
+	sudo wget -q -O ${OUIfile}  "http://standards-oui.ieee.org/oui.txt"
+	sudo chmod +r ${OUIfile}
+
+	if [ -n "$(command -v dos2unix)" ]
+	then
+		sudo dos2unix ${OUIfile}
+	fi
+
+fi
+
+if [ $# -eq 0 ]
+then
+  echo "Usage: ouilookup [mac]"
+  echo ""
+  exit 1
+fi
+OUI=$(echo $1 | tr -d ':.-' | cut -c -6)
+
+grep -i $OUI ${OUIfile} || echo

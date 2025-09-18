@@ -2,6 +2,10 @@
 HOST=$(hostname)
 
 CPU=$(egrep '^(vendor_id|Hardware)' /proc/cpuinfo  | cut -f2 -d: | sort -u | sed 's/.*\(Genuine\|Authentic\)//g; s/[[:space:]]\+//g;' | tr '[A-Z]' '[a-z]')
+if [ -z "${CPU}" -a -n "$(command -v lscpu)" ]
+then
+	CPU=$(lscpu -y | grep -E 'Vendor' | cut -f2 -d: | sed 's/^[[:space:]]\+//g; s/[[:space:]]\+/_/g; s/.*\(Genuine\|Authentic\)//g; s/[[:space:]]\+//g;' | tr '[A-Z]' '[a-z]')
+fi
 CPU=${CPU:-unknown}
 
 [[ -d "/proc/bus/pci" ]] && PCI="pci"

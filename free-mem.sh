@@ -15,7 +15,7 @@ kInst=$(grep MemAvailable /proc/meminfo | awk '{print $2}')
 kFree=$(grep MemFree /proc/meminfo | awk '{print $2}')
 
 kMin=$(( ${kTotl:-0} / 4 ))
-if [ ${kMin:-0} -gt 1024 -a ${kMin:-0} -gt 65536 ]
+if [ ${kMin:-0} -gt 1024 -a ${kMin:-0} -lt 65536 ]
 then
         kMin=65536
 fi

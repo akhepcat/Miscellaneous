@@ -35,8 +35,8 @@ pactl unload-module module-null-sink
 
 USENULL=1
 
-PVER=$(pipewire --version | tail -1 | sed 's/^[a-z ]\+//gi; s/\.//g; s/^0//g;')
-if [ ${PVER:-0} -gt 367 ]
+PVER=$(pipewire --version | tail -1 | sed 's/^[a-z ]\+//gi;' | perl -lpe '$_=sprintf("%d%03d%03d", split(/\./))' )
+if [ ${PVER:-0} -gt 3067 ]
 then
 	USENULL=0
 fi
@@ -47,9 +47,12 @@ res=$?
 if [ ${res:-1} -ne 0 ]
 then
 
-	if [ 1 -eq 1 ]
-	then
+#	if [ -n "$(command -v pw-loopback)" ]
+#	then
+#		pw-loopback -n All_Speakers  -m '[FL, FR]' --capture-props='media.class=Audio/Sink' --playback-props='media.class=Audio/Source'
 
+	if [ -n "$(command -v pw-cli)" ]
+	then
 		pw-cli create-node adapter '{ factory.name=support.null-audio-sink node.name=All_Speakers media.class=Audio/Sink object.linger=true audio.position=[FL FR] audio.sample_rate=44100 }'
 	else
 
@@ -89,7 +92,11 @@ pactl get-sink-mute vMic-silence >/dev/null 2>&1
 res=$?
 if [ ${res:-1} -ne 0 ]
 then
-	if [ 1 -eq 1 ]
+#	if [ -n "$(command -v pw-loopback)" ]
+#	then
+#		pw-loopback -n vMic-silence -m '[FL, FR]' --capture-props='media.class=Audio/Sink' --playback-props='media.class=Audio/Source'
+
+	if [ -n "$(command -v pw-cli)" ]
 	then
 
 		pw-cli create-node adapter '{ factory.name=support.null-audio-sink node.name=vMic-silence media.class=Audio/Sink object.linger=true audio.position=[FL FR] audio.sample_rate=44100 }'
