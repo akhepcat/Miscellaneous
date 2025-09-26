@@ -18,6 +18,12 @@ cleanup() {
 	echo -e "\n\n"
 	exit 0
 }
+if [ ! \( \( "${USER}" = "root" \) -o \( -n "${EUID}" -a ${EUID} = 0 \) \) ]
+then
+	SUDO=$(command -v sudo)
+else
+	SUDO=""
+fi
 
 if [ -z "$(which hdparm)" ]
 then
@@ -51,7 +57,7 @@ then
 	exit 1
 fi
 
-frozen=$(hdparm -I ${DISK} 2>&1 | grep -Ei 'not.*frozen|failed')
+frozen=$(${SUDO} hdparm -I ${DISK} 2>&1 | grep -Ei 'not.*frozen|failed')
 if [ -z "${FORCE}" ]
 then
   if [ -n "${frozen}" -a -z "${frozen##*failed*}" ]
@@ -71,9 +77,9 @@ echo "THIS IS DESTRUCTIVE. YOU MAY BRICK YOUR DRIVE. YOU HAVE BEEN WARNED"
 #echo "using security password:  ${SECPASS}"
 
 STATUS=474
-hdparm --user-master u --security-set-pass ${SECPASS} ${DISK}
+${SUDO} hdparm --user-master u --security-set-pass ${SECPASS} ${DISK}
 # Show the status, steal the duration with redirection!
-DUR=$(hdparm -I ${DISK} 2>&1 | grep -A 20 '^Security:' | tee /dev/stderr | grep 'ENHANCED SECURITY ERASE UNIT' | cut -f2 -d. | awk '{print $1}' )
+DUR=$(${SUDO} hdparm -I ${DISK} 2>&1 | grep -A 20 '^Security:' | tee /dev/stderr | grep 'ENHANCED SECURITY ERASE UNIT' | cut -f2 -d. | awk '{print $1}' )
 
 DUR=${DUR//min/}
 DUR=$(( $NOW + ($DUR * 60) ))
@@ -85,10 +91,10 @@ echo "ctrl-c to abort now, or wait 5 seconds to continue"
 
 sleep 5
 
-time hdparm --user-master u --security-erase ${SECPASS} ${DISK}
+time ${SUDO} hdparm --user-master u --security-erase ${SECPASS} ${DISK}
 STATUS=0
 
 echo "Drive ${DISK} is now securely erased"
-hdparm -I ${DISK} 2>&1 | grep -A 20 '^Security:'
+${SUDO} hdparm -I ${DISK} 2>&1 | grep -A 20 '^Security:'
 
 cleanup
