@@ -1,0 +1,81 @@
+#!/bin/bash
+# (c) 2020 Leif Sawyer
+# License: GPL 3.0 (see https://github.com/akhepcat/)
+# Permanent home:  https://github.com/akhepcat/Miscellaneous/
+# Direct download: https://raw.githubusercontent.com/akhepcat/Miscellaneous/master/update_bedrock.sh
+#
+#
+# "Installs" the applications as symlinks in the noted directories.   Ignores things that aren't specified, or are "manually" installed.   Checks for new things, too.
+
+CWD=$(pwd)
+
+SOURCE="${BASH_SOURCE[0]}"
+while [[ -h "$SOURCE" ]]
+do
+# resolve $SOURCE until the file is no longer a symlink
+DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+SOURCE="$(readlink "$SOURCE")"
+# if $SOURCE was a relative symlink, we need to resolve it relative to the path where the symlink file was located
+[[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
+done
+PDIR="$( cd -P "$( dirname "$SOURCE" )" && pwd -P )"
+## end
+
+
+
+BINS=( 32or64 4to6proxy.sh Xsshauth basecfg browser-tab confdiff cwatch cwdiff dummyX fakex gen-strong-pw gh git-updates hex2ascii html09-proxy.pl ipsort.pl jmake 
+	math md5dups myseq pingscan pipewire-virtual-mapper.sh piver rdig resolve-hosts.pl rsync-cp stopwatch uml2png urldecode v6-to-link_local v6-v4.sh vid2mp4
+	vidrotate x11vnc-app x509crypt xrdp )
+
+MANUAL=( Kubuntu-Cubic-Flasher.sh LatLongParse.py MDviewer.sh NoPrinterShutdown USBaudioWD alaskanets dshield-to-fail2ban.sh dshield_nft_blocklist.pl dump1090-daemon.sh
+	esxi-patch-watch.sh gpsControl.c gpsControl.service grouper-M-build.sh hamnets ipsort-bench.pl jws kali-burn-iso kali-custom-builder l2tpv3-cisco.sh lxc-pid 
+	multi-bogon-nft-blocklist.pl multibl.conf net_watchdog.initd net_watchdog.service net_watchdogd oclhcbench oclhcbench2csv oclhcbench2import.pl pidgin-fb-login-2fa.py
+	sagemcom-stats.py svpass.sh teams_cache_cleanup ubloxcfg.c update_bedrock.sh zoom-upd watchdog-arm-enable.sh )
+
+SBINS=( Raspi-Firstboot.sh apkpull apt-add-key apt-upg dhcp-lease-list dhcp-release dkms-force dmiordt do-chroot findbrkbin findbrklib findduplib findfrag findroute free-mem.sh
+        hd-secure-erase ip6tables-watch ipcapuniq ipt_or_nft.sh iptables-watch ksktest listeners.sh mqueuerm ntpdate-sntp ouilookup ova-convert pmaptitude sddd selfcap serfind 
+	smartester snmpcapuniq snmplog.py sysinfo2 tbattery web-timeset zone-bin2txt zone-xfer )
+
+
+do_install() {
+
+	if [ -d /usr/local/bin ]
+	then
+		cd /usr/local/bin
+		for PROG in ${BINS[@]}
+		do
+			[[ -r "${PDIR}/${PROG}" ]] && ln -s "${PDIR}/${PROG}" .
+		done
+	fi
+
+	if [ -d /usr/local/sbin ]
+	then
+		cd /usr/local/sbin
+		for PROG in ${SBINS[@]}
+		do
+			[[ -r "${PDIR}/${PROG}" ]] && ln -s "${PDIR}/${PROG}" .
+		done
+	fi
+}
+
+do_check() {
+	echo "not yet implemented"
+}
+
+do_usage() {
+	echo "install_links [option]"
+	echo "		check - checks for updated files that aren't installed or installable"
+	echo "		install - creates the symlinks as directed by this installer"
+	echo "		usage|help - this help"
+	echo ""
+}
+
+case "$1" in
+	check) do_check
+		;;
+	install) do_install
+		;;
+	*) do_usage
+		;;
+esac
+
