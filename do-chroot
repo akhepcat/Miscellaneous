@@ -170,7 +170,7 @@ then
 	resolv_conf
 
 	[[ -r "${ROOT:-undefined_rootfs}/etc/hostname" ]] && export debian_chroot=$(cat ${ROOT:-undefined_rootfs}/etc/hostname)
-	if [ -n "${EMU}" -a ! -r "${ROOT:-undefined_rootfs}/usr/bin/qemu-${EMU}-static" ]
+	if [ -n "${EMU}" -a -z "/bin/ls ${ROOT:-undefined_rootfs}/usr/bin/qemu-${EMU}*" ]
 	then
 		QEMUBIN=$(grep -Eo '/usr/bin/\S+' /proc/sys/fs/binfmt_misc/qemu-${EMU})
 		cp ${QEMUBIN} ${ROOT:-undefined_rootfs}/usr/bin/ 2>/dev/null
