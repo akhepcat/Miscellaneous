@@ -7,6 +7,19 @@
 
 formula=${*-0}
 
+# Handle case for factorials
+if [ "${formula//[0-9]!*/}" != "${formula}" ]
+then
+	# handle x! format
+	tform=$(sed -E 's/([0-9]+(\.[0-9]+)?)!/f(\1)/g' <<<"${formula}")
+	formula="${tform}"
+	func="""define f (x) {
+  if (x <= 1) return (1);
+  return (f(x-1) * x);
+}
+"""
+fi
+
 # Handle logarithms in two forms
 if [ "${formula//*log*/}" != "${formula}" ]
 then
@@ -19,4 +32,4 @@ then
 	formula=${tform}
 fi
 
-echo "scale = 3; print ( $formula ); print \"\n\";" | bc -l
+echo "${func}; scale = 3; print ( $formula ); print \"\n\";" | bc -l

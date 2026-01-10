@@ -1,0 +1,49 @@
+#!/bin/bash
+# (c) 2025 Leif Sawyer
+# License: GPL 3.0 (see https://github.com/akhepcat/)
+# Permanent home:  https://github.com/akhepcat/Miscellaneous/
+# Direct download: https://raw.githubusercontent.com/akhepcat/Miscellaneous/master/web-timeset
+#
+# Based on idea by gmamorim  - https://github.com/jetkvm/kvm/issues/293
+#
+# Don't have NTP available?  This will set your system and hwclock to a "mostly" accuract time
+# This should run at startup and will idly hang out in the background until the network is up and then set the clock.
+# This returns true if system AND hwclock were set. Returns false in all other cases.
+# This probably won't work for jetkvms anymore due to dependencies on bash and a more flexible 'date' binary
+# but gmamorim's original script should still work for those cases.
+(
+    sleep 30
+
+    # You can add additional servers here, it's a random choice each run.  We'll strip the 'www.' prefix for the ping (thanks, Google, for inconsistant results)
+    SERVERS=(www.google.com www.ntp.org)
+
+    #E-N-T-R-O-P-Y
+    RANDOM=$$$(date +%s)
+
+    SERVER=${SERVERS[ $RANDOM % ${#SERVERS[@]} ]}
+
+    while ! ping -c1 -W1 ${SERVER//www./} >/dev/null 2>&1
+    do
+	sleep 1
+    done
+
+    WGET=$(command -v wget)
+    CURL=$(command -v curl)
+
+    if [[ -n "${CURL}" ]]
+    then
+	FETCH="${CURL} -silent -I"
+    elif [[ -n "${WGET}" ]]
+    then
+	FETCH="${WGET} -q -O- -S --spider"
+    else
+	echo "neither curl nor wget is installed, cannot proceed"
+	exit 1
+    fi
+
+    ${FETCH} ${SERVER} 2>&1 | grep -i '^[[:space:]]*Date:' | cut -d: -f2- | xargs -I{} date -s "{}"
+
+    HWC=$(command -v hwclock)
+    ${HWC:-false} -w 2>/dev/null
+
+) &
