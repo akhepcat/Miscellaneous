@@ -15,7 +15,7 @@ sleep 3600
 if [ -e /reboot_canary.txt ]
 then
 	rm -f /reboot_canary.txt
-	shutdown -R +5s "apt-upg canary reboot" &
+	shutdown -r +5s "apt-upg canary reboot" &
 else
 	wall "shutdown aborted."
 fi
