@@ -46,7 +46,7 @@ fi
 
 
 # install updates
-${IONICE} ${NICE} apt-get -y dist-upgrade
+${IONICE} ${NICE} apt-get -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" -y dist-upgrade
 if [ $? -ne 0 ]
 then
 	echo "manually check upgrade failures"
